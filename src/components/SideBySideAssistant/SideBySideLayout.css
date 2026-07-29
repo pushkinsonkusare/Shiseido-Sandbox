@@ -259,13 +259,20 @@
  * docked rules above). Corners are clipped here since the inner docked
  * assistant keeps square edges. */
 .sxs-layout__panel--detached {
+  /* Top edge of the formerly centered min(760px, 86vh) modal, so the extra
+     height added below goes to the chat and the header stays put. */
+  --sxs-detached-top: max(0px, calc(50vh - min(760px, 86vh) / 2));
   position: fixed;
-  top: 50%;
+  top: var(--sxs-detached-top);
   left: 50%;
-  transform: translate3d(-50%, -50%, 0);
+  transform: translate3d(-50%, 0, 0);
   width: min(900px, 92vw);
-  height: min(760px, 86vh);
-  border-radius: 4px;
+  /* Runs to the bottom of the screen so the composer is flush with the viewport
+     edge. Stated as a height rather than `bottom: 0` so it also replaces the
+     docked rule's viewport-minus-headers height. */
+  height: calc(100vh - var(--sxs-detached-top));
+  /* Bottom corners are square since that edge meets the screen. */
+  border-radius: 4px 4px 0 0;
   overflow: hidden;
   box-shadow:
     0 24px 60px rgba(0, 0, 0, 0.28),
@@ -277,11 +284,11 @@
 @keyframes sxs-detach-in {
   from {
     opacity: 0;
-    transform: translate3d(-50%, calc(-50% + 12px), 0) scale(0.98);
+    transform: translate3d(-50%, 12px, 0) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: translate3d(-50%, -50%, 0) scale(1);
+    transform: translate3d(-50%, 0, 0) scale(1);
   }
 }
 
