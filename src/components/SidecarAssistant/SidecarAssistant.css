@@ -109,17 +109,28 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px;
+  /* Left inset matches the input bar's 16px padding so the header icon lines up
+     with the composer shell; the action buttons stay tighter to the right edge. */
+  padding: 12px 12px 12px 16px;
   background: #f8f8f8;
   border-bottom: 1px solid #e5e7eb;
   flex: 0 0 auto;
+  /* Lifted above the chat area so the shadow falls on the transcript instead of
+     being painted over by it: the chat area is also positioned and comes later
+     in the DOM, so it would otherwise win. The 7 clears the floating context
+     island's 6, which also keeps the menu popover above the island. */
+  position: relative;
+  z-index: 7;
+  box-shadow:
+    0 1px 2px rgba(23, 23, 27, 0.04),
+    0 8px 20px -10px rgba(23, 23, 27, 0.18);
 }
 
 .sidecar-assistant__header-title {
   flex: 1 1 auto;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   min-width: 0;
 }
 
@@ -127,9 +138,12 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  color: #17171b;
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  /* Deepened form of the brand red in the Shiseido wordmark (#ea021c). */
+  background: #8a1424;
+  color: #ffffff;
 }
 
 .sidecar-assistant__header-label {
@@ -171,15 +185,43 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   outline-offset: 1px;
 }
 
+/* Floats over the top of the chat rather than sitting in the header stack, so
+   the transcript scrolls underneath it. Inset on all sides with a shadow so it
+   reads as a raised island. */
 .sidecar-assistant__context-island {
-  flex: 0 0 auto;
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 6;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 12px;
+  /* Matches the 32px pill / cart button plus this padding and border, so the
+     island keeps a constant height whether it is showing the pill, the cart
+     group, or both. */
+  min-height: 50px;
+  padding: 8px;
   background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Nothing but the product pill to show, so the island hugs it. The base rule's
+   left/right insets stay in place and `margin-inline: auto` centers the box
+   inside them, which is how an absolutely positioned element with a definite
+   width centers between its offsets. */
+.sidecar-assistant__context-island--compact {
+  width: fit-content;
+  margin-inline: auto;
+}
+
+/* Hidden rather than unmounted so the space the chat reserves for it stays
+   reserved. See showContextIsland. */
+.sidecar-assistant__context-island--empty {
+  visibility: hidden;
 }
 
 .sidecar-assistant__context-island-product {
@@ -188,18 +230,24 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   gap: 8px;
   min-width: 0;
   flex: 1 1 auto;
+  max-width: 220px;
+  /* Matches the cart button so the two sit as equals in the island. */
+  height: 32px;
   padding: 4px 6px 4px 4px;
   background: #f7f7f7;
   border: 1px solid #e0e0e0;
-  border-radius: 999px;
+  border-radius: 4px;
 }
 
 .sidecar-assistant__context-island-thumb {
   flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
+  /* Fits inside the 32px pill without eating its 4px padding. */
+  width: 22px;
+  height: 22px;
   object-fit: cover;
-  border-radius: 999px;
+  /* Squared off to match the pill's own corners: a circle only meets the
+     padding at a tangent point, which reads as a wider gap on the left. */
+  border-radius: 4px;
   background: #f2f2f2;
 }
 
@@ -214,27 +262,63 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   white-space: nowrap;
 }
 
-.sidecar-assistant__context-island-view {
+.sidecar-assistant__context-island-add {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  width: 24px;
-  height: 24px;
-  margin-left: 2px;
-  padding: 0;
-  color: #6b7280;
-  background: transparent;
-  border: none;
-  border-radius: 999px;
+  /* Same 22px as the thumb, so both clear the pill's 4px padding. */
+  height: 22px;
+  padding: 0 8px;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+  color: #ffffff;
+  background: #131315;
+  border: 1px solid #131315;
+  border-radius: 4px;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.sidecar-assistant__context-island-view:hover {
-  background: #ececec;
+.sidecar-assistant__context-island-add:hover {
+  background: #1f1f23;
+  border-color: #1f1f23;
+}
+
+.sidecar-assistant__context-island-add:focus-visible {
+  outline: 2px solid #2f7df6;
+  outline-offset: 2px;
+}
+
+.sidecar-assistant__context-island-cart-group {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Two stacked lines right-aligned against the cart button, so the totals read
+   as a label for it rather than a separate control. */
+.sidecar-assistant__context-island-cart-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 14px;
+  white-space: nowrap;
+}
+
+.sidecar-assistant__context-island-cart-total {
+  font-size: 12px;
+  font-weight: 600;
   color: #17171b;
+}
+
+.sidecar-assistant__context-island-cart-count {
+  font-size: 11px;
+  color: #6b7280;
 }
 
 .sidecar-assistant__context-island-cart {
@@ -250,7 +334,7 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   color: #17171b;
   background: transparent;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
@@ -258,6 +342,19 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
 .sidecar-assistant__context-island-cart:hover {
   background: #f2f2f2;
   color: #0f0f0f;
+}
+
+/* Inside the island the cart reads as a filled grey button. Scoped to the
+   group because the floating cart FAB reuses this class but brings its own
+   white surface and shadow. */
+.sidecar-assistant__context-island-cart-group
+  .sidecar-assistant__context-island-cart {
+  background: #ececec;
+}
+
+.sidecar-assistant__context-island-cart-group
+  .sidecar-assistant__context-island-cart:hover {
+  background: #e0e0e0;
 }
 
 .sidecar-assistant__context-island-badge {
@@ -426,6 +523,12 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
 }
 
+/* Clears the floating island (12px inset + 50px island + 12px gap) so the first
+   message does not start life hidden behind it. */
+.sidecar-assistant__chat--with-island {
+  padding-top: 74px;
+}
+
 /* Floating cart button pinned to the corner of the chat area. Reuses the
    context-island cart button + badge internals; this layer adds the floating
    surface and positioning. */
@@ -519,7 +622,8 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
 }
 
 .sidecar-assistant__user-bubble {
-  background: #dbeafe;
+  /* Light tint of the header chip's brand maroon (#8a1424). */
+  background: #efd6db;
   color: #17171b;
   font-size: 14px;
   line-height: 20px;
@@ -838,11 +942,36 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   flex: 0 0 auto;
   background: rgba(250, 250, 250, 1);
   padding: 16px 16px 20px;
-  box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.06);
+  /* Mirror of the header's shadow, cast upward onto the transcript. Needs the
+     same lift as the header: the chat area is positioned and comes earlier in
+     the DOM, so it would otherwise paint over this. */
+  position: relative;
+  z-index: 7;
+  box-shadow:
+    0 -1px 2px rgba(23, 23, 27, 0.04),
+    0 -8px 20px -10px rgba(23, 23, 27, 0.18);
   border-top: 1px solid rgba(224, 224, 224, 1);
   border-right: 0 none rgba(0, 0, 0, 0);
   border-bottom: 0 none rgba(0, 0, 0, 0);
   border-left: 0 none rgba(0, 0, 0, 0);
+}
+
+.sidecar-assistant__disclaimer {
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: left;
+  color: rgba(115, 115, 115, 1);
+}
+
+.sidecar-assistant__disclaimer-link {
+  color: rgba(82, 82, 82, 1);
+  text-decoration: underline;
+  transition: color 160ms ease;
+}
+
+.sidecar-assistant__disclaimer-link:hover {
+  color: rgba(23, 23, 27, 1);
 }
 
 .sidecar-assistant__selection-tray {
@@ -850,38 +979,6 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   flex-direction: column;
   gap: 12px;
   padding-bottom: 12px;
-}
-
-.sidecar-assistant__selection-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.sidecar-assistant__selection-count {
-  font-size: 12px;
-  font-weight: var(--font-weight-semibold);
-  line-height: 16px;
-  color: rgba(115, 115, 115, 1);
-}
-
-.sidecar-assistant__selection-clear {
-  appearance: none;
-  padding: 0;
-  border: none;
-  background: transparent;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: var(--font-weight-medium);
-  line-height: 16px;
-  color: rgba(82, 82, 82, 1);
-  cursor: pointer;
-  transition: color 160ms ease;
-}
-
-.sidecar-assistant__selection-clear:hover {
-  color: rgba(23, 23, 27, 1);
 }
 
 .sidecar-assistant__selection-pills {

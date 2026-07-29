@@ -62,6 +62,7 @@ import {
 } from "./conversation/flow";
 import type { ChatMessage, RoutineSection } from "./conversation/types";
 import type { CatalogProduct } from "../../catalog/catalog";
+import type { AskAssistantEventDetail } from "../../pages/ProductDetailPage/PdpNbaPanel";
 import { resolveProductFaq } from "../SideBySideAssistant/conversation/productFaq";
 import { createOpenAIAgent, type AgentAction, type OpenAIAgent } from "./agent/openaiAgent";
 import { isLlmConfigured } from "../../lib/openaiClient";
@@ -121,7 +122,9 @@ function resolveContextualComposerLabel(
     return "Show similar";
   }
 
-  // Exact match against the tray pills currently offered for this selection.
+  // Exact match against the contextual questions for this selection. The
+  // ingredients question stays matchable even though the tray no longer offers
+  // it as a pill, so typing it still gets a product-scoped answer.
   const labels: string[] = [];
   if (selectedSlugs.length >= 2) {
     labels.push("Compare");
@@ -304,8 +307,7 @@ function buildContextualFollowupLabels(
 
 /**
  * The two most relevant FAQ pills for the selection tray: the first two
- * entries of the product's FAQ pool. The always-on "What are the
- * ingredients?" pill is appended separately by the caller.
+ * entries of the product's FAQ pool.
  */
 function buildContextualFaqs(product: CatalogProduct): [string, string] {
   const pool = buildContextualFaqPool(product);
@@ -315,6 +317,15 @@ const TALL_CARD_VIEWPORT_RATIO = 0.92;
 const TALL_CARD_ANCHOR_RATIO = 0.6;
 const TALL_CARD_TOP_INSET_PX = 16;
 const TALL_CARD_SETTLE_TIMEOUT_MS = 140;
+/** How far into the chat viewport a context divider must scroll before the
+ * island adopts its product. Clears the floating island (12px inset + its own
+ * height) so a divider hands over as it slides behind the island. */
+const CONTEXT_SCROLL_ACTIVATION_PX = 70;
+/** Slack for "scrolled to the bottom", which lands fractionally short. */
+const CONTEXT_SCROLL_BOTTOM_TOLERANCE_PX = 2;
+/** How long a reading of "no divider above the line" has to hold before the
+ * island drops its pill, so transient shifts do not flash it off and on. */
+const CONTEXT_SCROLL_BLANK_DELAY_MS = 300;
 
 let messageIdCounter = 0;
 function nextId(prefix: string) {
@@ -435,6 +446,19 @@ function toCompareColumn(product: CatalogProduct): AgentCompareColumn {
     rating: product.rating ?? undefined,
     reviewCount: product.reviewCount ?? undefined,
   };
+}
+
+/** How the shopper's own turn reads when they trigger a comparison: the pill
+ * label alone ("Compare") loses which products they picked, so the bubble names
+ * them the way someone would ask out loud. */
+function buildCompareQuery(products: CatalogProduct[]): string {
+  const titles = products.map((product) => `the ${product.title}`);
+  if (titles.length === 0) return "Compare";
+  // A single selection pads the table with related items, so say so.
+  if (titles.length === 1) return `Compare ${titles[0]} with similar products`;
+  const last = titles[titles.length - 1];
+  if (titles.length === 2) return `Compare ${titles[0]} and ${last}`;
+  return `Compare ${titles.slice(0, -1).join(", ")}, and ${last}`;
 }
 
 /* Preferred order for spec rows in the comparison table; any remaining
@@ -671,28 +695,41 @@ export function SidecarAssistant({
   const [selectedSlugs, setSelectedSlugs] = useState<string[]>([]);
   const selectedSet = useMemo(() => new Set(selectedSlugs), [selectedSlugs]);
 
-  // Context island: item count from the latest cart card, and the product the
-  // conversation is currently scoped to (the primary selection).
-  const cartItemCount = useMemo(() => {
+  // Context island: item count and total from the latest cart card, and the
+  // product the conversation is currently scoped to (the primary selection).
+  const cartTotals = useMemo(() => {
     const cart = [...messages]
       .reverse()
       .find(
         (m): m is Extract<ChatMessage, { kind: "agent_cart" }> =>
           m.kind === "agent_cart",
       );
-    return cart ? cart.items.reduce((sum, item) => sum + item.quantity, 0) : 0;
+    if (!cart) return { count: 0, total: "" };
+    return {
+      count: cart.items.reduce((sum, item) => sum + item.quantity, 0),
+      // The emphasised line is the authoritative total: it already accounts
+      // for any applied promo, so the island never disagrees with the card.
+      total: cart.lineItems.find((line) => line.emphasis)?.value ?? "",
+    };
   }, [messages]);
-  const contextProduct = useMemo(() => {
-    // A live selection is the strongest signal for the product in context.
-    if (selectedSlugs.length > 0) {
-      return getProductBySlug(selectedSlugs[0]);
-    }
-    // Otherwise walk back through the conversation and let the most recent
-    // context-defining message decide. A product-focused message (PDP card,
-    // contextual FAQ row, or context separator) pins the island to that
-    // product even when newer cart / NBA rows follow - so the product pill
-    // and the cart button can co-exist. A results / routine message means
-    // the shopper has moved to a non-product context, so the pill drops.
+  const cartItemCount = cartTotals.count;
+  const hasContextSeparators = useMemo(
+    () => messages.some((message) => message.kind === "context_separator"),
+    [messages],
+  );
+  // Slug of the divider the shopper has most recently scrolled past. `null`
+  // means they are above the first one, where no product context exists yet.
+  const [scrolledContextSlug, setScrolledContextSlug] = useState<string | null>(
+    null,
+  );
+  // The product the transcript implies on its own, ignoring where the shopper
+  // has scrolled: walk back through the conversation and let the most recent
+  // context-defining message decide. A product-focused message (PDP card,
+  // contextual FAQ row, or context separator) pins the island to that
+  // product even when newer cart / NBA rows follow - so the product pill
+  // and the cart button can co-exist. A results / routine message means
+  // the shopper has moved to a non-product context, so the pill drops.
+  const threadContextProduct = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
       const message = messages[i];
       if (message.kind === "agent_pdp" && message.productSlug) {
@@ -713,15 +750,52 @@ export function SidecarAssistant({
       }
     }
     return undefined;
-  }, [selectedSlugs, messages, getProductBySlug]);
+  }, [messages, getProductBySlug]);
+  const contextProduct = useMemo(() => {
+    // A live selection is the strongest signal for the product in context.
+    if (selectedSlugs.length > 0) {
+      return getProductBySlug(selectedSlugs[0]);
+    }
+    // Once the transcript has dividers they define its product sections, so the
+    // island follows whichever section the shopper has scrolled into. Above the
+    // first divider there is no product context yet, so the pill drops.
+    if (hasContextSeparators) {
+      return scrolledContextSlug
+        ? getProductBySlug(scrolledContextSlug)
+        : undefined;
+    }
+    return threadContextProduct;
+  }, [
+    selectedSlugs,
+    getProductBySlug,
+    hasContextSeparators,
+    scrolledContextSlug,
+    threadContextProduct,
+  ]);
+  // Deliberately blind to scroll position. The island reserves space at the top
+  // of the transcript and that space sits inside the scroll container, so
+  // mounting it on a scroll-derived value would move the dividers the scroll
+  // reader measures and oscillate for as long as the shopper sat near one.
   const showContextIsland =
-    contextIsland && (cartItemCount > 0 || Boolean(contextProduct));
+    contextIsland &&
+    (cartItemCount > 0 ||
+      selectedSlugs.length > 0 ||
+      hasContextSeparators ||
+      Boolean(threadContextProduct));
+  // Above the first divider with an empty cart there is nothing worth showing,
+  // but unmounting would give the space back and restart the loop above, so the
+  // island stays in place and only turns invisible.
+  const contextIslandEmpty = !contextProduct && cartItemCount === 0;
+  // Only the product pill and the cart group compete for the island's width, so
+  // unless both are present it hugs the one that is and centers instead of
+  // leaving a stretch of empty surface beside it.
+  const contextIslandCompact = !(contextProduct && cartItemCount > 0);
   // True once the shopper has asked a contextual FAQ for the current selection:
   // the follow-up pills then live in-chat, so the tray hides its own pill row.
   const [contextualThreadActive, setContextualThreadActive] = useState(false);
   // Contextual pills adapt to how many products are selected: a single product
-  // offers Show similar + two product-tuned FAQs + the ingredients FAQ, while
-  // two or more products collapse to a single Compare action.
+  // offers Show similar plus its two most relevant FAQs, while two or more
+  // products collapse to a single Compare action.
   const contextualNbas = useMemo(() => {
     if (selectedSlugs.length >= 2) {
       return buildNbaItems(["Compare"], "nba-contextual");
@@ -730,10 +804,7 @@ export function SidecarAssistant({
     const product = firstSlug ? getProductBySlug(firstSlug) : undefined;
     if (!product) return [];
     const [faq1, faq2] = buildContextualFaqs(product);
-    return buildNbaItems(
-      ["Show similar", faq1, faq2, INGREDIENTS_FAQ_LABEL],
-      "nba-contextual",
-    );
+    return buildNbaItems(["Show similar", faq1, faq2], "nba-contextual");
   }, [selectedSlugs, getProductBySlug]);
 
   // When products are selected, the input invites a product-scoped question.
@@ -1981,11 +2052,11 @@ export function SidecarAssistant({
       // single, product-grounded reply. Follow-ups move in-chat; the tray
       // collapses on pill tap / composer submit.
       if (firstProduct && !CONTEXTUAL_ACTION_LABELS.has(label)) {
-        // When the context island is off, drop an in-chat context separator so
-        // the shopper always sees which product the FAQ thread is about. Only
-        // insert one when the product changes, so consecutive FAQs about the
-        // same product stay grouped under a single divider.
-        if (!contextIsland && lastSeparatorSlugRef.current !== firstProduct.slug) {
+        // Drop an in-chat context separator so the shopper always sees which
+        // product the FAQ thread is about. Only insert one when the product
+        // changes, so consecutive FAQs about the same product stay grouped
+        // under a single divider.
+        if (lastSeparatorSlugRef.current !== firstProduct.slug) {
           appendMessage({
             id: nextId("sep"),
             kind: "context_separator",
@@ -2081,7 +2152,11 @@ export function SidecarAssistant({
       }
 
       if (firstProduct && label === "Compare") {
-        appendMessage({ id: nextId("shopper"), kind: "shopper_text", text: label });
+        appendMessage({
+          id: nextId("shopper"),
+          kind: "shopper_text",
+          text: buildCompareQuery(selectedProducts),
+        });
         const loaderId = nextId("loader");
         appendMessage({ id: loaderId, kind: "agent_loader", variant: "answering" });
         scheduleResponse(() => {
@@ -2144,8 +2219,49 @@ export function SidecarAssistant({
       removeMessage,
       dispatchShopperMessage,
       handleAddToCart,
-      contextIsland,
     ],
+  );
+
+  /** "Ask me anything" (the PDP `open` pill) carries no actual question, so it
+   * opens a product-scoped thread instead of answering: the same divider +
+   * shopper turn shape as a contextual FAQ, then an invitation and the
+   * product's FAQ pills. Marking the row contextual keeps tapped pills and
+   * typed follow-ups scoped to this product. */
+  const startOpenQuestionThread = useCallback(
+    (product: CatalogProduct, prompt: string) => {
+      if (lastSeparatorSlugRef.current !== product.slug) {
+        appendMessage({
+          id: nextId("sep"),
+          kind: "context_separator",
+          productSlug: product.slug,
+        });
+        lastSeparatorSlugRef.current = product.slug;
+      }
+      appendMessage({ id: nextId("shopper"), kind: "shopper_text", text: prompt });
+      const loaderId = nextId("loader");
+      appendMessage({ id: loaderId, kind: "agent_loader", variant: "answering" });
+      scheduleResponse(() => {
+        removeMessage(loaderId);
+        appendMessage({
+          id: nextId("agent"),
+          kind: "agent_simple",
+          body: `Happy to help. What would you like to know about the ${product.title}?`,
+        });
+        appendMessage({
+          id: nextId("nbas"),
+          kind: "agent_nbas",
+          contextual: true,
+          productSlug: product.slug,
+          regenerateButton: false,
+          nbas: buildNbaItems(
+            buildContextualFollowupLabels(product, new Set<string>()),
+            "nba-followup",
+          ),
+        });
+        setContextualThreadActive(true);
+      });
+    },
+    [appendMessage, removeMessage, scheduleResponse],
   );
 
   const handleNbaSelect = useCallback(
@@ -2328,19 +2444,41 @@ export function SidecarAssistant({
 
   useEffect(() => {
     const onAskRequested = (event: Event) => {
-      const detail = (event as CustomEvent<{ prompt?: string }>).detail;
+      const detail = (event as CustomEvent<AskAssistantEventDetail>).detail;
       const prompt = detail?.prompt?.trim();
       if (!prompt) return;
+      const product = detail?.productSlug
+        ? getProductBySlug(detail.productSlug)
+        : undefined;
+      const pillKind = detail?.pillKind;
       setIsOpen(true);
       // Defer one frame so the open-driven welcome seeding effect commits
       // first; otherwise the seeding clobbers the shopper turn we're about
       // to enqueue.
-      window.requestAnimationFrame(() => dispatchShopperMessage(prompt));
+      window.requestAnimationFrame(() => {
+        // PDP pills name their product, so keep them off the free-text path:
+        // otherwise a prompt like "…about the Dark Spot and Wrinkle Smoothing
+        // Serum" reads as a category search and answers with a serums carousel.
+        if (product && pillKind === "open") {
+          startOpenQuestionThread(product, prompt);
+          return;
+        }
+        if (product && pillKind === "faq") {
+          handleContextualPill(prompt, product.slug);
+          return;
+        }
+        dispatchShopperMessage(prompt);
+      });
     };
     document.addEventListener("agentic:ask-assistant", onAskRequested);
     return () =>
       document.removeEventListener("agentic:ask-assistant", onAskRequested);
-  }, [dispatchShopperMessage]);
+  }, [
+    dispatchShopperMessage,
+    getProductBySlug,
+    handleContextualPill,
+    startOpenQuestionThread,
+  ]);
 
   useEffect(() => {
     // The docked layout renders its own FAB, so the sidecar's own nudge
@@ -2489,6 +2627,74 @@ export function SidecarAssistant({
     previousMessageIdsRef.current = currentIds;
     return () => {
       cleanupFns.forEach((cleanup) => cleanup());
+    };
+  }, [messages]);
+
+  // Context dividers split the transcript into product sections, so track which
+  // one the shopper has scrolled past and let the island mirror it like a sticky
+  // section header. Re-runs on `messages` to pick up newly appended dividers.
+  useEffect(() => {
+    const node = chatRef.current;
+    if (!node) return;
+    // Auto-scrolls and late-loading images shift the transcript for a few
+    // frames after a reply lands, which can park the first divider back below
+    // the activation line even though the shopper never scrolled there. Blank
+    // readings are therefore held briefly and only committed if they stick.
+    let pendingBlank: number | null = null;
+    const cancelPendingBlank = () => {
+      if (pendingBlank !== null) {
+        window.clearTimeout(pendingBlank);
+        pendingBlank = null;
+      }
+    };
+    const syncScrolledContext = (allowBlank = false) => {
+      const separators = Array.from(
+        node.querySelectorAll<HTMLElement>("[data-context-slug]"),
+      );
+      if (separators.length === 0) {
+        cancelPendingBlank();
+        setScrolledContextSlug(null);
+        return;
+      }
+      // At the bottom the newest section is what the shopper is looking at,
+      // even when it is too short to push its own divider up to the line.
+      if (
+        node.scrollHeight - node.clientHeight - node.scrollTop <=
+        CONTEXT_SCROLL_BOTTOM_TOLERANCE_PX
+      ) {
+        cancelPendingBlank();
+        setScrolledContextSlug(
+          separators[separators.length - 1].dataset.contextSlug ?? null,
+        );
+        return;
+      }
+      const threshold =
+        node.getBoundingClientRect().top + CONTEXT_SCROLL_ACTIVATION_PX;
+      let active: string | null = null;
+      // Dividers are in document order, so stop at the first one still below
+      // the activation line.
+      for (const separator of separators) {
+        if (separator.getBoundingClientRect().top > threshold) break;
+        active = separator.dataset.contextSlug ?? null;
+      }
+      if (active === null && !allowBlank) {
+        if (pendingBlank === null) {
+          pendingBlank = window.setTimeout(() => {
+            pendingBlank = null;
+            syncScrolledContext(true);
+          }, CONTEXT_SCROLL_BLANK_DELAY_MS);
+        }
+        return;
+      }
+      cancelPendingBlank();
+      setScrolledContextSlug(active);
+    };
+    const onScroll = () => syncScrolledContext();
+    syncScrolledContext();
+    node.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      cancelPendingBlank();
+      node.removeEventListener("scroll", onScroll);
     };
   }, [messages]);
 
@@ -2750,16 +2956,13 @@ export function SidecarAssistant({
               />
             );
           case "context_separator": {
-            // Context island owns product scope in the header — hide the
-            // in-chat divider whenever that feature is on (including mid-thread
-            // toggles that left separators already in message history).
-            if (contextIsland) return null;
             const product = getProductBySlug(message.productSlug);
             if (!product) return null;
             return (
               <div
                 key={message.id}
                 className="sidecar-assistant__context-separator"
+                data-context-slug={message.productSlug}
               >
                 <span className="sidecar-assistant__context-separator-line" />
                 <div className="sidecar-assistant__context-separator-chip">
@@ -2806,7 +3009,6 @@ export function SidecarAssistant({
       selectedSet,
       messages,
       accordionRecommendations,
-      contextIsland,
     ],
   );
 
@@ -2872,7 +3074,7 @@ export function SidecarAssistant({
       <header className="sidecar-assistant__header">
         <div className="sidecar-assistant__header-title">
           <span className="sidecar-assistant__header-icon" aria-hidden="true">
-            <SparkleIcon width={20} height={20} />
+            <SparkleIcon width={18} height={18} strokeWidth={1.5} />
           </span>
           <span className="sidecar-assistant__header-label">Personal Assistant</span>
         </div>
@@ -2935,50 +3137,74 @@ export function SidecarAssistant({
         </div>
       </header>
 
-      {showContextIsland ? (
-        <div className="sidecar-assistant__context-island">
-          {contextProduct ? (
-            <div className="sidecar-assistant__context-island-product">
-              <img
-                className="sidecar-assistant__context-island-thumb"
-                src={contextProduct.imageUrl}
-                alt={contextProduct.imageAlt}
-              />
-              <span className="sidecar-assistant__context-island-title">
-                {contextProduct.title}
-              </span>
-              <button
-                type="button"
-                className="sidecar-assistant__context-island-view"
-                aria-label={`View ${contextProduct.title}`}
-                onClick={() => renderPdpCard(contextProduct.slug)}
-              >
-                <ChevronRightIcon width={16} height={16} aria-hidden="true" />
-              </button>
-            </div>
-          ) : (
-            <span />
-          )}
-          {cartItemCount > 0 ? (
-            <button
-              type="button"
-              className="sidecar-assistant__context-island-cart"
-              aria-label={`Cart: ${cartItemCount} item${cartItemCount === 1 ? "" : "s"}`}
-              onClick={showCartCard}
-            >
-              <ShoppingCartIcon width={20} height={20} />
-              <span className="sidecar-assistant__context-island-badge">
-                {cartItemCount}
-              </span>
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-
       <div className="sidecar-assistant__chat-area">
-        <div className="sidecar-assistant__chat" ref={chatRef}>
+        <div
+          className={`sidecar-assistant__chat${
+            showContextIsland ? " sidecar-assistant__chat--with-island" : ""
+          }`}
+          ref={chatRef}
+        >
           {renderedMessages}
         </div>
+        {showContextIsland ? (
+          <div
+            className={`sidecar-assistant__context-island${
+              contextIslandCompact
+                ? " sidecar-assistant__context-island--compact"
+                : ""
+            }${
+              contextIslandEmpty
+                ? " sidecar-assistant__context-island--empty"
+                : ""
+            }`}
+          >
+            {contextProduct ? (
+              <div className="sidecar-assistant__context-island-product">
+                <img
+                  className="sidecar-assistant__context-island-thumb"
+                  src={contextProduct.imageUrl}
+                  alt={contextProduct.imageAlt}
+                />
+                <span className="sidecar-assistant__context-island-title">
+                  {contextProduct.title}
+                </span>
+                <button
+                  type="button"
+                  className="sidecar-assistant__context-island-add"
+                  aria-label={`Add ${contextProduct.title} to cart`}
+                  onClick={() => handleAddToCart(contextProduct.slug, 1)}
+                >
+                  Add to cart
+                </button>
+              </div>
+            ) : null}
+            {cartItemCount > 0 ? (
+              <div className="sidecar-assistant__context-island-cart-group">
+                <span className="sidecar-assistant__context-island-cart-summary">
+                  {cartTotals.total ? (
+                    <span className="sidecar-assistant__context-island-cart-total">
+                      Total {cartTotals.total}
+                    </span>
+                  ) : null}
+                  <span className="sidecar-assistant__context-island-cart-count">
+                    {cartItemCount} item{cartItemCount === 1 ? "" : "s"}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  className="sidecar-assistant__context-island-cart"
+                  aria-label={`Cart: ${cartItemCount} item${cartItemCount === 1 ? "" : "s"}`}
+                  onClick={showCartCard}
+                >
+                  <ShoppingCartIcon width={20} height={20} />
+                  <span className="sidecar-assistant__context-island-badge">
+                    {cartItemCount}
+                  </span>
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         {!contextIsland && cartItemCount > 0 ? (
           <button
             type="button"
@@ -2997,20 +3223,6 @@ export function SidecarAssistant({
       <form className="sidecar-assistant__input-bar" onSubmit={handleSubmit}>
         {selectedSlugs.length > 0 ? (
           <div className="sidecar-assistant__selection-tray">
-            <div className="sidecar-assistant__selection-header">
-              <span className="sidecar-assistant__selection-count">
-                {selectedSlugs.length} product
-                {selectedSlugs.length === 1 ? "" : "s"} selected ({selectedSlugs.length}/
-                {MAX_SELECTED_PRODUCTS})
-              </span>
-              <button
-                type="button"
-                className="sidecar-assistant__selection-clear"
-                onClick={() => setSelectedSlugs([])}
-              >
-                Clear
-              </button>
-            </div>
             <div
               className="sidecar-assistant__selection-pills"
               role="list"
@@ -3114,6 +3326,18 @@ export function SidecarAssistant({
             <SendHorizontalIcon width={20} height={20} />
           </button>
         </div>
+        <p className="sidecar-assistant__disclaimer">
+          AI generated content may be wrong. Refer to{" "}
+          <a
+            className="sidecar-assistant__disclaimer-link"
+            href="https://www.salesforce.com/company/ethical-and-humane-use/how-we-build-trusted-ai/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            guidelines
+          </a>
+          .
+        </p>
       </form>
       {simulateMobileKeyboard && simKeyboardOpen ? (
         <SimulatedIOSKeyboard
