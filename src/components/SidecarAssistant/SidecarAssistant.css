@@ -113,7 +113,7 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
      with the composer shell; the action buttons stay tighter to the right edge. */
   padding: 12px 12px 12px 16px;
   background: #f8f8f8;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid rgba(23, 23, 27, 0.07);
   flex: 0 0 auto;
   /* Lifted above the chat area so the shadow falls on the transcript instead of
      being painted over by it: the chat area is also positioned and comes later
@@ -121,9 +121,11 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
      island's 6, which also keeps the menu popover above the island. */
   position: relative;
   z-index: 7;
+  /* Wide, low-opacity falloff rather than a tight dark edge: at full-bleed
+     immersive widths a contact shadow reads as a hard line. */
   box-shadow:
-    0 1px 2px rgba(23, 23, 27, 0.04),
-    0 8px 20px -10px rgba(23, 23, 27, 0.18);
+    0 1px 1px -1px rgba(23, 23, 27, 0.03),
+    0 14px 30px -20px rgba(23, 23, 27, 0.1);
 }
 
 .sidecar-assistant__header-title {
@@ -191,12 +193,16 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
 .sidecar-assistant__context-island {
   position: absolute;
   top: 12px;
+  /* The insets are the band the island centers inside, not its width: it hugs
+     whatever it is showing, and `margin-inline: auto` centers the box between
+     its offsets. */
   left: 12px;
   right: 12px;
+  width: fit-content;
+  margin-inline: auto;
   z-index: 6;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   /* Matches the 32px pill / cart button plus this padding and border, so the
      island keeps a constant height whether it is showing the pill, the cart
@@ -207,15 +213,6 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   border: 1px solid #e5e7eb;
   border-radius: 4px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* Nothing but the product pill to show, so the island hugs it. The base rule's
-   left/right insets stay in place and `margin-inline: auto` centers the box
-   inside them, which is how an absolutely positioned element with a definite
-   width centers between its offsets. */
-.sidecar-assistant__context-island--compact {
-  width: fit-content;
-  margin-inline: auto;
 }
 
 /* Hidden rather than unmounted so the space the chat reserves for it stays
@@ -527,6 +524,32 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
    message does not start life hidden behind it. */
 .sidecar-assistant__chat--with-island {
   padding-top: 74px;
+}
+
+/* Full-page immersive: hold the transcript to a readable column instead of
+   stretching cards across the screen. Padding rather than a max-width so the
+   scrollbar stays at the panel's edge. `--sxs-immersive-column` is 860px, the
+   card width the panel produced before it went full-bleed. */
+.sxs-layout__panel--detached .sidecar-assistant__chat {
+  padding-inline: max(20px, calc((100% - var(--sxs-immersive-column)) / 2));
+}
+
+/* The island and cart button float over the transcript, so they follow the same
+   column rather than drifting out into the empty margins. */
+.sxs-layout__panel--detached .sidecar-assistant__context-island {
+  left: max(12px, calc((100% - var(--sxs-immersive-column)) / 2));
+  right: max(12px, calc((100% - var(--sxs-immersive-column)) / 2));
+}
+
+.sxs-layout__panel--detached .sidecar-assistant__cart-fab {
+  right: max(16px, calc((100% - var(--sxs-immersive-column)) / 2));
+}
+
+/* Composer, disclaimer and selection tray line up with the cards above them.
+   Padding on the bar rather than a width on its children, so the background,
+   border and upward shadow still run the full width of the screen. */
+.sxs-layout__panel--detached .sidecar-assistant__input-bar {
+  padding-inline: max(20px, calc((100% - var(--sxs-immersive-column)) / 2));
 }
 
 /* Floating cart button pinned to the corner of the chat area. Reuses the
@@ -948,9 +971,9 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   position: relative;
   z-index: 7;
   box-shadow:
-    0 -1px 2px rgba(23, 23, 27, 0.04),
-    0 -8px 20px -10px rgba(23, 23, 27, 0.18);
-  border-top: 1px solid rgba(224, 224, 224, 1);
+    0 -1px 1px -1px rgba(23, 23, 27, 0.03),
+    0 -14px 30px -20px rgba(23, 23, 27, 0.1);
+  border-top: 1px solid rgba(23, 23, 27, 0.07);
   border-right: 0 none rgba(0, 0, 0, 0);
   border-bottom: 0 none rgba(0, 0, 0, 0);
   border-left: 0 none rgba(0, 0, 0, 0);
@@ -1261,6 +1284,12 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__fab {
   .sidecar-assistant__header-actions,
   html[data-demo-viewport="mobile"] .sidecar-assistant__header-actions {
     gap: 0;
+  }
+
+  /* Real phones keep the desktop viewport mode, so the React-side check does
+     not catch them; immersive mode is not offered at this width either. */
+  .sidecar-assistant__header-btn--detach {
+    display: none;
   }
 
   .sidecar-assistant__chat,

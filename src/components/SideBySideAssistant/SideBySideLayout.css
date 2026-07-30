@@ -73,9 +73,11 @@
 .sxs-shell:has(.figma-overview) {
   --sxs-storefront-header-height: 80px;
 }
+/* 81px: same top-nav as above plus its 1px bottom border. Immersive mode sits
+ * flush against this edge, so an over-estimate here shows as a seam. */
 .sxs-shell:has(.figma-order-confirmation),
 .sxs-shell:has(.figma-checkout) {
-  --sxs-storefront-header-height: 84px;
+  --sxs-storefront-header-height: 81px;
 }
 
 /* Unwrap the layout main slot so children of the page wrapper become grid
@@ -234,61 +236,51 @@
   }
 }
 
-/* Detached mode: the assistant floats as a centered modal and the storefront
- * reflows to full width. Reuses the collapsed-grid shape so the existing
- * `grid-template-columns` transition animates the storefront expanding. */
+/* Detached mode: the assistant takes over the page below the storefront's
+ * top-nav and the storefront reflows to full width behind it. Reuses the
+ * collapsed-grid shape so the existing `grid-template-columns` transition
+ * animates the storefront expanding. */
 .sxs-layout--detached {
   grid-template-columns: 1fr 0px;
 }
 
-/* Backdrop dimming the full-width storefront behind the floating modal. */
-.sxs-layout__detach-backdrop {
-  position: fixed;
-  inset: var(--sxs-mode-bar-height) 0 0 0;
-  z-index: 39;
-  border: none;
-  margin: 0;
-  padding: 0;
-  background: rgba(15, 23, 42, 0.34);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  cursor: pointer;
-}
-
-/* Float the column-2 panel as a centered fixed modal (overrides the sticky
- * docked rules above). Corners are clipped here since the inner docked
- * assistant keeps square edges. */
+/* Take the column-2 panel full-bleed below the storefront's top-nav (overrides
+ * the sticky docked rules above). Every edge meets either the screen or the
+ * top-nav, so there are no corners to round and nothing to cast a shadow onto. */
 .sxs-layout__panel--detached {
-  /* Top edge of the formerly centered min(760px, 86vh) modal, so the extra
-     height added below goes to the chat and the header stays put. */
-  --sxs-detached-top: max(0px, calc(50vh - min(760px, 86vh) / 2));
+  /* Sits directly under the page's sticky top-nav, which stays visible. */
+  --sxs-detached-top: calc(
+    var(--sxs-mode-bar-height) + var(--sxs-storefront-header-height)
+  );
+  /* Width the transcript is held to; the panel itself is full-bleed. */
+  --sxs-immersive-column: 860px;
   position: fixed;
   top: var(--sxs-detached-top);
-  left: 50%;
-  transform: translate3d(-50%, 0, 0);
-  width: min(900px, 92vw);
-  /* Runs to the bottom of the screen so the composer is flush with the viewport
-     edge. Stated as a height rather than `bottom: 0` so it also replaces the
-     docked rule's viewport-minus-headers height. */
+  left: 0;
+  right: 0;
+  width: auto;
+  transform: none;
+  /* Stated as a height rather than `bottom: 0` so it also replaces the docked
+     rule's viewport-minus-headers height, which would otherwise over-constrain
+     the box and win. */
   height: calc(100vh - var(--sxs-detached-top));
-  /* Bottom corners are square since that edge meets the screen. */
-  border-radius: 4px 4px 0 0;
+  border-radius: 0;
   overflow: hidden;
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.28),
-    0 6px 18px rgba(0, 0, 0, 0.16);
+  box-shadow: none;
   z-index: 40;
   animation: sxs-detach-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Rise and fade only: the panel is full-bleed now, so scaling it in would show
+   the storefront through its edges mid-animation. */
 @keyframes sxs-detach-in {
   from {
     opacity: 0;
-    transform: translate3d(-50%, 12px, 0) scale(0.98);
+    transform: translate3d(0, 12px, 0);
   }
   to {
     opacity: 1;
-    transform: translate3d(-50%, 0, 0) scale(1);
+    transform: translate3d(0, 0, 0);
   }
 }
 

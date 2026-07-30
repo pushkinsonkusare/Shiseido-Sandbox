@@ -643,6 +643,14 @@ function buildOrderLineItems(
   return items;
 }
 
+/** An "Ask Assistant" request that arrived before this component existed, so
+ * its own event listener could not see it. `token` lets the consumer ignore a
+ * replayed prop (React 18 StrictMode remounts) instead of doubling the turn. */
+export type PendingAsk = {
+  token: number;
+  detail: AskAssistantEventDetail;
+};
+
 type SidecarAssistantProps = {
   /** When true, the assistant renders as a flush docked panel that fills its
    * container (see SidecarDockLayout) instead of a floating fixed overlay.
@@ -658,6 +666,10 @@ type SidecarAssistantProps = {
   detached?: boolean;
   /** Toggle between docked and detached modal, driven by the Expand button. */
   onToggleDetach?: () => void;
+  /** Ask request the layout caught while this component was unmounted. */
+  pendingAsk?: PendingAsk | null;
+  /** Fired once `pendingAsk` has been turned into a thread. */
+  onPendingAskHandled?: () => void;
 };
 
 export function SidecarAssistant({
@@ -666,6 +678,8 @@ export function SidecarAssistant({
   onRequestClose,
   detached = false,
   onToggleDetach,
+  pendingAsk = null,
+  onPendingAskHandled,
 }: SidecarAssistantProps = {}) {
   const { products, heroProduct, getProductBySlug, getRelatedProducts, orderHistory } =
     useCatalog();
@@ -786,10 +800,6 @@ export function SidecarAssistant({
   // but unmounting would give the space back and restart the loop above, so the
   // island stays in place and only turns invisible.
   const contextIslandEmpty = !contextProduct && cartItemCount === 0;
-  // Only the product pill and the cart group compete for the island's width, so
-  // unless both are present it hugs the one that is and centers instead of
-  // leaving a stretch of empty surface beside it.
-  const contextIslandCompact = !(contextProduct && cartItemCount > 0);
   // True once the shopper has asked a contextual FAQ for the current selection:
   // the follow-up pills then live in-chat, so the tray hides its own pill row.
   const [contextualThreadActive, setContextualThreadActive] = useState(false);
@@ -2245,7 +2255,7 @@ export function SidecarAssistant({
         appendMessage({
           id: nextId("agent"),
           kind: "agent_simple",
-          body: `Happy to help. What would you like to know about the ${product.title}?`,
+          body: `Shoot any question you have about the ${product.title} and I'll try to get it answered for you.`,
         });
         appendMessage({
           id: nextId("nbas"),
@@ -2442,9 +2452,8 @@ export function SidecarAssistant({
       document.removeEventListener("agentic:open-assistant", onOpenRequested);
   }, []);
 
-  useEffect(() => {
-    const onAskRequested = (event: Event) => {
-      const detail = (event as CustomEvent<AskAssistantEventDetail>).detail;
+  const handleAskRequest = useCallback(
+    (detail: AskAssistantEventDetail | undefined) => {
       const prompt = detail?.prompt?.trim();
       if (!prompt) return;
       const product = detail?.productSlug
@@ -2469,16 +2478,35 @@ export function SidecarAssistant({
         }
         dispatchShopperMessage(prompt);
       });
-    };
+    },
+    [
+      dispatchShopperMessage,
+      getProductBySlug,
+      handleContextualPill,
+      startOpenQuestionThread,
+    ],
+  );
+
+  useEffect(() => {
+    const onAskRequested = (event: Event) =>
+      handleAskRequest((event as CustomEvent<AskAssistantEventDetail>).detail);
     document.addEventListener("agentic:ask-assistant", onAskRequested);
     return () =>
       document.removeEventListener("agentic:ask-assistant", onAskRequested);
-  }, [
-    dispatchShopperMessage,
-    getProductBySlug,
-    handleContextualPill,
-    startOpenQuestionThread,
-  ]);
+  }, [handleAskRequest]);
+
+  // A PDP pill clicked while the panel was closed fires before this component
+  // mounts, so the layout hands the request over here instead. Held until the
+  // welcome seeding has run, since that replaces the whole message list and
+  // would otherwise wipe the thread we are about to append.
+  const consumedAskTokenRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!pendingAsk || messages.length === 0) return;
+    if (consumedAskTokenRef.current === pendingAsk.token) return;
+    consumedAskTokenRef.current = pendingAsk.token;
+    handleAskRequest(pendingAsk.detail);
+    onPendingAskHandled?.();
+  }, [pendingAsk, messages.length, handleAskRequest, onPendingAskHandled]);
 
   useEffect(() => {
     // The docked layout renders its own FAB, so the sidecar's own nudge
@@ -3113,19 +3141,23 @@ export function SidecarAssistant({
               </div>
             ) : null}
           </div>
-          <button
-            type="button"
-            className="sidecar-assistant__header-btn"
-            aria-label={detached ? "Dock assistant" : "Expand"}
-            aria-pressed={detached}
-            onClick={onToggleDetach}
-          >
-            {detached ? (
-              <ShrinkIcon width={16} height={16} />
-            ) : (
-              <ExpandIcon width={16} height={16} />
-            )}
-          </button>
+          {/* Immersive mode is desktop-only — SidecarDockLayout keeps the panel
+              docked on mobile — so the toggle would be a dead control there. */}
+          {viewportMode !== "mobile" ? (
+            <button
+              type="button"
+              className="sidecar-assistant__header-btn sidecar-assistant__header-btn--detach"
+              aria-label={detached ? "Dock assistant" : "Expand"}
+              aria-pressed={detached}
+              onClick={onToggleDetach}
+            >
+              {detached ? (
+                <ShrinkIcon width={16} height={16} />
+              ) : (
+                <ExpandIcon width={16} height={16} />
+              )}
+            </button>
+          ) : null}
           <button
             type="button"
             className="sidecar-assistant__header-btn"
@@ -3149,10 +3181,6 @@ export function SidecarAssistant({
         {showContextIsland ? (
           <div
             className={`sidecar-assistant__context-island${
-              contextIslandCompact
-                ? " sidecar-assistant__context-island--compact"
-                : ""
-            }${
               contextIslandEmpty
                 ? " sidecar-assistant__context-island--empty"
                 : ""

@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { SparkleIcon } from "../icons/StorefrontIcons";
 import { useAgentMode } from "../AgentModeBar/AgentModeContext";
-import { SidecarAssistant } from "./SidecarAssistant";
+import { SidecarAssistant, type PendingAsk } from "./SidecarAssistant";
+import type { AskAssistantEventDetail } from "../../pages/ProductDetailPage/PdpNbaPanel";
 // Reuse the SideBySide docking shell CSS for desktop grid + mobile overlay.
 import "../SideBySideAssistant/SideBySideLayout.css";
 
@@ -28,6 +29,15 @@ export function SidecarDockLayout({ children }: Props) {
   // slides out via `--closing`).
   const [panelMounted, setPanelMounted] = useState(() => userTestingLock);
   const [fabVisible, setFabVisible] = useState(() => !userTestingLock);
+  // An ask request that landed before the assistant mounted; see the listener.
+  const [pendingAsk, setPendingAsk] = useState<PendingAsk | null>(null);
+  const clearPendingAsk = useCallback(() => setPendingAsk(null), []);
+  const askTokenRef = useRef(0);
+  // Read inside the document listener, which is registered once.
+  const panelMountedRef = useRef(panelMounted);
+  useEffect(() => {
+    panelMountedRef.current = panelMounted;
+  }, [panelMounted]);
 
   const panelRef = useRef<HTMLElement | null>(null);
   const swipeStartXRef = useRef<number | null>(null);
@@ -72,17 +82,30 @@ export function SidecarDockLayout({ children }: Props) {
   }, [isMobileViewport, panelOpen]);
 
   // Open on the same storefront events the sidecar/SxS assistants listen for.
-  // The `agentic:ask-assistant` prompt itself is seeded by SidecarAssistant's
-  // own listener; here we only need to open the panel so the grid reflows.
+  // The `agentic:ask-assistant` prompt is normally seeded by SidecarAssistant's
+  // own listener, so we only open the panel to reflow the grid. The exception is
+  // the very first click from a closed panel: the assistant is not in the tree
+  // yet, so nothing is listening and the prompt would be dropped. Stash it and
+  // let the assistant pick it up once mounted.
   // UserTesting lock opens the panel on load (initial state above) but does
   // not auto-dispatch a prompt — testers click/type the welcome NBA instead.
   useEffect(() => {
     const onOpen = () => openPanel();
+    const onAsk = (event: Event) => {
+      if (!panelMountedRef.current) {
+        const detail = (event as CustomEvent<AskAssistantEventDetail>).detail;
+        if (detail?.prompt?.trim()) {
+          askTokenRef.current += 1;
+          setPendingAsk({ token: askTokenRef.current, detail });
+        }
+      }
+      openPanel();
+    };
     document.addEventListener("agentic:open-assistant", onOpen);
-    document.addEventListener("agentic:ask-assistant", onOpen);
+    document.addEventListener("agentic:ask-assistant", onAsk);
     return () => {
       document.removeEventListener("agentic:open-assistant", onOpen);
-      document.removeEventListener("agentic:ask-assistant", onOpen);
+      document.removeEventListener("agentic:ask-assistant", onAsk);
     };
   }, []);
 
@@ -179,6 +202,8 @@ export function SidecarDockLayout({ children }: Props) {
         onRequestClose={closePanel}
         detached={isDetached}
         onToggleDetach={toggleDetach}
+        pendingAsk={pendingAsk}
+        onPendingAskHandled={clearPendingAsk}
       />
     </aside>
   ) : null;
@@ -193,14 +218,6 @@ export function SidecarDockLayout({ children }: Props) {
 
   return (
     <div className="sxs-shell">
-      {isDetached ? (
-        <button
-          type="button"
-          className="sxs-layout__detach-backdrop"
-          aria-label="Dock assistant panel"
-          onClick={() => setDetached(false)}
-        />
-      ) : null}
       <div
         className={
           (panelOpen ? "sxs-layout" : "sxs-layout sxs-layout--panel-collapsed") +
