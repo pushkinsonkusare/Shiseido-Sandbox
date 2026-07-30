@@ -1689,6 +1689,14 @@
   color: var(--agentic-card-foreground);
 }
 
+/* Holds the stepper and the pending spinner side by side; `__qty` above is a
+   column, so the spinner would otherwise land under the stepper. */
+.agent-summary__stepper-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .agent-summary__stepper {
   display: inline-flex;
   align-items: center;
@@ -1696,6 +1704,32 @@
   border: 1px solid var(--agentic-card-border);
   background: var(--agentic-input-bg);
   overflow: hidden;
+}
+
+/* Tells the shopper the edit is in flight, since the quantity itself does not
+   move until the agent answers. */
+.agent-summary__qty-spinner {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(23, 23, 27, 0.14);
+  border-top-color: rgba(23, 23, 27, 0.55);
+  border-radius: 50%;
+  animation: agent-summary__qty-spin 700ms linear infinite;
+}
+
+@keyframes agent-summary__qty-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Kept spinning, since it is the only signal that the edit is still running,
+   but slowed well below the flicker range. */
+@media (prefers-reduced-motion: reduce) {
+  .agent-summary__qty-spinner {
+    animation-duration: 2000ms;
+  }
 }
 
 .agent-summary__stepper-btn {
@@ -1751,8 +1785,13 @@
   cursor: pointer;
 }
 
-.agent-summary__remove:hover {
+.agent-summary__remove:hover:not(:disabled) {
   color: var(--agentic-muted-foreground);
+}
+
+.agent-summary__remove:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .agent-summary__remove:focus-visible {
@@ -1803,6 +1842,44 @@
 .agent-summary__line--total .agent-summary__line-value {
   font-size: 18px;
   font-weight: 500;
+}
+
+/* Stands in for a figure while the agent recalculates the cart. Sized close to
+   the amounts it replaces so the rows hold their shape when the values land. */
+.agent-summary__line-skeleton {
+  display: inline-block;
+  width: 54px;
+  height: 12px;
+  vertical-align: middle;
+  border-radius: 3px;
+  background: linear-gradient(
+    90deg,
+    rgba(23, 23, 27, 0.07) 25%,
+    rgba(23, 23, 27, 0.03) 37%,
+    rgba(23, 23, 27, 0.07) 63%
+  );
+  background-size: 400% 100%;
+  animation: agent-summary__line-skeleton 1400ms ease infinite;
+}
+
+.agent-summary__line--total .agent-summary__line-skeleton {
+  width: 72px;
+  height: 16px;
+}
+
+@keyframes agent-summary__line-skeleton {
+  from {
+    background-position: 100% 50%;
+  }
+  to {
+    background-position: 0 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-summary__line-skeleton {
+    animation: none;
+  }
 }
 
 .agent-summary__promo {

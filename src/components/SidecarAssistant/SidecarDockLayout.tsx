@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom";
 import { SparkleIcon } from "../icons/StorefrontIcons";
 import { useAgentMode } from "../AgentModeBar/AgentModeContext";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { SidecarAssistant, type PendingAsk } from "./SidecarAssistant";
 import type { AskAssistantEventDetail } from "../../pages/ProductDetailPage/PdpNbaPanel";
 // Reuse the SideBySide docking shell CSS for desktop grid + mobile overlay.
@@ -54,6 +55,11 @@ export function SidecarDockLayout({ children }: Props) {
   }, [panelOpen, isMobileViewport]);
 
   const isDetached = detached && !isMobileViewport;
+
+  // Immersive covers the viewport, so the storefront behind it should hold still
+  // rather than scrolling along. The docked panel deliberately does not lock:
+  // browsing the storefront while chatting is the point of that mode.
+  useBodyScrollLock(isDetached);
 
   useEffect(() => {
     if (panelOpen) {

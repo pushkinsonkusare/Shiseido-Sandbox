@@ -511,6 +511,9 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  /* Reaching either end of the transcript stops there instead of handing the
+     scroll on to the storefront behind it. */
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 16px;

@@ -66,6 +66,10 @@ export type AgentCartProps = {
   onQuantityChange?: (itemId: string, quantity: number) => void;
   /** Called when an item's "Remove" control is clicked. */
   onRemoveItem?: (itemId: string) => void;
+  /** Id of the item whose quantity change is in flight, if any. That row gets a
+   * spinner, the totals become skeletons, and every stepper is held until the
+   * new numbers land. */
+  updatingItemId?: string | null;
   /** Footnote rendered beneath the CTAs. */
   footnote?: string;
   /**
@@ -100,6 +104,7 @@ export function AgentCart({
   onRemoveItemCoupon,
   onQuantityChange,
   onRemoveItem,
+  updatingItemId = null,
   footnote = "Shipping and taxes calculated at checkout.",
   onCheckout,
   checkoutLabel = "Checkout",
@@ -108,6 +113,9 @@ export function AgentCart({
 }: AgentCartProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [promoCode, setPromoCode] = useState("");
+  // Every figure on the card is derived from the cart, so one pending item
+  // holds all of them, not just the row being edited.
+  const updating = updatingItemId !== null;
 
   const rootClass = "agent-summary__card" + (className ? " " + className : "");
 
@@ -231,44 +239,58 @@ export function AgentCart({
                             <span className="agent-summary__qty-label">
                               Quantity
                             </span>
-                            <div
-                              className="agent-summary__stepper"
-                              role="group"
-                              aria-label={`Quantity for ${item.title}`}
-                            >
-                              <button
-                                type="button"
-                                className="agent-summary__stepper-btn"
-                                aria-label="Decrease quantity"
-                                disabled={item.quantity <= 1}
-                                onClick={() =>
-                                  onQuantityChange?.(
-                                    item.id,
-                                    Math.max(1, item.quantity - 1),
-                                  )
-                                }
+                            <div className="agent-summary__stepper-row">
+                              <div
+                                className="agent-summary__stepper"
+                                role="group"
+                                aria-label={`Quantity for ${item.title}`}
                               >
-                                <MinusIcon width={14} height={14} />
-                              </button>
-                              <span className="agent-summary__stepper-value">
-                                {item.quantity}
-                              </span>
-                              <button
-                                type="button"
-                                className="agent-summary__stepper-btn"
-                                aria-label="Increase quantity"
-                                onClick={() =>
-                                  onQuantityChange?.(item.id, item.quantity + 1)
-                                }
-                              >
-                                <PlusIcon width={14} height={14} />
-                              </button>
+                                <button
+                                  type="button"
+                                  className="agent-summary__stepper-btn"
+                                  aria-label="Decrease quantity"
+                                  disabled={updating || item.quantity <= 1}
+                                  onClick={() =>
+                                    onQuantityChange?.(
+                                      item.id,
+                                      Math.max(1, item.quantity - 1),
+                                    )
+                                  }
+                                >
+                                  <MinusIcon width={14} height={14} />
+                                </button>
+                                <span className="agent-summary__stepper-value">
+                                  {item.quantity}
+                                </span>
+                                <button
+                                  type="button"
+                                  className="agent-summary__stepper-btn"
+                                  aria-label="Increase quantity"
+                                  disabled={updating}
+                                  onClick={() =>
+                                    onQuantityChange?.(
+                                      item.id,
+                                      item.quantity + 1,
+                                    )
+                                  }
+                                >
+                                  <PlusIcon width={14} height={14} />
+                                </button>
+                              </div>
+                              {updatingItemId === item.id ? (
+                                <span
+                                  className="agent-summary__qty-spinner"
+                                  role="status"
+                                  aria-label="Updating cart"
+                                />
+                              ) : null}
                             </div>
                           </div>
 
                           <button
                             type="button"
                             className="agent-summary__remove"
+                            disabled={updating}
                             onClick={() => onRemoveItem?.(item.id)}
                           >
                             Remove
@@ -303,7 +325,7 @@ export function AgentCart({
                     </div>
                   ) : null}
 
-                  <div className="agent-summary__lines">
+                  <div className="agent-summary__lines" aria-busy={updating}>
                     {lineItems.map((line, index) => (
                       <div
                         key={`${line.label}-${index}`}
@@ -321,7 +343,14 @@ export function AgentCart({
                           ) : null}
                         </span>
                         <span className="agent-summary__line-value">
-                          {line.value}
+                          {updating ? (
+                            <span
+                              className="agent-summary__line-skeleton"
+                              aria-label="Updating"
+                            />
+                          ) : (
+                            line.value
+                          )}
                         </span>
                       </div>
                     ))}
@@ -357,6 +386,7 @@ export function AgentCart({
                   type="button"
                   className="agent-msg__btn agent-msg__btn--apple"
                   aria-label="Pay with Apple Pay"
+                  disabled={updating}
                   onClick={onApplePay}
                 >
                   <img
@@ -370,6 +400,7 @@ export function AgentCart({
                 <button
                   type="button"
                   className="agent-msg__btn agent-msg__btn--secondary agent-msg__btn--full agent-msg__btn--lg"
+                  disabled={updating}
                   onClick={onCheckout}
                 >
                   <ExternalLinkIcon width={16} height={16} />

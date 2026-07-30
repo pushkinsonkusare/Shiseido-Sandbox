@@ -76,6 +76,9 @@ const NUDGE_INTERVAL_MS = 90_000;
 const NUDGE_DURATION_MS = 2500;
 
 const RESPONSE_LATENCY_MS = 1200;
+/** Cart edits go through the agent rather than straight into local state, so a
+ * quantity change holds the card's totals until the round trip lands. */
+const CART_UPDATE_LATENCY_MS = 3000;
 const PLP_PAGE_SIZE = 5;
 
 /** Maximum number of products a shopper can select at once. */
@@ -706,6 +709,11 @@ export function SidecarAssistant({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [welcomeRefreshCount, setWelcomeRefreshCount] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // The cart card and item whose quantity change is mid-flight, if any.
+  const [updatingCart, setUpdatingCart] = useState<{
+    cartId: string;
+    itemId: string;
+  } | null>(null);
   const [selectedSlugs, setSelectedSlugs] = useState<string[]>([]);
   const selectedSet = useMemo(() => new Set(selectedSlugs), [selectedSlugs]);
 
@@ -1533,25 +1541,36 @@ export function SidecarAssistant({
   const handleCartQuantityChange = useCallback(
     (cartMessageId: string, itemId: string, quantity: number) => {
       const nextQuantity = Math.max(1, quantity);
-      updateMessage(cartMessageId, (message) => {
-        if (message.kind !== "agent_cart") return message;
-        const items = message.items.map((item) =>
-          item.id === itemId ? { ...item, quantity: nextQuantity } : item,
+      // Quantity and totals commit together once the agent answers, so the card
+      // never shows a new quantity against stale money. The steppers are held
+      // meanwhile (see AgentCart's `updating`), so edits cannot pile up.
+      setUpdatingCart({ cartId: cartMessageId, itemId });
+      scheduleResponse(() => {
+        updateMessage(cartMessageId, (message) => {
+          if (message.kind !== "agent_cart") return message;
+          const items = message.items.map((item) =>
+            item.id === itemId ? { ...item, quantity: nextQuantity } : item,
+          );
+          const lineItems = recomputeCartLineItems(items, message.appliedPromo);
+          const subtotal = items.reduce(
+            (sum, item) => sum + cartItemUnitPrice(item) * item.quantity,
+            0,
+          );
+          return {
+            ...message,
+            items,
+            lineItems,
+            summary: cartSummaryText(items, subtotal),
+          };
+        });
+        setUpdatingCart((current) =>
+          current?.cartId === cartMessageId && current.itemId === itemId
+            ? null
+            : current,
         );
-        const lineItems = recomputeCartLineItems(items, message.appliedPromo);
-        const subtotal = items.reduce(
-          (sum, item) => sum + cartItemUnitPrice(item) * item.quantity,
-          0,
-        );
-        return {
-          ...message,
-          items,
-          lineItems,
-          summary: cartSummaryText(items, subtotal),
-        };
-      });
+      }, CART_UPDATE_LATENCY_MS);
     },
-    [updateMessage],
+    [scheduleResponse, updateMessage],
   );
 
   const handleRemoveCartItem = useCallback(
@@ -2950,6 +2969,11 @@ export function SidecarAssistant({
                   handleCartQuantityChange(message.id, itemId, quantity)
                 }
                 onRemoveItem={(itemId) => handleRemoveCartItem(message.id, itemId)}
+                updatingItemId={
+                  updatingCart?.cartId === message.id
+                    ? updatingCart.itemId
+                    : null
+                }
                 onCheckout={() => handleCheckout(message.id)}
                 onApplePay={() => handleCheckout(message.id)}
               />
@@ -3037,6 +3061,7 @@ export function SidecarAssistant({
       selectedSet,
       messages,
       accordionRecommendations,
+      updatingCart,
     ],
   );
 
@@ -3077,6 +3102,7 @@ export function SidecarAssistant({
     answeredFaqsBySlugRef.current.clear();
     setWelcomeRefreshCount(0);
     setSelectedSlugs([]);
+    setUpdatingCart(null);
     // Emptying the list lets the welcome-seed effect re-run and restore the
     // greeting card + NBA row, matching a fresh session.
     setMessages([]);
