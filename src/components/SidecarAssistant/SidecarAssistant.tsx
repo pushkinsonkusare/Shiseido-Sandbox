@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCatalog } from "../../catalog/CatalogContext";
 import { useAgentMode, UT_WELCOME_NBA_LABEL } from "../AgentModeBar/AgentModeContext";
 import {
+  ChevronDownIcon,
   ChevronRightIcon,
   CloseIcon,
   EllipsisVerticalIcon,
@@ -329,6 +330,14 @@ const CONTEXT_SCROLL_BOTTOM_TOLERANCE_PX = 2;
 /** How long a reading of "no divider above the line" has to hold before the
  * island drops its pill, so transient shifts do not flash it off and on. */
 const CONTEXT_SCROLL_BLANK_DELAY_MS = 300;
+/** How far from the end of the transcript counts as having left the latest
+ * message. Generous enough that landing fractionally short of the end does not
+ * leave the jump-to-latest button hanging around. */
+const JUMP_TO_LATEST_SLACK_PX = 40;
+/** How long the transcript has to sit away from the end before the button
+ * appears. Appending a tall card parks it at the top and the auto-scroll to the
+ * end follows a beat later, which would otherwise blink the button on and off. */
+const JUMP_TO_LATEST_SHOW_DELAY_MS = 250;
 
 let messageIdCounter = 0;
 function nextId(prefix: string) {
@@ -744,6 +753,9 @@ export function SidecarAssistant({
   const [scrolledContextSlug, setScrolledContextSlug] = useState<string | null>(
     null,
   );
+  // True while there are messages below the fold, which the jump-to-latest
+  // button both announces and offers to close the distance on.
+  const [awayFromLatest, setAwayFromLatest] = useState(false);
   // The product the transcript implies on its own, ignoring where the shopper
   // has scrolled: walk back through the conversation and let the most recent
   // context-defining message decide. A product-focused message (PDP card,
@@ -882,8 +894,23 @@ export function SidecarAssistant({
 
   /* ---------- mutation helpers ---------- */
 
-  const appendMessage = useCallback((rawMessage: ChatMessage) => {
+  const appendMessage = useCallback(
+    (rawMessage: ChatMessage, options: { keepContext?: boolean } = {}) => {
     const message = sanitizeAgentMessage(rawMessage);
+    // A shopper turn that is not part of the open product thread closes it, so
+    // the sticky chip stops labelling messages that have moved on and a later
+    // return to the product earns a fresh divider. Only shopper turns count:
+    // the agent messages that answer them belong to the turn that opened them.
+    const closesContext =
+      message.kind === "shopper_text" &&
+      !options.keepContext &&
+      lastSeparatorSlugRef.current !== null;
+    if (closesContext) {
+      lastSeparatorSlugRef.current = null;
+    }
+    const boundary: ChatMessage[] = closesContext
+      ? [{ id: nextId("ctx-end"), kind: "context_end" }]
+      : [];
     setMessages((current) => {
       // Only ever show the most recent NBA set: when a new one is appended,
       // drop any prior NBA sets so historical ones don't accumulate in the
@@ -902,6 +929,7 @@ export function SidecarAssistant({
       if (message.kind === "shopper_text") {
         return [
           ...current.filter((m) => m.kind !== "agent_nbas"),
+          ...boundary,
           message,
         ];
       }
@@ -916,7 +944,9 @@ export function SidecarAssistant({
       }
       return [...current, message];
     });
-  }, []);
+    },
+    [],
+  );
 
   const removeMessage = useCallback((id: string) => {
     setMessages((current) => current.filter((message) => message.id !== id));
@@ -1253,11 +1283,16 @@ export function SidecarAssistant({
       const product = getProductBySlug(slug);
       if (!product) return;
 
-      appendMessage({
-        id: nextId("shopper"),
-        kind: "shopper_text",
-        text: `Tell me more about the ${product.title}`,
-      });
+      appendMessage(
+        {
+          id: nextId("shopper"),
+          kind: "shopper_text",
+          text: `Tell me more about the ${product.title}`,
+        },
+        // Reading more about the product the open section is already about — the
+        // chip's own chevron does this — stays inside that section.
+        { keepContext: slug === lastSeparatorSlugRef.current },
+      );
       const loaderId = nextId("loader");
       appendMessage({ id: loaderId, kind: "agent_loader", variant: "answering" });
 
@@ -2099,7 +2134,10 @@ export function SidecarAssistant({
           new Set<string>();
         answered.add(label);
         answeredFaqsBySlugRef.current.set(firstProduct.slug, answered);
-        appendMessage({ id: nextId("shopper"), kind: "shopper_text", text: label });
+        appendMessage(
+          { id: nextId("shopper"), kind: "shopper_text", text: label },
+          { keepContext: true },
+        );
         const loaderId = nextId("loader");
         appendMessage({ id: loaderId, kind: "agent_loader", variant: "answering" });
         scheduleResponse(() => {
@@ -2266,7 +2304,10 @@ export function SidecarAssistant({
         });
         lastSeparatorSlugRef.current = product.slug;
       }
-      appendMessage({ id: nextId("shopper"), kind: "shopper_text", text: prompt });
+      appendMessage(
+        { id: nextId("shopper"), kind: "shopper_text", text: prompt },
+        { keepContext: true },
+      );
       const loaderId = nextId("loader");
       appendMessage({ id: loaderId, kind: "agent_loader", variant: "answering" });
       scheduleResponse(() => {
@@ -2638,12 +2679,29 @@ export function SidecarAssistant({
       const anchorNode =
         appendedNodes.find((child) => child.offsetHeight > viewportHeight * TALL_CARD_ANCHOR_RATIO) ??
         appendedNodes[0];
+      // With sticky context headers on, the section's chip is docked at the top
+      // of the transcript by the time the card is aligned, so the card has to
+      // clear the chip as well as the inset.
+      const dockedHeaderHeight = () => {
+        if (!node.classList.contains("sidecar-assistant__chat--sticky-context")) return 0;
+        const separators = Array.from(
+          node.querySelectorAll<HTMLElement>(".sidecar-assistant__context-separator"),
+        );
+        const preceding = separators.filter(
+          (separator) =>
+            separator.compareDocumentPosition(anchorNode) & Node.DOCUMENT_POSITION_FOLLOWING,
+        );
+        return preceding.length ? preceding[preceding.length - 1].offsetHeight : 0;
+      };
       const alignTallAnchor = () => {
         const chatRect = node.getBoundingClientRect();
         const anchorRect = anchorNode.getBoundingClientRect();
         const topTarget = Math.max(
           0,
-          node.scrollTop + (anchorRect.top - chatRect.top) - TALL_CARD_TOP_INSET_PX,
+          node.scrollTop +
+            (anchorRect.top - chatRect.top) -
+            TALL_CARD_TOP_INSET_PX -
+            dockedHeaderHeight(),
         );
         node.scrollTo({ top: topTarget, behavior: "auto" });
       };
@@ -2744,6 +2802,105 @@ export function SidecarAssistant({
       node.removeEventListener("scroll", onScroll);
     };
   }, [messages]);
+
+  // Sticky pins every separator the shopper has scrolled past to the same line,
+  // where they would pile up — each chip casting its own shadow — and would go
+  // on labelling the transcript after it has left the product. So show only the
+  // chip that actually covers what is on screen: the last section marker above
+  // the dock line, and nothing at all when that marker is a section's end.
+  useEffect(() => {
+    if (contextIsland) return;
+    const node = chatRef.current;
+    if (!node) return;
+    const syncStickyHeaders = () => {
+      const separators = Array.from(
+        node.querySelectorAll<HTMLElement>(".sidecar-assistant__context-separator"),
+      );
+      if (separators.length === 0) return;
+      const markers = Array.from(
+        node.querySelectorAll<HTMLElement>(
+          ".sidecar-assistant__context-separator, .sidecar-assistant__context-end",
+        ),
+      );
+      // Separators clamp here, section ends scroll on past it.
+      const dockLine =
+        node.getBoundingClientRect().top +
+        parseFloat(window.getComputedStyle(node).paddingTop);
+      let current: HTMLElement | null = null;
+      for (const marker of markers) {
+        if (marker.getBoundingClientRect().top > dockLine + 1) break;
+        current = marker.classList.contains("sidecar-assistant__context-separator")
+          ? marker
+          : null;
+      }
+      separators.forEach((separator) => {
+        const docked = separator.getBoundingClientRect().top <= dockLine + 1;
+        // `visibility` rather than `display`, so hiding one cannot shift the
+        // transcript and feed back into the next reading. Separators still in
+        // flow are left alone: they read as ordinary dividers down there.
+        if (docked && separator !== current) {
+          separator.dataset.superseded = "true";
+        } else {
+          delete separator.dataset.superseded;
+        }
+      });
+    };
+    const onScroll = () => syncStickyHeaders();
+    syncStickyHeaders();
+    // A reply lands before the auto-scroll has moved, so take a second reading
+    // once the transcript has settled into its new position.
+    const settleFrame = window.requestAnimationFrame(syncStickyHeaders);
+    node.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.cancelAnimationFrame(settleFrame);
+      node.removeEventListener("scroll", onScroll);
+      node
+        .querySelectorAll<HTMLElement>(".sidecar-assistant__context-separator")
+        .forEach((separator) => delete separator.dataset.superseded);
+    };
+  }, [contextIsland, messages]);
+
+  // Tall cards are anchored by their top rather than scrolled to the end, so the
+  // transcript is often left with messages below the fold. Track that so the
+  // jump-to-latest button can say so and offer the way down.
+  useEffect(() => {
+    const node = chatRef.current;
+    if (!node) return;
+    let showTimeout = 0;
+    const syncDistanceFromEnd = () => {
+      const distanceFromEnd = node.scrollHeight - node.clientHeight - node.scrollTop;
+      if (distanceFromEnd <= JUMP_TO_LATEST_SLACK_PX) {
+        window.clearTimeout(showTimeout);
+        showTimeout = 0;
+        setAwayFromLatest(false);
+        return;
+      }
+      // Arriving at the end hides the button at once, but leaving it has to hold
+      // for a moment, so a passing auto-scroll cannot blink the button.
+      if (showTimeout) return;
+      showTimeout = window.setTimeout(() => {
+        showTimeout = 0;
+        setAwayFromLatest(true);
+      }, JUMP_TO_LATEST_SHOW_DELAY_MS);
+    };
+    const onScroll = () => syncDistanceFromEnd();
+    syncDistanceFromEnd();
+    // A reply lands before the auto-scroll has moved, so take a second reading
+    // once the transcript has settled into its new position.
+    const settleFrame = window.requestAnimationFrame(syncDistanceFromEnd);
+    node.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.cancelAnimationFrame(settleFrame);
+      window.clearTimeout(showTimeout);
+      node.removeEventListener("scroll", onScroll);
+    };
+  }, [messages]);
+
+  const jumpToLatest = () => {
+    const node = chatRef.current;
+    if (!node) return;
+    node.scrollTo({ top: node.scrollHeight, behavior: "smooth" });
+  };
 
   // Clear pending response timers on unmount / close.
   useEffect(() => {
@@ -3016,7 +3173,6 @@ export function SidecarAssistant({
                 className="sidecar-assistant__context-separator"
                 data-context-slug={message.productSlug}
               >
-                <span className="sidecar-assistant__context-separator-line" />
                 <div className="sidecar-assistant__context-separator-chip">
                   <img
                     className="sidecar-assistant__context-separator-thumb"
@@ -3035,10 +3191,17 @@ export function SidecarAssistant({
                     <ChevronRightIcon width={16} height={16} />
                   </button>
                 </div>
-                <span className="sidecar-assistant__context-separator-line" />
               </div>
             );
           }
+          case "context_end":
+            return (
+              <div
+                key={message.id}
+                className="sidecar-assistant__context-end"
+                aria-hidden="true"
+              />
+            );
           default:
             return null;
         }
@@ -3130,7 +3293,7 @@ export function SidecarAssistant({
           <span className="sidecar-assistant__header-icon" aria-hidden="true">
             <SparkleIcon width={18} height={18} strokeWidth={1.5} />
           </span>
-          <span className="sidecar-assistant__header-label">Personal Assistant</span>
+          <span className="sidecar-assistant__header-label">Beauty Advisor</span>
         </div>
         <div className="sidecar-assistant__header-actions">
           <div className="sidecar-assistant__menu" ref={menuRef}>
@@ -3199,7 +3362,7 @@ export function SidecarAssistant({
         <div
           className={`sidecar-assistant__chat${
             showContextIsland ? " sidecar-assistant__chat--with-island" : ""
-          }`}
+          }${contextIsland ? "" : " sidecar-assistant__chat--sticky-context"}`}
           ref={chatRef}
         >
           {renderedMessages}
@@ -3266,10 +3429,20 @@ export function SidecarAssistant({
             aria-label={`Cart: ${cartItemCount} item${cartItemCount === 1 ? "" : "s"}`}
             onClick={showCartCard}
           >
-            <ShoppingCartIcon width={20} height={20} />
+            <ShoppingCartIcon width={18} height={18} />
             <span className="sidecar-assistant__context-island-badge">
               {cartItemCount}
             </span>
+          </button>
+        ) : null}
+        {awayFromLatest ? (
+          <button
+            type="button"
+            className="sidecar-assistant__jump-to-latest"
+            aria-label="Jump to the latest message"
+            onClick={jumpToLatest}
+          >
+            <ChevronDownIcon width={18} height={18} />
           </button>
         ) : null}
       </div>
@@ -3416,7 +3589,7 @@ export function SidecarAssistant({
           (simKeyboardOpen ? " sidecar-assistant--keyboard-open" : "")
         }
         role="complementary"
-        aria-label="Personal Assistant"
+        aria-label="Beauty Advisor"
         onMouseDownCapture={handleSimKeyboardMouseDownCapture}
         onClick={handleSimKeyboardClick}
       >
@@ -3433,7 +3606,7 @@ export function SidecarAssistant({
           "sidecar-assistant__fab" +
           (isNudging ? " sidecar-assistant__fab--nudging" : "")
         }
-        aria-label="Open Personal Assistant"
+        aria-label="Open Beauty Advisor"
         onClick={handleFabClick}
         onMouseEnter={() => setIsNudging(false)}
       >
@@ -3461,7 +3634,7 @@ export function SidecarAssistant({
         ref={panelRef}
         className="sidecar-assistant"
         role="complementary"
-        aria-label="Personal Assistant"
+        aria-label="Beauty Advisor"
       >
         {panelBody}
       </aside>

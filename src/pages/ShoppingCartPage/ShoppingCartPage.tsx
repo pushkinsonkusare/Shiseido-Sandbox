@@ -155,98 +155,102 @@ export default function ShoppingCartPage() {
     <div className="figma-cart">
       <UnifiedTopHeader navigate={navigate} openSearchOverlay={openSearchOverlay} />
 
-      <div className="figma-cart__title-strip">
-        <h1>Cart ({cartItems.length} items)</h1>
-      </div>
-
-      <div className="figma-cart__main-wrap">
-        <div className="figma-cart__left">
-          <section className="figma-cart__shipping-progress">
-            <p>
-              You are <strong>{formatPrice(Math.max(0, 150 - subtotalValue))}</strong> away from{" "}
-              <strong className="figma-cart__shipping-strong">Priority Shipping</strong>
-            </p>
-            <div className="figma-cart__range">
-              <span>{formatPrice(Math.max(0, subtotalValue / 2))}</span>
-              <span>{formatPrice(150)}</span>
-            </div>
-            <div className="figma-cart__bar">
-              <div className="figma-cart__bar-fill" />
-            </div>
-          </section>
-
-          <CartSection
-            icon={<StoreIcon width={20} height={20} />}
-            title={(
-              <>
-                <span>Pickup at </span>
-                <strong>Shiseido Boutique</strong>
-                <span> - {pickupItems.length} items</span>
-              </>
-            )}
-            subtitle={SITE_ADDRESS}
-            items={pickupItems}
-            showChangeStore
-          />
-          <CartSection
-            icon={<TruckIcon width={20} height={20} />}
-            title={`Delivery - ${deliveryItems.length} items`}
-            subtitle={SITE_ADDRESS}
-            items={deliveryItems}
-          />
+      {/* Title and body share one wrapper so the side-by-side layout can place
+          them as a single column-1 item beside the assistant panel. */}
+      <div className="figma-cart__page-inner">
+        <div className="figma-cart__title-strip">
+          <h1>Cart ({cartItems.length} items)</h1>
         </div>
 
-        <aside className="figma-cart__summary">
-          <div className="figma-cart__summary-header">
-            <h2>Order Summary</h2>
+        <div className="figma-cart__main-wrap">
+          <div className="figma-cart__left">
+            <section className="figma-cart__shipping-progress">
+              <p>
+                You are <strong>{formatPrice(Math.max(0, 150 - subtotalValue))}</strong> away from{" "}
+                <strong className="figma-cart__shipping-strong">Priority Shipping</strong>
+              </p>
+              <div className="figma-cart__range">
+                <span>{formatPrice(Math.max(0, subtotalValue / 2))}</span>
+                <span>{formatPrice(150)}</span>
+              </div>
+              <div className="figma-cart__bar">
+                <div className="figma-cart__bar-fill" />
+              </div>
+            </section>
+
+            <CartSection
+              icon={<StoreIcon width={20} height={20} />}
+              title={(
+                <>
+                  <span>Pickup at </span>
+                  <strong>Shiseido Boutique</strong>
+                  <span> - {pickupItems.length} items</span>
+                </>
+              )}
+              subtitle={SITE_ADDRESS}
+              items={pickupItems}
+              showChangeStore
+            />
+            <CartSection
+              icon={<TruckIcon width={20} height={20} />}
+              title={`Delivery - ${deliveryItems.length} items`}
+              subtitle={SITE_ADDRESS}
+              items={deliveryItems}
+            />
           </div>
-          <div className="figma-cart__summary-lines">
-            <div className="figma-cart__line"><span>Subtotal</span><span>{formatPrice(subtotalValue)}</span></div>
-            <div className="figma-cart__line"><span>Promotions</span><span>-{formatPrice(promotionValue)}</span></div>
-            <div className="figma-cart__line"><span>Shipping</span><span>{subtotalValue >= 150 ? "$0.00" : "Calculated at checkout"}</span></div>
-            <div className="figma-cart__line"><span>Tax</span><span>Calculated at checkout</span></div>
-            <div className="figma-cart__line figma-cart__line--total"><span>Total</span><span>{formatPrice(totalValue)}</span></div>
-          </div>
-          <div className="figma-cart__promo-block">
-            <button type="button" className="figma-cart__promo">
-              <span>Do you have a promo code?</span>
-              <ChevronDownIcon width={24} height={24} className="figma-cart__promo-chevron" />
-            </button>
-            <div className="figma-cart__applied">
-              <span className="figma-cart__promo-badge">Set & Bundle Savings</span>
-              <span className="figma-cart__applied-amt">-{formatPrice(promotionValue)}</span>
+
+          <aside className="figma-cart__summary">
+            <div className="figma-cart__summary-header">
+              <h2>Order Summary</h2>
             </div>
-          </div>
-          <div className="figma-cart__summary-footer">
-            <button type="button" className="figma-cart__btn-checkout" onClick={() => navigate(ROUTES.checkout)}>Continue to Checkout</button>
-            <div className="figma-cart__express">
-              <button type="button" className="figma-cart__btn-gpay">
-                <span className="figma-cart__brand-gpay">
-                  <span className="figma-cart__brand-g">G</span>
-                  <span>Pay</span>
-                </span>
-              </button>
-              <button type="button" className="figma-cart__btn-apple">
-                <span className="figma-cart__apple-pay">Apple Pay</span>
-              </button>
-              <button type="button" className="figma-cart__btn-paypal">
-                <span className="figma-cart__brand-paypal">
-                  <span className="figma-cart__brand-paypal-dark">Pay</span>
-                  <span className="figma-cart__brand-paypal-light">Pal</span>
-                </span>
-              </button>
-              <button type="button" className="figma-cart__btn-venmo">
-                <span className="figma-cart__brand-venmo">venmo</span>
-              </button>
-              <button type="button" className="figma-cart__btn-amazon">
-                <span className="figma-cart__brand-amazon">
-                  <span>amazon</span>
-                  <span className="figma-cart__brand-amazon-pay">pay</span>
-                </span>
-              </button>
+            <div className="figma-cart__summary-lines">
+              <div className="figma-cart__line"><span>Subtotal</span><span>{formatPrice(subtotalValue)}</span></div>
+              <div className="figma-cart__line"><span>Promotions</span><span>-{formatPrice(promotionValue)}</span></div>
+              <div className="figma-cart__line"><span>Shipping</span><span>{subtotalValue >= 150 ? "$0.00" : "Calculated at checkout"}</span></div>
+              <div className="figma-cart__line"><span>Tax</span><span>Calculated at checkout</span></div>
+              <div className="figma-cart__line figma-cart__line--total"><span>Total</span><span>{formatPrice(totalValue)}</span></div>
             </div>
-          </div>
-        </aside>
+            <div className="figma-cart__promo-block">
+              <button type="button" className="figma-cart__promo">
+                <span>Do you have a promo code?</span>
+                <ChevronDownIcon width={24} height={24} className="figma-cart__promo-chevron" />
+              </button>
+              <div className="figma-cart__applied">
+                <span className="figma-cart__promo-badge">Set & Bundle Savings</span>
+                <span className="figma-cart__applied-amt">-{formatPrice(promotionValue)}</span>
+              </div>
+            </div>
+            <div className="figma-cart__summary-footer">
+              <button type="button" className="figma-cart__btn-checkout" onClick={() => navigate(ROUTES.checkout)}>Continue to Checkout</button>
+              <div className="figma-cart__express">
+                <button type="button" className="figma-cart__btn-gpay">
+                  <span className="figma-cart__brand-gpay">
+                    <span className="figma-cart__brand-g">G</span>
+                    <span>Pay</span>
+                  </span>
+                </button>
+                <button type="button" className="figma-cart__btn-apple">
+                  <span className="figma-cart__apple-pay">Apple Pay</span>
+                </button>
+                <button type="button" className="figma-cart__btn-paypal">
+                  <span className="figma-cart__brand-paypal">
+                    <span className="figma-cart__brand-paypal-dark">Pay</span>
+                    <span className="figma-cart__brand-paypal-light">Pal</span>
+                  </span>
+                </button>
+                <button type="button" className="figma-cart__btn-venmo">
+                  <span className="figma-cart__brand-venmo">venmo</span>
+                </button>
+                <button type="button" className="figma-cart__btn-amazon">
+                  <span className="figma-cart__brand-amazon">
+                    <span>amazon</span>
+                    <span className="figma-cart__brand-amazon-pay">pay</span>
+                  </span>
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
       </div>
 
       <footer className="figma-cart__footer-shell">

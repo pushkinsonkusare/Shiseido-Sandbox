@@ -11,7 +11,7 @@ export function OpenPersonalAssistantNavButton() {
     <button
       type="button"
       className="personal-assistant-nav-trigger"
-      aria-label="Open Personal Assistant"
+      aria-label="Open Beauty Advisor"
       onClick={() =>
         document.dispatchEvent(new CustomEvent("agentic:open-assistant"))
       }

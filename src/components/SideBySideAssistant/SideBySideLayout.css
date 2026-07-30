@@ -135,7 +135,7 @@
 .sxs-layout__main .figma-storefront__newsletter,
 .sxs-layout__main .figma-storefront__footer,
 .sxs-layout__main .figma-pdp__page-inner,
-.sxs-layout__main .figma-cart__main-wrap,
+.sxs-layout__main .figma-cart__page-inner,
 .sxs-layout__main .figma-checkout__main,
 .sxs-layout__main .figma-order-confirmation__main,
 .sxs-layout__main .figma-about__page,
@@ -151,7 +151,7 @@
  * grid-auto-flow:dense will place it into the assistant panel column. */
 .sxs-layout__main .figma-plp__footer,
 .sxs-layout__main .figma-pdp__footer,
-.sxs-layout__main .figma-cart__footer,
+.sxs-layout__main .figma-cart__footer-shell,
 .sxs-layout__main .figma-order-confirmation__footer,
 .sxs-layout__main .figma-about__footer,
 .sxs-layout__main .figma-overview__footer,

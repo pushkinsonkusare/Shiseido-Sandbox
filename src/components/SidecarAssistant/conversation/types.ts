@@ -28,7 +28,8 @@ export type ChatMessage =
   | AgentCartMessage
   | AgentOrderMessage
   | AgentNbasMessage
-  | ContextSeparatorMessage;
+  | ContextSeparatorMessage
+  | ContextEndMessage;
 
 /** In-chat divider that announces the product a contextual FAQ thread is
  * about. Rendered as a replacement for the context island when that feature
@@ -37,6 +38,14 @@ export type ContextSeparatorMessage = {
   id: string;
   kind: "context_separator";
   productSlug: string;
+};
+
+/** Closes the product section a separator opened, dropped in when the thread
+ * moves on to something that is not about that product. Renders as an invisible
+ * marker whose only job is to let the sticky chip release at the right point. */
+export type ContextEndMessage = {
+  id: string;
+  kind: "context_end";
 };
 
 export type AgentSimpleMessage = {

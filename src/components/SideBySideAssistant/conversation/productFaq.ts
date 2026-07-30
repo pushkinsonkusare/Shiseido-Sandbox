@@ -797,6 +797,82 @@ function ingredientsAnswer(product: CatalogProduct): string {
   return `I don't have a detailed ingredient list for the ${product.title}.`;
 }
 
+/** Every place the catalog states a hard product claim, most authoritative
+ *  first: sun care prints the SPF factor in the name, and the benefit bullets
+ *  carry the broad-spectrum and water-resistance wording. */
+function claimSources(product: CatalogProduct): string[] {
+  return [
+    product.title,
+    ...product.specs.map((spec) => `${spec.label}: ${spec.value}`),
+    ...product.featureBlocks,
+    product.overview,
+    product.ingredients,
+  ].filter(Boolean);
+}
+
+/** Minutes of water resistance the product itself claims, when it claims any.
+ *  The copy varies ("Water resistant for 40 minutes", "Water-resistant for up
+ *  to 80 minutes", "Water and sweat-resistant for 80 minutes"), so the gap
+ *  between "water" and "resistant" is left loose. */
+function waterResistanceMinutes(product: CatalogProduct): string | null {
+  const match =
+    /water\b[^.]{0,24}?resistan\w*\s*(?:for\s*)?(?:up\s*to\s*)?(\d{2,3})\s*minutes?/i.exec(
+      claimSources(product).join(" "),
+    );
+  return match ? match[1] : null;
+}
+
+/** The SPF factor as printed on the product, e.g. "50" or "60+". */
+function spfFactor(product: CatalogProduct): string | null {
+  for (const source of claimSources(product)) {
+    const match = /\bspf\s*(\d{1,3}\+?)/i.exec(source);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+function spfAnswer(product: CatalogProduct): string {
+  const factor = spfFactor(product);
+  const copy = claimSources(product).join(" ");
+  const tags = product.useCaseTags.map((tag) => tag.toLowerCase());
+  const isSunCare =
+    /sunscreen|sun\s*care/i.test(product.category) ||
+    tags.some((tag) => tag === "spf" || tag.includes("sun"));
+
+  if (!factor) {
+    if (isSunCare) {
+      return `The ${product.title} is sun care, but I don't have its SPF number here. It's printed on the pack and on the full product page.`;
+    }
+    return `The ${product.title} isn't a sunscreen, so it carries no SPF rating. Pair it with a broad-spectrum sunscreen as the last step of your morning routine.`;
+  }
+
+  const broadSpectrum = /broad[-\s]?spectrum/i.test(copy);
+  const protection = broadSpectrum
+    ? `broad-spectrum SPF ${factor}, so it covers UVA as well as UVB`
+    : `SPF ${factor}`;
+  const sentences = [
+    product.isBundle
+      ? `The ${product.title} includes ${protection}.`
+      : `The ${product.title} is ${protection}.`,
+  ];
+
+  const minutes = waterResistanceMinutes(product);
+  if (minutes) {
+    sentences.push(
+      `It's water resistant for up to ${minutes} minutes, so reapply after that, or after swimming or towelling off.`,
+    );
+  } else if (/water[-\s]?resistan\w*/i.test(copy)) {
+    sentences.push(`It's water resistant, so reapply after swimming or heavy sweating.`);
+  } else if (isSunCare || product.isBundle) {
+    sentences.push(`Reapply every couple of hours in the sun.`);
+  } else {
+    sentences.push(
+      `That protection is built into the cream, so for a long stretch outdoors a dedicated sunscreen is the stronger call.`,
+    );
+  }
+  return joinSentences(sentences);
+}
+
 function waterResistanceAnswer(product: CatalogProduct): string {
   // Grounded in category + capability tags + feature copy. Skincare
   // isn't sold on a "waterproof" spec, so the only genuine water-
@@ -806,17 +882,35 @@ function waterResistanceAnswer(product: CatalogProduct): string {
   const isSunCare =
     /sunscreen|sun\s*care/i.test(product.category) ||
     tags.some((t) => t === "spf" || t.includes("sun"));
+  // A stated duration is the real answer, phrased as a sentence: the benefit
+  // bullet it comes from is a fragment ("Water resistant for 40 minutes").
+  const minutes = waterResistanceMinutes(product);
+  if (minutes) {
+    return `The ${product.title} is water resistant for up to ${minutes} minutes. Reapply after that, or after swimming or towelling off.`;
+  }
   const waterBlock = findFeatureBlockMatching(product, [
     /\bwater[-\s]?resist\w*/i,
     /\bwaterproof\b/i,
     /\bsweat[-\s]?resist\w*/i,
     /\bhumidity\b/i,
   ]);
-  if (waterBlock) {
+  // A cleanser's "removes waterproof makeup" claim is about what it takes off,
+  // not how it holds up in water, so it must not answer this question.
+  const isRemovalClaim = waterBlock
+    ? /\b(remov\w*|lift\w*|melt\w*|dissolv\w*|break\w*\s+down|takes?\s+off|cleans\w*)\b/i.test(
+        waterBlock,
+      )
+    : false;
+  if (waterBlock && !isRemovalClaim) {
     return waterBlock;
   }
   if (isSunCare) {
     return `The ${product.title} is sun care, so it's designed to hold up better against water and sweat than most skincare. For swimming or heavy perspiration, reapply regularly.`;
+  }
+  if (/cleans\w*|foam|wash|micellar|remover|makeup\s+remov\w*/i.test(
+    `${product.category} ${product.title}`,
+  )) {
+    return `The ${product.title} isn't a waterproof product — it's a rinse-off step, so water is part of how you use it. If you need water or sweat resistance, a water-resistant sunscreen is the piece built for that.`;
   }
   return `The ${product.title} isn't a waterproof product. It's a leave-on skincare step meant to absorb into the skin rather than sit on top like a barrier. If you need water or sweat resistance, a water-resistant sunscreen is the piece built for that.`;
 }
@@ -1005,14 +1099,15 @@ export function resolveProductFaq(
     return scentAnswer(product);
   }
 
-  // --- SPF / sun ---
-  if (/\b(spf|sunscreen|sun\s+protect\w*|uv\b|sunblock|sun\s+care)\b/.test(q)) {
-    return resolutionAnswer(product);
-  }
-
-  // --- Water / sweat resistance ---
+  // --- Water / sweat resistance. Ahead of SPF, so "does this sunscreen hold up
+  // when I swim?" answers about water rather than the factor. ---
   if (/\bwaterproof\b|water[-\s]?resist\w*|\bsweat\b|\bswim\w*|\bperspir\w*/.test(q)) {
     return waterResistanceAnswer(product);
+  }
+
+  // --- SPF / sun ---
+  if (/\b(spf|sunscreen|sun\s+protect\w*|uv\b|sunblock|sun\s+care)\b/.test(q)) {
+    return spfAnswer(product);
   }
 
   // --- Results / efficacy ---

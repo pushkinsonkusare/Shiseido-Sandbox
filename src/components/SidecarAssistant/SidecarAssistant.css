@@ -112,7 +112,27 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   /* Left inset matches the input bar's 16px padding so the header icon lines up
      with the composer shell; the action buttons stay tighter to the right edge. */
   padding: 12px 12px 12px 16px;
-  background: #f8f8f8;
+  /* A whisper of the brand red washing out through warm ivory: enough hue
+     travel to mark this as the AI surface, far too little to compete with the
+     transcript. Sized in percentages so it holds its shape from the 419px dock
+     to full-bleed immersive. */
+  background-color: #f8f8f8;
+  background-image:
+    radial-gradient(
+      100% 190% at -4% 118%,
+      rgba(138, 20, 36, 0.09) 0%,
+      rgba(138, 20, 36, 0) 56%
+    ),
+    radial-gradient(
+      72% 170% at 33% -30%,
+      rgba(206, 124, 110, 0.06) 0%,
+      rgba(206, 124, 110, 0) 62%
+    ),
+    radial-gradient(
+      70% 150% at 82% 115%,
+      rgba(198, 158, 116, 0.075) 0%,
+      rgba(198, 158, 116, 0) 66%
+    );
   border-bottom: 1px solid rgba(23, 23, 27, 0.07);
   flex: 0 0 auto;
   /* Lifted above the chat area so the shadow falls on the transcript instead of
@@ -377,13 +397,40 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
 .sidecar-assistant__context-separator {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0px;
 }
 
-.sidecar-assistant__context-separator-line {
-  flex: 1 1 auto;
-  height: 1px;
-  background: rgba(224, 226, 229, 1);
+/* Sticky product headers, used whenever the Context island is off: the section
+   being read keeps its chip docked at the top of the transcript, and the next
+   section's chip lands over it on the way past. Later separators come later in
+   the DOM at the same z-index, so the hand-off needs no script. */
+.sidecar-assistant__chat--sticky-context .sidecar-assistant__context-separator {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+/* Invisible end-of-section marker. Zero height, with the flex gap either side
+   of it pulled back so closing a section does not open a hole in the
+   transcript. */
+.sidecar-assistant__context-end {
+  height: 0;
+  margin-block: -8px;
+}
+
+/* Handed over to a newer section's chip, or released at the end of its own. */
+.sidecar-assistant__chat--sticky-context
+  .sidecar-assistant__context-separator[data-superseded] {
+  visibility: hidden;
+}
+
+/* The docked row stays transparent so it never lies as a band across the
+   transcript; the chip alone lifts off the messages passing underneath. */
+.sidecar-assistant__chat--sticky-context .sidecar-assistant__context-separator-chip {
+  box-shadow:
+    0 1px 2px rgba(23, 23, 27, 0.06),
+    0 6px 16px rgba(23, 23, 27, 0.1);
 }
 
 .sidecar-assistant__context-separator-chip {
@@ -391,7 +438,10 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  max-width: 70%;
+  /* One size for every product, so the chip reads as a fixed marker instead of
+     breathing in and out with the length of the title. */
+  width: var(--sidecar-context-chip-width);
+  max-width: 100%;
   padding: 4px 6px 4px 4px;
   background: #ffffff;
   border: 1px solid #e5e7eb;
@@ -409,6 +459,8 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
 }
 
 .sidecar-assistant__context-separator-title {
+  /* Takes the slack in the fixed-width chip so the chevron stays on the edge. */
+  flex: 1 1 auto;
   min-width: 0;
   font-size: 13px;
   font-weight: 600;
@@ -500,6 +552,15 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
 /* Positioned wrapper so the cart FAB can float over the scrolling chat
    without moving as messages scroll. */
 .sidecar-assistant__chat-area {
+  /* Declared here because both the transcript and the floating cart button read
+     them: the button lines up with the docked context chip, which sits on the
+     transcript's own padding and centre line. */
+  --sidecar-chat-pad: 20px;
+  --sidecar-context-chip-width: 265px;
+  --sidecar-context-chip-height: 42px;
+  /* Tracks the inline padding of `.sidecar-assistant__input-bar`, so the
+     jump-to-latest button lines up with the composer's right edge. */
+  --sidecar-composer-inset: 16px;
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
@@ -517,7 +578,7 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 20px;
+  padding: var(--sidecar-chat-pad);
   background: rgba(250, 250, 250, 1);
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
@@ -544,10 +605,6 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   right: max(12px, calc((100% - var(--sxs-immersive-column)) / 2));
 }
 
-.sxs-layout__panel--detached .sidecar-assistant__cart-fab {
-  right: max(16px, calc((100% - var(--sxs-immersive-column)) / 2));
-}
-
 /* Composer, disclaimer and selection tray line up with the cards above them.
    Padding on the bar rather than a width on its children, so the background,
    border and upward shadow still run the full width of the screen. */
@@ -555,20 +612,77 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   padding-inline: max(20px, calc((100% - var(--sxs-immersive-column)) / 2));
 }
 
-/* Floating cart button pinned to the corner of the chat area. Reuses the
-   context-island cart button + badge internals; this layer adds the floating
-   surface and positioning. */
+/* Follows the composer out to the column edge rather than sitting against the
+   screen edge, far from the transcript it belongs to. */
+.sxs-layout__panel--detached .sidecar-assistant__chat-area {
+  --sidecar-composer-inset: max(
+    20px,
+    calc((100% - var(--sxs-immersive-column)) / 2)
+  );
+}
+
+/* Floating cart button, parked just off the docked context chip so the two read
+   as one row. Reuses the context-island cart button + badge internals; this
+   layer adds the floating surface and positioning. */
 .sidecar-assistant__cart-fab {
   position: absolute;
-  right: 16px;
-  top: 16px;
+  /* 8px past the chip, which is centred on the transcript. */
+  left: calc(50% + var(--sidecar-context-chip-width) / 2 + 8px);
+  right: auto;
+  top: calc(
+    var(--sidecar-chat-pad) + (var(--sidecar-context-chip-height) - 36px) / 2
+  );
   z-index: 5;
   width: 36px;
   height: 36px;
   padding: 0;
   background: #ffffff;
-  border-radius: 4px;
+  /* Same hairline as the context chip it sits beside. */
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* Brand red, matching the header's assistant tile. */
+.sidecar-assistant__cart-fab .sidecar-assistant__context-island-badge {
+  background: #8a1424;
+}
+
+/* Says there are messages past the fold, and takes the shopper to them. Same
+   floating surface as the cart button, parked on the composer's right edge. */
+.sidecar-assistant__jump-to-latest {
+  position: absolute;
+  right: var(--sidecar-composer-inset);
+  bottom: 16px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: #17171b;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  animation: sidecar-jump-to-latest-in 160ms ease;
+}
+
+.sidecar-assistant__jump-to-latest:hover {
+  background: #f5f5f5;
+}
+
+@keyframes sidecar-jump-to-latest-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Prevent any direct chat message/card from being squashed by the flex
@@ -576,6 +690,15 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
    height and let `.sidecar-assistant__chat` scroll instead. */
 .sidecar-assistant__chat > * {
   flex-shrink: 0;
+}
+
+/* Land the thread on the composer edge and let it grow upward. The auto margin
+   only exists while the transcript is shorter than the viewport; once it
+   overflows there is no free space left and the margin collapses to zero.
+   `justify-content: flex-end` would do the same thing but pushes overflow past
+   the start edge, where it can no longer be scrolled back into view. */
+.sidecar-assistant__chat > *:first-child {
+  margin-top: auto;
 }
 
 .sidecar-assistant__chat::-webkit-scrollbar {
@@ -1295,9 +1418,13 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__fab {
     display: none;
   }
 
+  .sidecar-assistant__chat-area,
+  html[data-demo-viewport="mobile"] .sidecar-assistant__chat-area {
+    --sidecar-chat-pad: 12px;
+  }
+
   .sidecar-assistant__chat,
   html[data-demo-viewport="mobile"] .sidecar-assistant__chat {
-    padding: 12px;
     overflow-x: hidden;
   }
 

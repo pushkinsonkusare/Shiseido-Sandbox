@@ -154,7 +154,7 @@ export function SidecarDockLayout({ children }: Props) {
         (isMobileViewport ? " sxs-layout__panel--mobile" : "") +
         (isDetached ? " sxs-layout__panel--detached" : "")
       }
-      aria-label="Personal Assistant"
+      aria-label="Beauty Advisor"
       aria-hidden={!panelOpen}
       onTouchStart={(event) => {
         if (!isMobileViewport || !panelOpen) return;
@@ -239,7 +239,7 @@ export function SidecarDockLayout({ children }: Props) {
         <button
           type="button"
           className="sxs-layout__fab"
-          aria-label="Open Personal Assistant"
+          aria-label="Open Beauty Advisor"
           onClick={openPanel}
         >
           <SparkleIcon width={22} height={22} className="sxs-layout__fab-icon" />
