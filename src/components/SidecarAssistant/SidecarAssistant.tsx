@@ -3,10 +3,10 @@ import { useCatalog } from "../../catalog/CatalogContext";
 import { useAgentMode, UT_WELCOME_NBA_LABEL } from "../AgentModeBar/AgentModeContext";
 import {
   ChevronDownIcon,
-  ChevronRightIcon,
   CloseIcon,
   EllipsisVerticalIcon,
   ExpandIcon,
+  PlusIcon,
   SaveIcon,
   SendHorizontalIcon,
   ShoppingCartIcon,
@@ -29,6 +29,7 @@ import {
   type AgentCartLineItem,
   type AgentCompareColumn,
   type AgentCompareRow,
+  type AgentPDPSizeOption,
   type AgentPLPProduct,
 } from "./components";
 import { SimulatedIOSKeyboard } from "./components/SimulatedIOSKeyboard";
@@ -111,6 +112,9 @@ const CART_UPDATE_LATENCY_MS = 3000;
 const ROUTINE_THINKING_MS = 2000;
 const ROUTINE_STREAM_STEP_MS = 700;
 const ROUTINE_LOADER_STEP_MS = 750;
+/** How long a product list card holds its intro before the row lands. Same beat
+ * as a routine section, so the two cards read as the same agent writing. */
+const PLP_REVEAL_MS = 700;
 const PLP_PAGE_SIZE = 5;
 
 /** Maximum number of products a shopper can select at once. */
@@ -553,6 +557,24 @@ function toPlpProduct(
     badgeLabel: product.badgeLabel,
     onSelect: () => onSelect(product.slug),
   };
+}
+
+/** The sizes a product is sold in, read off the catalog's `Sizes` spec. A
+ * product with a single size offers nothing to choose between, so it comes back
+ * empty and reads as having no variants at all. */
+function productSizeOptions(product: CatalogProduct): AgentPDPSizeOption[] {
+  const spec = product.specs.find((entry) => entry.label === "Sizes");
+  if (!spec || !spec.value) return [];
+  const labels = [
+    ...new Set(
+      spec.value
+        .split(",")
+        .map((token) => token.trim())
+        .filter(Boolean),
+    ),
+  ];
+  if (labels.length < 2) return [];
+  return labels.map((label, index) => ({ id: `size-${index}`, label }));
 }
 
 function toCompareColumn(product: CatalogProduct): AgentCompareColumn {
@@ -1175,14 +1197,15 @@ export function SidecarAssistant({
    * whole parks, and the rest of the routine flows on below.
    */
   const followStreamingCard = useCallback(() => {
+    const node = chatRef.current;
+    if (!node) return;
+    // Resolved now rather than inside the frame: the reveal that calls this has
+    // already queued the state update that drops `data-streaming`, so by the
+    // time the DOM has grown there is nothing left to match.
+    const cards = node.querySelectorAll<HTMLElement>('[data-streaming="true"]');
+    const card = cards[cards.length - 1];
+    if (!card) return;
     requestAnimationFrame(() => {
-      const node = chatRef.current;
-      if (!node) return;
-      const cards = node.querySelectorAll<HTMLElement>(
-        '[data-component="agent-routine-card"]',
-      );
-      const card = cards[cards.length - 1];
-      if (!card) return;
       node.scrollTo({
         top: Math.min(
           node.scrollHeight - node.clientHeight,
@@ -1221,6 +1244,7 @@ export function SidecarAssistant({
           label: index === 0 ? "Default" : `Variant ${index + 1}`,
           color,
         })),
+        sizes: productSizeOptions(product),
       });
     },
     [appendMessage, getProductBySlug],
@@ -1529,7 +1553,7 @@ export function SidecarAssistant({
           text: `Tell me more about the ${product.title}`,
         },
         // Reading more about the product the open section is already about — the
-        // chip's own chevron does this — stays inside that section.
+        // chip itself does this — stays inside that section.
         { keepContext: slug === lastSeparatorSlugRef.current },
       );
       const loaderId = nextId("loader");
@@ -1565,23 +1589,62 @@ export function SidecarAssistant({
       intro: string,
       slugs: string[],
       showMoreCard: boolean,
-      options?: { remainingSlugs?: string[]; searchTerm?: string },
+      options?: {
+        remainingSlugs?: string[];
+        searchTerm?: string;
+        /** Runs when the products land, so a follow-up row is never shown
+         *  attached to a card that has nothing in it yet. */
+        onSettled?: () => void;
+      },
     ) => {
       const valid = slugs
         .map((slug) => getProductBySlug(slug))
         .filter((p): p is CatalogProduct => Boolean(p));
-      if (valid.length === 0) return;
+      if (valid.length === 0) {
+        options?.onSettled?.();
+        return;
+      }
+
+      // The intro lands on its own first, with a placeholder standing in for the
+      // row, so the shopper reads what the agent found while it is still laying
+      // the products out.
+      const plpId = nextId("plp");
       appendMessage({
-        id: nextId("plp"),
+        id: plpId,
         kind: "agent_plp",
         intro,
-        products: valid.map((p) => toPlpProduct(p, handleProductSelect)),
+        products: [],
         showMoreCard,
         remainingSlugs: options?.remainingSlugs,
         searchTerm: options?.searchTerm,
+        streaming: true,
       });
+
+      scheduleResponse(() => {
+        // The follow-up row lands in the same commit as the products, and on its
+        // own the transcript would scroll for it twice.
+        skipAutoScrollRef.current = true;
+        updateMessage(plpId, (message) =>
+          message.kind === "agent_plp"
+            ? {
+                ...message,
+                products: valid.map((p) => toPlpProduct(p, handleProductSelect)),
+                streaming: false,
+              }
+            : message,
+        );
+        options?.onSettled?.();
+        followStreamingCard();
+      }, PLP_REVEAL_MS);
     },
-    [appendMessage, getProductBySlug, handleProductSelect],
+    [
+      appendMessage,
+      followStreamingCard,
+      getProductBySlug,
+      handleProductSelect,
+      scheduleResponse,
+      updateMessage,
+    ],
   );
 
   // Broad-intent "routine" card: one acknowledgement + a section per routine
@@ -1788,11 +1851,16 @@ export function SidecarAssistant({
       const product = getProductBySlug(slug);
       if (!product) return;
 
-      appendMessage({
-        id: nextId("shopper"),
-        kind: "shopper_text",
-        text: `Add ${quantity} × ${product.title} to my cart`,
-      });
+      appendMessage(
+        {
+          id: nextId("shopper"),
+          kind: "shopper_text",
+          text: `Add ${quantity} × ${product.title} to my cart`,
+        },
+        // Buying the product the open section is about — what the chip's plus
+        // does — belongs to that section rather than closing it.
+        { keepContext: slug === lastSeparatorSlugRef.current },
+      );
       const loaderId = nextId("loader");
       appendMessage({ id: loaderId, kind: "agent_loader", variant: "thinking" });
 
@@ -2018,6 +2086,18 @@ export function SidecarAssistant({
       let lastPdpProduct: CatalogProduct | undefined;
       let lastCartProduct: CatalogProduct | undefined;
 
+      // A listing reveals its products a beat after this returns, so whatever
+      // chip row the batch produces waits with it rather than attaching itself
+      // to a card that is still a placeholder.
+      const listingStreaming = actions.some(
+        (action) => action.type === "show_product_listing",
+      );
+      const queued: Array<() => void> = [];
+      const emitFollowUp = (work: () => void) => {
+        if (listingStreaming) queued.push(work);
+        else work();
+      };
+
       for (const action of actions) {
         switch (action.type) {
           // `say` is intentionally not handled: free-form acknowledgements must
@@ -2029,6 +2109,7 @@ export function SidecarAssistant({
               action.intro,
               action.productSlugs,
               Boolean(action.showMoreCard),
+              { onSettled: () => queued.splice(0).forEach((work) => work()) },
             );
             lastPlpSlugs = action.productSlugs;
             break;
@@ -2051,7 +2132,7 @@ export function SidecarAssistant({
             break;
           }
           case "suggest_nbas":
-            appendMessage(buildNbasMessage(action.labels));
+            emitFollowUp(() => appendMessage(buildNbasMessage(action.labels)));
             break;
         }
       }
@@ -2063,37 +2144,44 @@ export function SidecarAssistant({
       if (sawSuggestNbas) return;
 
       if (lastCartProduct) {
-        const items = buildStageNbas({
-          stage: "cart",
-          cartProducts: [lastCartProduct],
-          matchingBundle: findMatchingBundle(lastCartProduct, products),
-          catalog: products,
-        });
-        appendMessage(buildStageNbasMessage("cart", items));
-        emitAssistantTelemetry("nba_impression", {
-          stage: "cart",
-          labels: items.map((item) => item.label),
-          lanes: items.map((item) => item.lane),
+        const cartProduct = lastCartProduct;
+        emitFollowUp(() => {
+          const items = buildStageNbas({
+            stage: "cart",
+            cartProducts: [cartProduct],
+            matchingBundle: findMatchingBundle(cartProduct, products),
+            catalog: products,
+          });
+          appendMessage(buildStageNbasMessage("cart", items));
+          emitAssistantTelemetry("nba_impression", {
+            stage: "cart",
+            labels: items.map((item) => item.label),
+            lanes: items.map((item) => item.lane),
+          });
         });
         return;
       }
 
       if (lastPdpProduct) {
-        const items = buildStageNbas(buildPdpStageContext(lastPdpProduct));
-        appendMessage(
-          buildStageNbasMessage("pdp", items, true, {
-            productSlug: lastPdpProduct.slug,
-          }),
-        );
-        emitAssistantTelemetry("nba_impression", {
-          stage: "pdp",
-          labels: items.map((item) => item.label),
-          lanes: items.map((item) => item.lane),
+        const pdpProduct = lastPdpProduct;
+        emitFollowUp(() => {
+          const items = buildStageNbas(buildPdpStageContext(pdpProduct));
+          appendMessage(
+            buildStageNbasMessage("pdp", items, true, {
+              productSlug: pdpProduct.slug,
+            }),
+          );
+          emitAssistantTelemetry("nba_impression", {
+            stage: "pdp",
+            labels: items.map((item) => item.label),
+            lanes: items.map((item) => item.lane),
+          });
         });
         return;
       }
 
       if (lastPlpSlugs) {
+        const plpSlugs = lastPlpSlugs;
         // Re-derive intent from the latest shopper message so the chips are
         // tuned to whatever the shopper just asked for.
         let latestShopperText = "";
@@ -2107,17 +2195,19 @@ export function SidecarAssistant({
         const intent = classifyIntent(latestShopperText);
         // Remember the intent behind this PLP so refinement pills can narrow it.
         activePlpIntentRef.current = intent;
-        const items = buildStageNbas({
-          stage: "plp",
-          intent,
-          matchCount: lastPlpSlugs.length,
-          bundleProducts: findBundlesForIntent(intent, products),
-        });
-        appendMessage(buildStageNbasMessage("plp", items));
-        emitAssistantTelemetry("nba_impression", {
-          stage: "plp",
-          labels: items.map((item) => item.label),
-          lanes: items.map((item) => item.lane),
+        emitFollowUp(() => {
+          const items = buildStageNbas({
+            stage: "plp",
+            intent,
+            matchCount: plpSlugs.length,
+            bundleProducts: findBundlesForIntent(intent, products),
+          });
+          appendMessage(buildStageNbasMessage("plp", items));
+          emitAssistantTelemetry("nba_impression", {
+            stage: "plp",
+            labels: items.map((item) => item.label),
+            lanes: items.map((item) => item.lane),
+          });
         });
       }
     },
@@ -2168,20 +2258,25 @@ export function SidecarAssistant({
         buildPlpIntro(query, intent, firstPage.length),
         firstPage.map((p) => p.slug),
         rest.length > 0,
-        { remainingSlugs: rest.map((p) => p.slug), searchTerm: query },
+        {
+          remainingSlugs: rest.map((p) => p.slug),
+          searchTerm: query,
+          onSettled: () => {
+            const plpItems = buildStageNbas({
+              stage: "plp",
+              intent,
+              matchCount: matches.length,
+              bundleProducts: findBundlesForIntent(intent, products),
+            });
+            appendMessage(buildStageNbasMessage("plp", plpItems));
+            emitAssistantTelemetry("nba_impression", {
+              stage: "plp",
+              labels: plpItems.map((item) => item.label),
+              lanes: plpItems.map((item) => item.lane),
+            });
+          },
+        },
       );
-      const plpItems = buildStageNbas({
-        stage: "plp",
-        intent,
-        matchCount: matches.length,
-        bundleProducts: findBundlesForIntent(intent, products),
-      });
-      appendMessage(buildStageNbasMessage("plp", plpItems));
-      emitAssistantTelemetry("nba_impression", {
-        stage: "plp",
-        labels: plpItems.map((item) => item.label),
-        lanes: plpItems.map((item) => item.lane),
-      });
     },
     [appendMessage, products, renderPlpCard],
   );
@@ -2787,9 +2882,11 @@ export function SidecarAssistant({
             `Here's what comes in under ${recommended.priceFormatted}:`,
             firstPage.map((product) => product.slug),
             rest.length > 0,
-            { remainingSlugs: rest.map((product) => product.slug) },
+            {
+              remainingSlugs: rest.map((product) => product.slug),
+              onSettled: offerRemainingPills,
+            },
           );
-          offerRemainingPills();
         });
         return;
       }
@@ -2902,6 +2999,27 @@ export function SidecarAssistant({
     // A cart edit rides its own timer with the steppers held; cancelling the
     // timer has to release them or the card stays locked.
     setUpdatingCart(null);
+    // Cancelling a later turn drops the reveal a card was waiting on, and a card
+    // left marked as streaming holds the composer shut for good. Settle what has
+    // arrived; a list card with nothing in it is only a promise of products that
+    // are no longer coming, so it goes.
+    setMessages((current) =>
+      current
+        .filter(
+          (message) =>
+            !(
+              message.kind === "agent_plp" &&
+              message.streaming &&
+              message.products.length === 0
+            ),
+        )
+        .map((message) =>
+          (message.kind === "agent_plp" || message.kind === "agent_routine") &&
+          message.streaming
+            ? { ...message, streaming: false }
+            : message,
+        ),
+    );
 
     appendMessage({
       id: nextId("agent"),
@@ -3587,14 +3705,15 @@ export function SidecarAssistant({
   // hold their controls mid-round-trip. The demo phone keeps typing enabled:
   // disabling the field would blur it and take the simulated keyboard down
   // with it after every send.
-  // A streaming routine card is still the agent talking, even though its loader
-  // is already gone, so the composer stays held until the last section lands.
+  // A card still writing itself is the agent talking, even though its loader is
+  // already gone, so the composer stays held until the content lands.
   const agentReplying = useMemo(
     () =>
       messages.some(
         (message) =>
           message.kind === "agent_loader" ||
-          (message.kind === "agent_routine" && message.streaming === true),
+          ((message.kind === "agent_routine" || message.kind === "agent_plp") &&
+            message.streaming === true),
       ),
     [messages],
   );
@@ -3765,6 +3884,7 @@ export function SidecarAssistant({
                 onToggleSelect={handleToggleSelect}
                 onAddToCart={(slug) => handleAddToCart(slug, 1)}
                 selectionLimitReached={selectedSet.size >= MAX_SELECTED_PRODUCTS}
+                streaming={message.streaming}
               />
             );
           case "agent_routine":
@@ -3872,6 +3992,10 @@ export function SidecarAssistant({
           case "context_separator": {
             const product = getProductBySlug(message.productSlug);
             if (!product) return null;
+            // Nothing to choose between means nothing to open the card for: the
+            // plus adds the product outright and only falls back to the product
+            // card when a size has to be picked first.
+            const hasVariants = productSizeOptions(product).length > 0;
             return (
               <div
                 key={message.id}
@@ -3879,21 +4003,38 @@ export function SidecarAssistant({
                 data-context-slug={message.productSlug}
               >
                 <div className="sidecar-assistant__context-separator-chip">
-                  <img
-                    className="sidecar-assistant__context-separator-thumb"
-                    src={product.imageUrl}
-                    alt={product.imageAlt}
-                  />
-                  <span className="sidecar-assistant__context-separator-title">
-                    {product.title}
-                  </span>
+                  {/* The thumb and title are one button rather than the whole
+                      chip, which would nest the plus inside another button. */}
                   <button
                     type="button"
-                    className="sidecar-assistant__context-separator-action"
+                    className="sidecar-assistant__context-separator-open"
                     aria-label={`More about ${product.title}`}
                     onClick={() => handleProductSelect(message.productSlug)}
                   >
-                    <ChevronRightIcon width={16} height={16} />
+                    <img
+                      className="sidecar-assistant__context-separator-thumb"
+                      src={product.imageUrl}
+                      alt={product.imageAlt}
+                    />
+                    <span className="sidecar-assistant__context-separator-title">
+                      {product.title}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="sidecar-assistant__context-separator-action"
+                    aria-label={
+                      hasVariants
+                        ? `Choose a size for ${product.title}`
+                        : `Add ${product.title} to cart`
+                    }
+                    onClick={() =>
+                      hasVariants
+                        ? handleProductSelect(message.productSlug)
+                        : handleAddToCart(message.productSlug, 1)
+                    }
+                  >
+                    <PlusIcon width={16} height={16} />
                   </button>
                 </div>
               </div>
@@ -4007,29 +4148,31 @@ export function SidecarAssistant({
           <span className="sidecar-assistant__header-label">Beauty Advisor</span>
         </div>
         <div className="sidecar-assistant__header-actions">
-          {/* Immersive has no floating cart button - the panel is full-bleed,
-              so a button parked over the transcript has nothing to anchor to.
-              The cart moves into the header instead, keeping the island's
-              totals-beside-the-button reading. */}
-          {!contextIsland && detached && cartItemCount > 0 ? (
+          {/* With the island off the cart lives in the header rather than over
+              the transcript, which leaves nothing floating between the shopper
+              and what they are reading. Only immersive has the width to carry
+              the island's totals beside the button. */}
+          {!contextIsland && cartItemCount > 0 ? (
             <div className="sidecar-assistant__header-cart">
-              <span className="sidecar-assistant__header-cart-summary">
-                {cartTotals.total ? (
-                  <span className="sidecar-assistant__header-cart-total">
-                    Total {cartTotals.total}
+              {detached ? (
+                <span className="sidecar-assistant__header-cart-summary">
+                  {cartTotals.total ? (
+                    <span className="sidecar-assistant__header-cart-total">
+                      Total {cartTotals.total}
+                    </span>
+                  ) : null}
+                  <span className="sidecar-assistant__header-cart-count">
+                    {cartItemCount} item{cartItemCount === 1 ? "" : "s"}
                   </span>
-                ) : null}
-                <span className="sidecar-assistant__header-cart-count">
-                  {cartItemCount} item{cartItemCount === 1 ? "" : "s"}
                 </span>
-              </span>
+              ) : null}
               <button
                 type="button"
                 className="sidecar-assistant__header-btn sidecar-assistant__header-cart-btn"
                 aria-label={`Cart: ${cartItemCount} item${cartItemCount === 1 ? "" : "s"}`}
                 onClick={showCartCard}
               >
-                <ShoppingCartIcon width={18} height={18} />
+                <ShoppingCartIcon width={16} height={16} />
                 <span className="sidecar-assistant__context-island-badge">
                   {cartItemCount}
                 </span>
@@ -4045,7 +4188,7 @@ export function SidecarAssistant({
               aria-expanded={isMenuOpen}
               onClick={() => setIsMenuOpen((open) => !open)}
             >
-              <EllipsisVerticalIcon width={20} height={20} />
+              <EllipsisVerticalIcon width={16} height={16} />
             </button>
             {isMenuOpen ? (
               <div className="sidecar-assistant__menu-popover" role="menu">
@@ -4093,7 +4236,7 @@ export function SidecarAssistant({
             aria-label="Close assistant"
             onClick={handleCloseClick}
           >
-            <CloseIcon width={20} height={20} />
+            <CloseIcon width={16} height={16} />
           </button>
         </div>
       </header>
@@ -4161,19 +4304,6 @@ export function SidecarAssistant({
               </div>
             ) : null}
           </div>
-        ) : null}
-        {!contextIsland && !detached && cartItemCount > 0 ? (
-          <button
-            type="button"
-            className="sidecar-assistant__cart-fab sidecar-assistant__context-island-cart"
-            aria-label={`Cart: ${cartItemCount} item${cartItemCount === 1 ? "" : "s"}`}
-            onClick={showCartCard}
-          >
-            <ShoppingCartIcon width={18} height={18} />
-            <span className="sidecar-assistant__context-island-badge">
-              {cartItemCount}
-            </span>
-          </button>
         ) : null}
         {awayFromLatest ? (
           <button

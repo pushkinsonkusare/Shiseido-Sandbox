@@ -148,11 +148,18 @@
   background: #222222;
 }
 
+/* The asset is a tight crop of the lockup, so its height is very nearly all
+   glyph. 16px puts its cap height on the 14px label of the button below it;
+   at 22px it read as a logo shouting over a word. */
 .agent-msg__apple-pay-mark {
-  height: 22px;
+  height: 16px;
   width: auto;
   display: block;
   object-fit: contain;
+  /* The mark is a JPEG of white on pure black, which prints a darker rectangle
+     on the button's #1a1a1a. Screening drops its black into the button and
+     leaves the white lockup. */
+  mix-blend-mode: screen;
 }
 
 .agent-msg__btn:focus-visible {
@@ -233,6 +240,12 @@
   font-size: 14px;
   line-height: 20px;
   color: var(--agentic-foreground);
+}
+
+/* Same inset as `.agent-plp__carousel`, so the placeholder tiles start where
+   the first product card will. */
+.agent-plp__skeleton {
+  padding-left: 20px;
 }
 
 /* ---------- Broad-intent routine card ---------- */
@@ -325,15 +338,12 @@
   color: var(--agentic-muted-foreground);
 }
 
-/* Placeholder for the step still being written. Sized to the real thing — step
-   heading, blurb, then the product row — so the card doesn't lurch when the
-   section it stands in for arrives. Shares the cart totals shimmer. */
-.agent-routine__skeleton {
-  gap: 14px;
-}
-
-.agent-routine__skeleton-bar,
-.agent-routine__skeleton-tile {
+/* Placeholders for content a card is still writing. Shared by the routine
+   section and the product list row, and sized to the real thing so a card
+   doesn't lurch when what they stand in for arrives. Shares the cart totals
+   shimmer rather than defining a second one. */
+.agent-skeleton__bar,
+.agent-skeleton__tile {
   display: block;
   border-radius: 3px;
   background: linear-gradient(
@@ -346,38 +356,48 @@
   animation: agent-summary__line-skeleton 1400ms ease infinite;
 }
 
-.agent-routine__skeleton-bar--step {
-  /* Matches `.agent-routine__step`'s 20px line box. */
-  width: 120px;
-  height: 15px;
-  margin: 0 20px;
-}
-
-.agent-routine__skeleton-bar--copy {
-  max-width: 460px;
-  height: 12px;
-  margin: 0 20px;
-}
-
-.agent-routine__skeleton-row {
+.agent-skeleton__row {
   display: flex;
   gap: 12px;
-  padding-left: 20px;
   /* The real carousel scrolls; the placeholder just runs off the card edge. */
   overflow: hidden;
 }
 
-.agent-routine__skeleton-tile {
+.agent-skeleton__tile {
   flex: 0 0 auto;
   width: 220px;
   height: 350px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .agent-routine__skeleton-bar,
-  .agent-routine__skeleton-tile {
+  .agent-skeleton__bar,
+  .agent-skeleton__tile {
     animation: none;
   }
+}
+
+/* The step still being written: heading, blurb, then the product row. */
+.agent-routine__skeleton {
+  gap: 14px;
+}
+
+.agent-routine__skeleton .agent-skeleton__bar {
+  margin: 0 20px;
+}
+
+.agent-routine__skeleton-bar--step {
+  /* Matches `.agent-routine__step`'s 20px line box. */
+  width: 120px;
+  height: 15px;
+}
+
+.agent-routine__skeleton-bar--copy {
+  max-width: 460px;
+  height: 12px;
+}
+
+.agent-routine__skeleton .agent-skeleton__row {
+  padding-left: 20px;
 }
 
 .agent-plp__carousel {

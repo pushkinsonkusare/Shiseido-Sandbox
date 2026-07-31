@@ -86,6 +86,9 @@ export type AgentPlpMessage = {
   remainingSlugs?: string[];
   /** The shopper's original query, used for the "Show more <term>" bubble. */
   searchTerm?: string;
+  /** True while the products are still arriving, which holds the placeholder in
+   *  the card and the composer until the row lands. */
+  streaming?: boolean;
 };
 
 /** One step of a broad-intent routine: a category header, a short

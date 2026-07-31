@@ -24,6 +24,9 @@ export type AgentPLPCardProps = {
   onAddToCart?: (id: string) => void;
   /** When true, unselected cards' checkboxes are disabled (selection cap hit). */
   selectionLimitReached?: boolean;
+  /** True while the products are still being pulled together: holds a
+   *  placeholder row where the carousel will be. */
+  streaming?: boolean;
   /** Optional class name appended to the root element. */
   className?: string;
 };
@@ -41,23 +44,40 @@ export function AgentPLPCard({
   onToggleSelect,
   onAddToCart,
   selectionLimitReached,
+  streaming = false,
   className,
 }: AgentPLPCardProps) {
   const rootClass = "agent-plp__card" + (className ? " " + className : "");
 
   return (
-    <article className={rootClass} data-component="agent-plp-card">
+    <article
+      className={rootClass}
+      data-component="agent-plp-card"
+      data-streaming={streaming || undefined}
+      aria-busy={streaming || undefined}
+    >
       <p className="agent-plp__intro">{intro}</p>
 
-      <AgentProductCarousel
-        products={products}
-        showMoreCard={showMoreCard}
-        onShowMore={onShowMore}
-        selectedIds={selectedIds}
-        onToggleSelect={onToggleSelect}
-        onAddToCart={onAddToCart}
-        selectionLimitReached={selectionLimitReached}
-      />
+      {streaming ? (
+        // The whole carousel is swapped out rather than handed an empty product
+        // list, which would leave its arrows and "Show more" tile framing
+        // nothing.
+        <div className="agent-plp__skeleton agent-skeleton__row" aria-hidden="true">
+          <span className="agent-skeleton__tile" />
+          <span className="agent-skeleton__tile" />
+          <span className="agent-skeleton__tile" />
+        </div>
+      ) : (
+        <AgentProductCarousel
+          products={products}
+          showMoreCard={showMoreCard}
+          onShowMore={onShowMore}
+          selectedIds={selectedIds}
+          onToggleSelect={onToggleSelect}
+          onAddToCart={onAddToCart}
+          selectionLimitReached={selectionLimitReached}
+        />
+      )}
     </article>
   );
 }

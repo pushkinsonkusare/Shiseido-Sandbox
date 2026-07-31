@@ -78,6 +78,7 @@ export function AgentRoutineCard({
     <article
       className={rootClass}
       data-component="agent-routine-card"
+      data-streaming={streaming || undefined}
       aria-busy={streaming || undefined}
     >
       <p className="agent-routine__acknowledgement">{acknowledgement}</p>
@@ -139,12 +140,12 @@ export function AgentRoutineCard({
           className="agent-routine__section agent-routine__skeleton"
           aria-hidden="true"
         >
-          <span className="agent-routine__skeleton-bar agent-routine__skeleton-bar--step" />
-          <span className="agent-routine__skeleton-bar agent-routine__skeleton-bar--copy" />
-          <div className="agent-routine__skeleton-row">
-            <span className="agent-routine__skeleton-tile" />
-            <span className="agent-routine__skeleton-tile" />
-            <span className="agent-routine__skeleton-tile" />
+          <span className="agent-skeleton__bar agent-routine__skeleton-bar--step" />
+          <span className="agent-skeleton__bar agent-routine__skeleton-bar--copy" />
+          <div className="agent-skeleton__row">
+            <span className="agent-skeleton__tile" />
+            <span className="agent-skeleton__tile" />
+            <span className="agent-skeleton__tile" />
           </div>
         </section>
       ) : null}

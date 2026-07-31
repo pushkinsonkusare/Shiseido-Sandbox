@@ -183,32 +183,37 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   flex: 0 0 auto;
 }
 
+/* Sized and styled as the storefront's own header actions
+   (`.unified-top-header__top-actions button`), so the panel's controls read as
+   the same set of icons as the ones in the page behind it. */
 .sidecar-assistant__header-btn {
   appearance: none;
   background: transparent;
-  border: none;
-  width: 32px;
-  height: 32px;
+  border: 0;
+  width: 36px;
+  height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: #17171b;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 120ms ease;
+  transition: background-color 120ms ease, color 120ms ease;
 }
 
 .sidecar-assistant__header-btn:hover {
-  background: rgba(23, 23, 27, 0.06);
+  background: rgba(0, 0, 0, 0.06);
+  color: #000000;
 }
 
 .sidecar-assistant__header-btn:focus-visible {
-  outline: 2px solid #2f7df6;
-  outline-offset: 1px;
+  outline: 2px solid #7c5cff;
+  outline-offset: 2px;
 }
 
-/* The immersive stand-in for the floating cart button. Same shape as its
-   neighbours in the header, with the island's totals stack alongside it. */
+/* Where the cart goes whenever the context island is off. Same shape as its
+   neighbours in the header, with the island's totals stack alongside it when
+   the panel is wide enough (immersive) to carry them. */
 .sidecar-assistant__header-cart {
   display: inline-flex;
   align-items: center;
@@ -242,8 +247,16 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   position: relative;
 }
 
-/* Brand red, as it was on the FAB this replaces. */
+/* Brand red, as it was on the FAB this replaces. Pulled in off the corner of
+   the 36px button so it rides the 16px glyph rather than floating away from it
+   in the padding. */
 .sidecar-assistant__header-cart-btn .sidecar-assistant__context-island-badge {
+  top: 3px;
+  right: 3px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  font-size: 9px;
   background: #8a1424;
 }
 
@@ -378,6 +391,7 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   color: #6b7280;
 }
 
+/* Against the island's white surface the cart reads as a filled grey button. */
 .sidecar-assistant__context-island-cart {
   position: relative;
   flex: 0 0 auto;
@@ -389,7 +403,7 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   height: 32px;
   padding: 0 8px;
   color: #17171b;
-  background: transparent;
+  background: #ececec;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -397,21 +411,8 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
 }
 
 .sidecar-assistant__context-island-cart:hover {
-  background: #f2f2f2;
-  color: #0f0f0f;
-}
-
-/* Inside the island the cart reads as a filled grey button. Scoped to the
-   group because the floating cart FAB reuses this class but brings its own
-   white surface and shadow. */
-.sidecar-assistant__context-island-cart-group
-  .sidecar-assistant__context-island-cart {
-  background: #ececec;
-}
-
-.sidecar-assistant__context-island-cart-group
-  .sidecar-assistant__context-island-cart:hover {
   background: #e0e0e0;
+  color: #0f0f0f;
 }
 
 .sidecar-assistant__context-island-badge {
@@ -487,6 +488,47 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   border: 1px solid #e5e7eb;
   border-radius: 999px;
   box-shadow: none;
+  transition: border-color 150ms ease;
+}
+
+/* The clickable body is a nested button, so the hover is drawn on the chip
+   around it: lighting a rectangle inside a pill would read as a second control
+   rather than as the chip being the target. The edge alone carries it — the
+   chip holds its place in the transcript. */
+.sidecar-assistant__context-separator-chip:has(
+    .sidecar-assistant__context-separator-open:hover
+  ) {
+  border-color: rgba(23, 23, 27, 0.28);
+}
+
+/* Keyboard focus lands on that same inner button; the ring goes on the chip so
+   it traces the pill instead of a rectangle cutting through it. */
+.sidecar-assistant__context-separator-open:focus-visible {
+  outline: none;
+}
+
+.sidecar-assistant__context-separator-chip:has(
+    .sidecar-assistant__context-separator-open:focus-visible
+  ) {
+  outline: 2px solid #7c5cff;
+  outline-offset: 2px;
+}
+
+/* The chip's own body: everything but the plus opens the product card, so it
+   carries the chip's layout and leaves the chip a bare container. */
+.sidecar-assistant__context-separator-open {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 .sidecar-assistant__context-separator-thumb {
@@ -499,7 +541,7 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
 }
 
 .sidecar-assistant__context-separator-title {
-  /* Takes the slack in the fixed-width chip so the chevron stays on the edge. */
+  /* Takes the slack in the fixed-width chip so the plus stays on the edge. */
   flex: 1 1 auto;
   min-width: 0;
   font-size: 13px;
@@ -589,15 +631,11 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
 
 /* ---------- Chat scroll area ---------- */
 
-/* Positioned wrapper so the cart FAB can float over the scrolling chat
-   without moving as messages scroll. */
+/* Positioned wrapper so the jump-to-latest button can float over the scrolling
+   chat without moving as messages scroll. */
 .sidecar-assistant__chat-area {
-  /* Declared here because both the transcript and the floating cart button read
-     them: the button lines up with the docked context chip, which sits on the
-     transcript's own padding and centre line. */
   --sidecar-chat-pad: 20px;
   --sidecar-context-chip-width: 265px;
-  --sidecar-context-chip-height: 42px;
   /* Tracks the inline padding of `.sidecar-assistant__input-bar`, so the
      jump-to-latest button lines up with the composer's right edge. */
   --sidecar-composer-inset: 16px;
@@ -690,35 +728,8 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   right: calc(var(--sidecar-composer-inset) + 8px);
 }
 
-/* Floating cart button, parked just off the docked context chip so the two read
-   as one row. Reuses the context-island cart button + badge internals; this
-   layer adds the floating surface and positioning. */
-.sidecar-assistant__cart-fab {
-  position: absolute;
-  /* 8px past the chip, which is centred on the transcript. */
-  left: calc(50% + var(--sidecar-context-chip-width) / 2 + 8px);
-  right: auto;
-  top: calc(
-    var(--sidecar-chat-pad) + (var(--sidecar-context-chip-height) - 36px) / 2
-  );
-  z-index: 5;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  background: #ffffff;
-  /* Same hairline as the context chip it sits beside. */
-  border: 1px solid #e5e7eb;
-  border-radius: 999px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
-}
-
-/* Brand red, matching the header's assistant tile. */
-.sidecar-assistant__cart-fab .sidecar-assistant__context-island-badge {
-  background: #8a1424;
-}
-
-/* Says there are messages past the fold, and takes the shopper to them. Same
-   floating surface as the cart button, parked on the composer's right edge. */
+/* Says there are messages past the fold, and takes the shopper to them. Floats
+   over the transcript, parked on the composer's right edge. */
 .sidecar-assistant__jump-to-latest {
   position: absolute;
   right: var(--sidecar-composer-inset);
