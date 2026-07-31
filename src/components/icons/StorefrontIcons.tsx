@@ -325,6 +325,15 @@ export function ArrowLeftIcon(props: IconProps) {
   );
 }
 
+export function ArrowDownIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M12 5v14" />
+      <path d="m18 13-6 6-6-6" />
+    </BaseIcon>
+  );
+}
+
 export function ArrowUpRightIcon(props: IconProps) {
   return (
     <BaseIcon {...props}>
@@ -505,10 +514,22 @@ export function PauseIcon(props: IconProps) {
   );
 }
 
+/* Solid mark rather than a stroked glyph, and it fills the viewBox so the
+ * `width` / `height` passed in IS the size of the square on screen. Inset art
+ * would render at ~40% of the requested size, which is what made this read as
+ * a dot at every size it was asked for. */
 export function StopIcon(props: IconProps) {
   return (
     <BaseIcon {...props}>
-      <rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor" />
+      <rect
+        x="0"
+        y="0"
+        width="24"
+        height="24"
+        rx="4"
+        fill="currentColor"
+        stroke="none"
+      />
     </BaseIcon>
   );
 }

@@ -528,9 +528,25 @@
   width: 100px;
   min-width: 100px;
   /* Top-left of the grid: contributes the left segment of the divider under
-   * the intro and the top of the legend / product vertical divider. */
+   * the intro. */
   border-top: 1px solid rgba(236, 236, 236, 1);
-  border-right: 1px solid rgba(236, 236, 236, 1);
+}
+
+/* The attribute column stays put while the products scroll past it, so a row
+ * never loses the name of what it is measuring. The cells need their own
+ * background to hide what passes underneath, and the divider is drawn as an
+ * inset shadow because a collapsed table's borders belong to the table and
+ * would be left behind by the sticky cell. That shadow is the ONLY vertical
+ * rule here: pairing it with a `border-right` renders both, reading as a
+ * doubled 2px line. */
+.agent-compare__corner,
+.agent-compare__row-head,
+.agent-compare__action-head {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--agentic-card-bg, #ffffff);
+  box-shadow: inset -1px 0 0 rgba(236, 236, 236, 1);
 }
 
 .agent-compare__col-head {
@@ -604,7 +620,6 @@
   white-space: nowrap;
   padding: 12px 12px 12px 20px;
   border-top: 1px solid rgba(236, 236, 236, 1);
-  border-right: 1px solid rgba(236, 236, 236, 1);
   vertical-align: top;
 }
 
@@ -629,10 +644,6 @@
 .agent-compare__action-cell {
   border-top: 1px solid rgba(236, 236, 236, 1);
   padding-top: 16px;
-}
-
-.agent-compare__action-head {
-  border-right: 1px solid rgba(236, 236, 236, 1);
 }
 
 .agent-compare__action-cell {

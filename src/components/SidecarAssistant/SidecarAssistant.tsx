@@ -1,8 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useCatalog } from "../../catalog/CatalogContext";
 import { useAgentMode, UT_WELCOME_NBA_LABEL } from "../AgentModeBar/AgentModeContext";
 import {
-  ChevronDownIcon,
+  ArrowDownIcon,
   CloseIcon,
   EllipsisVerticalIcon,
   ExpandIcon,
@@ -63,6 +70,12 @@ import {
   type RoutineIntent,
   type StageNbaItem,
 } from "./conversation/flow";
+import {
+  GUARDRAIL_BODIES,
+  GUARDRAIL_NBAS,
+  classifyGuardrail,
+  type GuardrailKind,
+} from "./conversation/guardrails";
 import type { ChatMessage, RoutineSection } from "./conversation/types";
 import type { CatalogProduct } from "../../catalog/catalog";
 import type { AskAssistantEventDetail } from "../../pages/ProductDetailPage/PdpNbaPanel";
@@ -81,13 +94,16 @@ import { isLlmConfigured } from "../../lib/openaiClient";
 import { stripEmDashes } from "../../lib/sanitizeText";
 import "./SidecarAssistant.css";
 
-const PLACEHOLDER_INPUT =
-  "Ask anything about skincare, routines, orders, or recommendations…";
+const PLACEHOLDER_INPUT = "Ask me anything";
 
 const NUDGE_INTERVAL_MS = 90_000;
 const NUDGE_DURATION_MS = 2500;
 
 const RESPONSE_LATENCY_MS = 1200;
+/** A guardrail turn is a read of the message, not a search, so it answers
+ * faster than any lookup: a long "searching" beat before "I can't help with
+ * that" implies the store went looking. */
+const GUARDRAIL_LATENCY_MS = 700;
 /** An open-ended ask reads as real work, so the agent takes the time to narrate
  * it. A query that already carries filters is closer to a lookup. */
 const DISCOVERY_LATENCY_MS = 5000;
@@ -1047,7 +1063,7 @@ export function SidecarAssistant({
 
   const chatRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const previousMessageIdsRef = useRef<string[]>([]);
   /** Set for a single commit whose scroll position is already being managed, so
    *  the transcript's own auto-scroll stands down for it. */
@@ -2384,12 +2400,47 @@ export function SidecarAssistant({
     [appendMessage, removeMessage, renderRankedPlp, scheduleResponse],
   );
 
+  const renderGuardrailResponse = useCallback(
+    (kind: GuardrailKind) => {
+      appendMessage({
+        id: nextId("agent"),
+        kind: "agent_simple",
+        body: GUARDRAIL_BODIES[kind],
+      });
+      const labels = GUARDRAIL_NBAS[kind];
+      if (labels.length > 0) {
+        appendMessage(buildNbasMessage(labels, false));
+      }
+    },
+    [appendMessage],
+  );
+
   const dispatchShopperMessage = useCallback(
     (text: string) => {
       const trimmed = text.trim();
       if (!trimmed) return;
 
       appendMessage({ id: nextId("shopper"), kind: "shopper_text", text: trimmed });
+
+      /* Unsafe, off-catalog and unreadable input never reaches intent
+       * classification: `classifyIntent` has no way to say "I can't help with
+       * that", so all three would land on the probing card as if the store
+       * were about to find a match. The first scripted turn is deliberately
+       * NOT consumed here, so a shopper whose opener was junk still gets it. */
+      const guardrail = classifyGuardrail(trimmed);
+      if (guardrail) {
+        const guardrailLoaderId = nextId("loader");
+        appendMessage({
+          id: guardrailLoaderId,
+          kind: "agent_loader",
+          variant: "answering",
+        });
+        scheduleResponse(() => {
+          removeMessage(guardrailLoaderId);
+          renderGuardrailResponse(guardrail);
+        }, GUARDRAIL_LATENCY_MS);
+        return;
+      }
 
       // Broad-intent routine requests are rendered deterministically as a
       // unified routine card on every turn, bypassing the LLM (which would
@@ -2468,6 +2519,7 @@ export function SidecarAssistant({
       applyAgentActions,
       dispatchRuleBasedResponse,
       removeMessage,
+      renderGuardrailResponse,
       renderRoutineCard,
       scheduleResponse,
     ],
@@ -3732,6 +3784,16 @@ export function SidecarAssistant({
     inputRef.current?.focus({ preventScroll: true });
   }, [composerDisabled]);
 
+  // The composer is a textarea so a long question wraps instead of scrolling
+  // away to the right, which means its height has to follow its content. Reset
+  // first: `scrollHeight` only ever grows against the height already set.
+  useLayoutEffect(() => {
+    const field = inputRef.current;
+    if (!field) return;
+    field.style.height = "auto";
+    field.style.height = `${field.scrollHeight}px`;
+  }, [inputValue, sentDraft, composerDisabled]);
+
   const dismissSimulatedKeyboard = () => {
     setSimKeyboardOpen(false);
     inputRef.current?.blur();
@@ -3742,6 +3804,17 @@ export function SidecarAssistant({
     if (!value) return false;
     setInputValue("");
     setSentDraft(value);
+
+    /* Product-scoped routing answers anything it can't parse with the
+     * product's own overview, so guarded input has to skip it: with a serum
+     * selected, "show me guns" came back as that serum's description. */
+    if (classifyGuardrail(value)) {
+      dispatchShopperMessage(value);
+      if (simulateMobileKeyboard) {
+        dismissSimulatedKeyboard();
+      }
+      return true;
+    }
 
     /* With a selection open, typed "compare" / "show similar" / FAQ copy
      * should take the same path as the tray pills — not the generic probe. */
@@ -4312,7 +4385,7 @@ export function SidecarAssistant({
             aria-label="Jump to the latest message"
             onClick={jumpToLatest}
           >
-            <ChevronDownIcon width={18} height={18} />
+            <ArrowDownIcon width={18} height={18} />
           </button>
         ) : null}
       </div>
@@ -4375,9 +4448,9 @@ export function SidecarAssistant({
             composerDisabled ? " sidecar-assistant__input-shell--disabled" : ""
           }`}
         >
-          <input
+          <textarea
             ref={inputRef}
-            type="text"
+            rows={1}
             className="sidecar-assistant__input"
             placeholder={inputPlaceholder}
             value={composerDisabled ? sentDraft : inputValue}
@@ -4385,6 +4458,9 @@ export function SidecarAssistant({
             onChange={(event) => setInputValue(event.target.value)}
             onKeyDown={(event) => {
               if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+              // Shift+Enter is the only way to a second line by hand; the field
+              // wraps a long question on its own.
+              if (event.shiftKey) return;
               /* Explicit submit so Enter always sends, even when the demo
                * keyboard / inputMode=none interferes with native form Enter. */
               event.preventDefault();

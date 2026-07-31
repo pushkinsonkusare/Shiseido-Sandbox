@@ -179,7 +179,7 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
 .sidecar-assistant__header-actions {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 0;
   flex: 0 0 auto;
 }
 
@@ -217,10 +217,8 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
 .sidecar-assistant__header-cart {
   display: inline-flex;
   align-items: center;
+  /* Between the totals and the button; the row itself is packed edge to edge. */
   gap: 8px;
-  /* The action row is packed at 2px; the cart is a different kind of control,
-     so it gets a little air before the icon buttons. */
-  margin-right: 6px;
 }
 
 .sidecar-assistant__header-cart-summary {
@@ -1282,7 +1280,9 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
    shopper is in the field, pale while the agent has the turn. */
 .sidecar-assistant__input-shell {
   display: flex;
-  align-items: center;
+  /* The field grows downward as the question wraps, so the send button rides
+     the last line rather than floating in the middle of the block. */
+  align-items: flex-end;
   gap: 8px;
   border: 1px solid #a3a3a3;
   padding: 12px;
@@ -1312,10 +1312,17 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   color: rgba(23, 23, 27, 0.26);
 }
 
+/* A textarea rather than an input so a long question wraps onto a second line
+   instead of scrolling out of sight to the right. Its height is set from
+   `scrollHeight` on every keystroke; the padding makes a single line match the
+   32px send button beside it, and the cap turns the overflow into a scroll
+   rather than letting the composer eat the transcript. */
 .sidecar-assistant__input {
   appearance: none;
   flex: 1 1 auto;
   min-width: 0;
+  display: block;
+  padding: 6px 0 6px 4px;
   border: none;
   outline: none;
   background: transparent;
@@ -1323,6 +1330,10 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   font-size: 14px;
   line-height: 20px;
   color: #17171b;
+  resize: none;
+  overflow-y: auto;
+  max-height: 112px;
+  scrollbar-width: thin;
 }
 
 .sidecar-assistant__input::placeholder {
@@ -1510,11 +1521,6 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__fab {
   html[data-demo-viewport="mobile"] .sidecar-assistant__header-label {
     font-size: 18px;
     line-height: 26px;
-  }
-
-  .sidecar-assistant__header-actions,
-  html[data-demo-viewport="mobile"] .sidecar-assistant__header-actions {
-    gap: 0;
   }
 
   /* Real phones keep the desktop viewport mode, so the React-side check does
