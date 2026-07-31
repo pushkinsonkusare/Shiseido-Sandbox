@@ -661,6 +661,21 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   );
 }
 
+/* The last piece of chrome running to the screen edges while everything below it
+   sat in a column. The header carries the cart summary that replaced the
+   floating button, so it belongs over the transcript rather than 350px away from
+   it. Padding, not a width, so the gradient, border and shadow stay full-bleed. */
+.sxs-layout__panel--detached .sidecar-assistant__header {
+  --sidecar-header-inset: max(
+    20px,
+    calc((100% - var(--sxs-immersive-column)) / 2)
+  );
+  padding-left: var(--sidecar-header-inset);
+  /* 4px tighter, the same asymmetry docked mode uses, so the trailing button's
+     glyph lands on the column edge rather than its 32px box. */
+  padding-right: calc(var(--sidecar-header-inset) - 4px);
+}
+
 /* The transcript column here is more than twice the docked one, so the bubble's
    300px cap folds a long question into a narrow ribbon beside the full-width
    cards. Take a share of the column instead - the same 300-of-380 it holds when
