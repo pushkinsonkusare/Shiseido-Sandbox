@@ -325,6 +325,61 @@
   color: var(--agentic-muted-foreground);
 }
 
+/* Placeholder for the step still being written. Sized to the real thing — step
+   heading, blurb, then the product row — so the card doesn't lurch when the
+   section it stands in for arrives. Shares the cart totals shimmer. */
+.agent-routine__skeleton {
+  gap: 14px;
+}
+
+.agent-routine__skeleton-bar,
+.agent-routine__skeleton-tile {
+  display: block;
+  border-radius: 3px;
+  background: linear-gradient(
+    90deg,
+    rgba(23, 23, 27, 0.07) 25%,
+    rgba(23, 23, 27, 0.03) 37%,
+    rgba(23, 23, 27, 0.07) 63%
+  );
+  background-size: 400% 100%;
+  animation: agent-summary__line-skeleton 1400ms ease infinite;
+}
+
+.agent-routine__skeleton-bar--step {
+  /* Matches `.agent-routine__step`'s 20px line box. */
+  width: 120px;
+  height: 15px;
+  margin: 0 20px;
+}
+
+.agent-routine__skeleton-bar--copy {
+  max-width: 460px;
+  height: 12px;
+  margin: 0 20px;
+}
+
+.agent-routine__skeleton-row {
+  display: flex;
+  gap: 12px;
+  padding-left: 20px;
+  /* The real carousel scrolls; the placeholder just runs off the card edge. */
+  overflow: hidden;
+}
+
+.agent-routine__skeleton-tile {
+  flex: 0 0 auto;
+  width: 220px;
+  height: 350px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-routine__skeleton-bar,
+  .agent-routine__skeleton-tile {
+    animation: none;
+  }
+}
+
 .agent-plp__carousel {
   position: relative;
   padding-left: 20px;

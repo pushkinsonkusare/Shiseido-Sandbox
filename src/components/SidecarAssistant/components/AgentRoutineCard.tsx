@@ -39,6 +39,9 @@ export type AgentRoutineCardProps = {
    * false, every section is expanded and headers are static (no toggle).
    */
   accordion?: boolean;
+  /** True while sections are still arriving: holds a placeholder below the last
+   *  one so the card reads as still being written. */
+  streaming?: boolean;
   /** Optional class name appended to the root element. */
   className?: string;
 };
@@ -60,16 +63,23 @@ export function AgentRoutineCard({
   onAddToCart,
   selectionLimitReached,
   accordion = true,
+  streaming = false,
   className,
 }: AgentRoutineCardProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
-  if (sections.length === 0) return null;
+  // While streaming the card opens on the acknowledgement alone, so an empty
+  // section list is a valid state rather than nothing to render.
+  if (sections.length === 0 && !streaming) return null;
 
   const rootClass = "agent-routine__card" + (className ? " " + className : "");
 
   return (
-    <article className={rootClass} data-component="agent-routine-card">
+    <article
+      className={rootClass}
+      data-component="agent-routine-card"
+      aria-busy={streaming || undefined}
+    >
       <p className="agent-routine__acknowledgement">{acknowledgement}</p>
 
       {sections.map((section, index) => {
@@ -121,6 +131,23 @@ export function AgentRoutineCard({
           </section>
         );
       })}
+
+      {streaming ? (
+        // Stands in for the step being written: a heading, its blurb, and the
+        // row of products, at the proportions a real section lands at.
+        <section
+          className="agent-routine__section agent-routine__skeleton"
+          aria-hidden="true"
+        >
+          <span className="agent-routine__skeleton-bar agent-routine__skeleton-bar--step" />
+          <span className="agent-routine__skeleton-bar agent-routine__skeleton-bar--copy" />
+          <div className="agent-routine__skeleton-row">
+            <span className="agent-routine__skeleton-tile" />
+            <span className="agent-routine__skeleton-tile" />
+            <span className="agent-routine__skeleton-tile" />
+          </div>
+        </section>
+      ) : null}
     </article>
   );
 }

@@ -1195,6 +1195,12 @@ export const ORDER_FOLLOWUP_NBAS = [
   "Help with returns",
 ] as const;
 
+export const ROUTINE_FOLLOWUP_NBAS = [
+  "Show a simpler routine",
+  "Best for sensitive skin",
+  "Budget-friendly picks",
+] as const;
+
 /* =============================================================
  * Stage-aware NBA framework.
  *
@@ -1234,10 +1240,11 @@ export type StageNbaContext =
   | {
       stage: "pdp";
       product: CatalogProduct;
-      /** Optional bundle that complements the displayed product. */
+      /** Optional bundle the product can be upgraded to. */
       matchingBundle?: CatalogProduct;
-      /** Full catalog used to resolve compatible accessories. */
-      catalog?: CatalogProduct[];
+      /** Unanswered FAQ labels for this product, most relevant first. The host
+       *  owns the pool and the answered-question set, so the builder stays pure. */
+      faqLabels?: string[];
     }
   | {
       stage: "cart";
@@ -1439,47 +1446,40 @@ function buildPlpNbas(
   return dedupeLabels(items).slice(0, 4);
 }
 
+/**
+ * A shopper reading about one product is already interested in it, so the row
+ * spends its slots on questions that settle a purchase — fit, texture, SPF,
+ * reviews — plus a single upsell. `Show similar` and `Compare with similar`
+ * used to hold two of the four slots and pointed back out to browsing.
+ *
+ * No "Add … to cart" chip: the PDP card above carries that CTA, and answering
+ * any of these questions appends a follow-up row that offers add and
+ * show-similar anyway.
+ */
 function buildPdpNbas(
   product: CatalogProduct,
   matchingBundle: CatalogProduct | undefined,
-  catalog: CatalogProduct[] | undefined,
+  faqLabels: string[],
 ): StageNbaItem[] {
-  const category = humanCategory(product.category);
-  // Skip "Add … to cart" — the PDP card already has a primary Add to Cart CTA.
-  const items: StageNbaItem[] = [
-    { label: "Show similar products", lane: "refinement" },
-  ];
+  const items: StageNbaItem[] = faqLabels
+    .slice(0, 3)
+    .map((label) => ({ label, lane: "confidence" as const }));
 
-  // Bundle upsell takes priority because it's the highest-AOV next move.
   if (matchingBundle && !product.isBundle) {
     items.push({
       label: `Save more with ${matchingBundle.title.split("(")[0].trim()}`,
       lane: "crossSell",
     });
+  } else if (faqLabels[3]) {
+    // Nothing to upsell to, so ask one more question rather than spend the slot
+    // on a chip that would fall through to a free-text search.
+    items.push({ label: faqLabels[3], lane: "confidence" });
   }
 
-  items.push({ label: `Compare with similar ${category}`, lane: "conversion" });
-  items.push({ label: "What do reviews say", lane: "confidence" });
-
-  // Surface a concrete, model-specific accessory chip when we have a
-  // catalog to query. Falls back to the static `COMPLEMENTS_BY_CATEGORY`
-  // suggestion if no compatible accessory is found.
-  if (items.length < 4) {
-    const accessory = catalog
-      ? findAccessoriesFor(product, catalog, { limit: 1 })[0]
-      : undefined;
-    if (accessory) {
-      items.push({ label: accessoryChipLabel(accessory), lane: "crossSell" });
-    } else {
-      const complements = COMPLEMENTS_BY_CATEGORY[product.category] ?? [];
-      const crossSell = complements.find(
-        (entry) => entry.targetCategory !== product.category,
-      );
-      items.push({
-        label: crossSell?.label ?? "Show more like this",
-        lane: "crossSell",
-      });
-    }
+  if (items.length === 0) {
+    // Every question in the pool has been answered and there's no bundle, so
+    // lateral really is the best move left.
+    items.push({ label: "Show similar products", lane: "escape" });
   }
 
   return dedupeLabels(items).slice(0, 4);
@@ -1664,7 +1664,7 @@ export function buildStageNbas(context: StageNbaContext): StageNbaItem[] {
       return buildPdpNbas(
         context.product,
         context.matchingBundle,
-        context.catalog,
+        context.faqLabels ?? [],
       );
     case "cart":
       return buildCartNbas(

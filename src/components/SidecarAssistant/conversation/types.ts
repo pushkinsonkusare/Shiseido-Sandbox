@@ -114,6 +114,9 @@ export type AgentRoutineMessage = {
   kind: "agent_routine";
   acknowledgement: string;
   sections: RoutineSection[];
+  /** True while sections are still arriving, which keeps the skeleton in the
+   *  card and the composer disabled until the turn really ends. */
+  streaming?: boolean;
 };
 
 export type AgentPdpMessage = {

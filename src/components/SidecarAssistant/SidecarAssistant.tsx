@@ -36,6 +36,7 @@ import {
   LANDING_NBA_SUCCESS_THRESHOLDS,
   ORDER_FOLLOWUP_NBAS,
   POLICY_BODIES,
+  ROUTINE_FOLLOWUP_NBAS,
   PROBING_FALLBACK_BODY,
   TRACK_ORDER_BODY,
   WELCOME_BODY,
@@ -104,6 +105,12 @@ const NARROW_LOADER_STEPS = [
 /** Cart edits go through the agent rather than straight into local state, so a
  * quantity change holds the card's totals until the round trip lands. */
 const CART_UPDATE_LATENCY_MS = 3000;
+/** The routine card writes itself a step at a time, so it needs far less silent
+ * thinking up front than a search that lands whole: the reveal is the progress
+ * indicator. */
+const ROUTINE_THINKING_MS = 2000;
+const ROUTINE_STREAM_STEP_MS = 700;
+const ROUTINE_LOADER_STEP_MS = 750;
 const PLP_PAGE_SIZE = 5;
 
 /** Maximum number of products a shopper can select at once. */
@@ -116,6 +123,10 @@ const CONTEXTUAL_ACTION_LABELS = new Set(["Show similar", "Compare", "Add to car
 
 /** Always-present FAQ pill for a single selected product. */
 const INGREDIENTS_FAQ_LABEL = "What are the ingredients?";
+
+/** Social proof, offered alongside the product's own FAQ pool. Shared so the
+ *  PDP chip builder and the click router agree on one string. */
+const REVIEWS_FAQ_LABEL = "What do reviews say";
 
 /** Normalize free-text so "Compare!", "compare these", etc. can match pills. */
 function normalizeComposerQuery(text: string): string {
@@ -345,6 +356,36 @@ const TALL_CARD_VIEWPORT_RATIO = 0.92;
 const TALL_CARD_ANCHOR_RATIO = 0.6;
 const TALL_CARD_TOP_INSET_PX = 16;
 const TALL_CARD_SETTLE_TIMEOUT_MS = 140;
+
+/** With sticky context headers on, the section's chip is docked at the top of
+ *  the transcript by the time a card is aligned, so the card has to clear the
+ *  chip as well as the inset. */
+function dockedSeparatorHeight(node: HTMLElement, anchor: HTMLElement) {
+  if (!node.classList.contains("sidecar-assistant__chat--sticky-context")) return 0;
+  const separators = Array.from(
+    node.querySelectorAll<HTMLElement>(".sidecar-assistant__context-separator"),
+  );
+  const preceding = separators.filter(
+    (separator) =>
+      separator.compareDocumentPosition(anchor) & Node.DOCUMENT_POSITION_FOLLOWING,
+  );
+  return preceding.length ? preceding[preceding.length - 1].offsetHeight : 0;
+}
+
+/** The scrollTop that parks `card`'s first line just under the transcript's top
+ *  inset. Shared by the tall-card landing and the streaming follow so a card
+ *  that grows ends up exactly where a card that lands whole does. */
+function cardTopScrollTarget(node: HTMLElement, card: HTMLElement) {
+  const chatRect = node.getBoundingClientRect();
+  const cardRect = card.getBoundingClientRect();
+  return Math.max(
+    0,
+    node.scrollTop +
+      (cardRect.top - chatRect.top) -
+      TALL_CARD_TOP_INSET_PX -
+      dockedSeparatorHeight(node, card),
+  );
+}
 /** How far into the chat viewport a context divider must scroll before the
  * island adopts its product. Clears the floating island (12px inset + its own
  * height) so a divider hands over as it slides behind the island. */
@@ -986,6 +1027,9 @@ export function SidecarAssistant({
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const previousMessageIdsRef = useRef<string[]>([]);
+  /** Set for a single commit whose scroll position is already being managed, so
+   *  the transcript's own auto-scroll stands down for it. */
+  const skipAutoScrollRef = useRef(false);
   const panelRef = useRef<HTMLElement>(null);
   // Scheduled work for the turn in flight. The handlers are kept alongside
   // their timers so "Stop" can drop them and "Retry last" can put the very same
@@ -1121,6 +1165,33 @@ export function SidecarAssistant({
     },
     [],
   );
+
+  /**
+   * Follows a card that is still writing itself. Chasing the end is right while
+   * the card still fits the transcript, but a routine card outgrows it after a
+   * step or two, and from then on the same move carries the shopper below the
+   * acknowledgement they are reading. So the card's own top edge is the floor:
+   * once it can no longer fit, it parks exactly where a tall card that lands
+   * whole parks, and the rest of the routine flows on below.
+   */
+  const followStreamingCard = useCallback(() => {
+    requestAnimationFrame(() => {
+      const node = chatRef.current;
+      if (!node) return;
+      const cards = node.querySelectorAll<HTMLElement>(
+        '[data-component="agent-routine-card"]',
+      );
+      const card = cards[cards.length - 1];
+      if (!card) return;
+      node.scrollTo({
+        top: Math.min(
+          node.scrollHeight - node.clientHeight,
+          cardTopScrollTarget(node, card),
+        ),
+        behavior: "smooth",
+      });
+    });
+  }, []);
 
   /* ---------- pure render helpers (no shopper-text / loader prefix) ---------- */
 
@@ -1424,6 +1495,28 @@ export function SidecarAssistant({
 
   /* ---------- user-facing handlers (rule-based path) ---------- */
 
+  /**
+   * Context for a PDP chip row. The FAQ pool minus whatever the shopper has
+   * already asked about this product, so a row never re-offers an answered
+   * question and keeps working through the pool across turns.
+   */
+  const buildPdpStageContext = useCallback(
+    (product: CatalogProduct) => {
+      const answered = answeredFaqsBySlugRef.current.get(product.slug);
+      const faqLabels = [
+        ...buildContextualFaqPool(product),
+        REVIEWS_FAQ_LABEL,
+      ].filter((label) => !answered?.has(label));
+      return {
+        stage: "pdp" as const,
+        product,
+        matchingBundle: findMatchingBundle(product, products),
+        faqLabels,
+      };
+    },
+    [products],
+  );
+
   const handleProductSelect = useCallback(
     (slug: string) => {
       const product = getProductBySlug(slug);
@@ -1445,12 +1538,7 @@ export function SidecarAssistant({
       scheduleResponse(() => {
         removeMessage(loaderId);
         renderPdpCard(slug);
-        const items = buildStageNbas({
-          stage: "pdp",
-          product,
-          matchingBundle: findMatchingBundle(product, products),
-          catalog: products,
-        });
+        const items = buildStageNbas(buildPdpStageContext(product));
         const nbasMessage = buildStageNbasMessage("pdp", items, true, {
           productSlug: product.slug,
         });
@@ -1462,7 +1550,14 @@ export function SidecarAssistant({
         });
       });
     },
-    [appendMessage, getProductBySlug, removeMessage, renderPdpCard, scheduleResponse],
+    [
+      appendMessage,
+      buildPdpStageContext,
+      getProductBySlug,
+      removeMessage,
+      renderPdpCard,
+      scheduleResponse,
+    ],
   );
 
   const renderPlpCard = useCallback(
@@ -1541,15 +1636,64 @@ export function SidecarAssistant({
 
       if (sections.length === 0) return false;
 
+      // The card opens on the acknowledgement alone and then writes itself a
+      // step at a time, so a five-step routine reads as being composed rather
+      // than dropped in finished.
+      const routineId = nextId("routine");
       appendMessage({
-        id: nextId("routine"),
+        id: routineId,
         kind: "agent_routine",
         acknowledgement: buildRoutineAcknowledgement(routine),
-        sections,
+        sections: [],
+        streaming: true,
+      });
+
+      sections.forEach((section, index) => {
+        const isLast = index === sections.length - 1;
+        scheduleResponse(
+          () => {
+            // Measured before the card grows: afterwards the distance always
+            // reads as far from the end, and the card would never be followed.
+            const node = chatRef.current;
+            const wasAtBottom = node
+              ? node.scrollHeight - node.scrollTop - node.clientHeight <=
+                JUMP_TO_LATEST_SLACK_PX
+              : false;
+
+            if (isLast) {
+              // The pill row lands in the same commit as the final section, and
+              // on its own the transcript would read it as a short append and
+              // jump to the end — dragging the start of a now very tall card off
+              // screen. followStreamingCard takes that decision instead.
+              skipAutoScrollRef.current = true;
+            }
+            updateMessage(routineId, (message) =>
+              message.kind === "agent_routine"
+                ? {
+                    ...message,
+                    sections: [...message.sections, section],
+                    streaming: !isLast,
+                  }
+                : message,
+            );
+            if (isLast) appendMessage(buildNbasMessage(ROUTINE_FOLLOWUP_NBAS));
+
+            if (wasAtBottom) followStreamingCard();
+          },
+          ROUTINE_STREAM_STEP_MS * (index + 1),
+        );
       });
       return true;
     },
-    [appendMessage, getProductBySlug, handleProductSelect, products],
+    [
+      appendMessage,
+      followStreamingCard,
+      getProductBySlug,
+      handleProductSelect,
+      products,
+      scheduleResponse,
+      updateMessage,
+    ],
   );
 
   const handleRoutineShowMore = useCallback(
@@ -1935,12 +2079,7 @@ export function SidecarAssistant({
       }
 
       if (lastPdpProduct) {
-        const items = buildStageNbas({
-          stage: "pdp",
-          product: lastPdpProduct,
-          matchingBundle: findMatchingBundle(lastPdpProduct, products),
-          catalog: products,
-        });
+        const items = buildStageNbas(buildPdpStageContext(lastPdpProduct));
         appendMessage(
           buildStageNbasMessage("pdp", items, true, {
             productSlug: lastPdpProduct.slug,
@@ -1985,6 +2124,7 @@ export function SidecarAssistant({
     [
       appendMessage,
       applyPromoToCart,
+      buildPdpStageContext,
       findLatestCartId,
       getProductBySlug,
       products,
@@ -2073,15 +2213,10 @@ export function SidecarAssistant({
 
       // Broad intent (skin type / concern / routine cue, no explicit category):
       // synthesise the full multi-step routine card instead of a single carousel.
+      // The card streams its own sections and appends the follow-up row when the
+      // last one lands.
       const routine = detectRoutineIntent(trimmed);
       if (routine.isRoutine && renderRoutineCard(routine)) {
-        appendMessage(
-          buildNbasMessage([
-            "Show a simpler routine",
-            "Best for sensitive skin",
-            "Budget-friendly picks",
-          ]),
-        );
         return;
       }
 
@@ -2161,6 +2296,11 @@ export function SidecarAssistant({
 
       appendMessage({ id: nextId("shopper"), kind: "shopper_text", text: trimmed });
 
+      // Broad-intent routine requests are rendered deterministically as a
+      // unified routine card on every turn, bypassing the LLM (which would
+      // otherwise return a single-category listing for these queries).
+      const routine = detectRoutineIntent(trimmed);
+
       const searchPlan = buildSearchLoaderPlan(trimmed);
       const loaderId = nextId("loader");
       appendMessage({
@@ -2168,29 +2308,22 @@ export function SidecarAssistant({
         kind: "agent_loader",
         variant: "answering",
         steps: searchPlan.steps,
-        stepIntervalMs: searchPlan.stepIntervalMs,
+        // A routine turn holds the loader for a fraction of a discovery search,
+        // so its steps have to advance faster or only the first one is read.
+        stepIntervalMs: routine.isRoutine
+          ? ROUTINE_LOADER_STEP_MS
+          : searchPlan.stepIntervalMs,
       });
 
-      // Broad-intent routine requests are rendered deterministically as a
-      // unified routine card on every turn, bypassing the LLM (which would
-      // otherwise return a single-category listing for these queries).
-      const routine = detectRoutineIntent(trimmed);
       if (routine.isRoutine) {
         firstShopperTurnHandledRef.current = true;
         scheduleResponse(() => {
           removeMessage(loaderId);
-          if (renderRoutineCard(routine)) {
-            appendMessage(
-              buildNbasMessage([
-                "Show a simpler routine",
-                "Best for sensitive skin",
-                "Budget-friendly picks",
-              ]),
-            );
-          } else {
+          // The card streams its sections and appends its own follow-up row.
+          if (!renderRoutineCard(routine)) {
             dispatchRuleBasedResponse(trimmed);
           }
-        }, searchPlan.delayMs);
+        }, ROUTINE_THINKING_MS);
         return;
       }
 
@@ -2697,12 +2830,7 @@ export function SidecarAssistant({
         ? getProductBySlug(lastCompareRef.current.recommendedSlug)
         : undefined);
     if (contextProductForRow) {
-      const items = buildStageNbas({
-        stage: "pdp",
-        product: contextProductForRow,
-        matchingBundle: findMatchingBundle(contextProductForRow, products),
-        catalog: products,
-      });
+      const items = buildStageNbas(buildPdpStageContext(contextProductForRow));
       return buildStageNbasMessage("pdp", items, false, {
         productSlug: contextProductForRow.slug,
       });
@@ -2735,7 +2863,7 @@ export function SidecarAssistant({
       intent: activePlpIntentRef.current ?? undefined,
     });
     return buildStageNbasMessage("probing", items, false);
-  }, [getProductBySlug, products, threadContextProduct]);
+  }, [buildPdpStageContext, getProductBySlug, products, threadContextProduct]);
 
   /** The utterance a loader is answering, so a stopped turn can be replayed
    * under the same words. Only the run of messages immediately before the
@@ -2869,9 +2997,9 @@ export function SidecarAssistant({
 
       removeMessage(messageId);
 
-      // PDP follow-ups are about the product on the card above — route
-      // reviews / similar / compare chips through product-scoped handlers
-      // instead of the generic free-text probe.
+      // Every PDP chip is about the product on the card above, so none of them
+      // belong to the generic free-text probe: the upsell opens the bundle it
+      // names, and everything else is a question for the FAQ resolver.
       if (
         clicked?.kind === "agent_nbas" &&
         clicked.stage === "pdp" &&
@@ -2879,12 +3007,15 @@ export function SidecarAssistant({
       ) {
         const slug = clicked.productSlug;
         const normalized = label.trim().toLowerCase();
-        if (
-          /what do reviews say/.test(normalized) ||
-          /\breviews?\b/.test(normalized)
-        ) {
-          handleContextualPill(label, slug);
-          return;
+        if (/^save more with/.test(normalized)) {
+          const product = getProductBySlug(slug);
+          const bundle = product
+            ? findMatchingBundle(product, products)
+            : undefined;
+          if (bundle) {
+            handleProductSelect(bundle.slug);
+            return;
+          }
         }
         if (
           /^show similar/.test(normalized) ||
@@ -2893,10 +3024,8 @@ export function SidecarAssistant({
           handleContextualPill("Show similar", slug);
           return;
         }
-        if (/^compare with similar/.test(normalized)) {
-          handleContextualPill("Compare", slug);
-          return;
-        }
+        handleContextualPill(label, slug);
+        return;
       }
 
       // Comparison follow-ups are about the whole table above, so they never
@@ -2915,8 +3044,11 @@ export function SidecarAssistant({
     [
       dispatchPlpRefinement,
       dispatchShopperMessage,
+      getProductBySlug,
       handleComparePill,
       handleContextualPill,
+      handleProductSelect,
+      products,
       removeMessage,
       retryCancelledTurn,
       welcomeRefreshCount,
@@ -3196,6 +3328,14 @@ export function SidecarAssistant({
       previousMessageIdsRef.current = currentIds;
       return;
     }
+    // Claimed by whoever is already scrolling for this append, and only by a
+    // commit that appended: an in-place update leaves the flag for the append
+    // it was set for.
+    if (skipAutoScrollRef.current) {
+      skipAutoScrollRef.current = false;
+      previousMessageIdsRef.current = currentIds;
+      return;
+    }
 
     const children = Array.from(node.children) as HTMLElement[];
     const appendedNodes = children.slice(-appendedCount);
@@ -3222,31 +3362,11 @@ export function SidecarAssistant({
       const anchorNode =
         appendedNodes.find((child) => child.offsetHeight > viewportHeight * TALL_CARD_ANCHOR_RATIO) ??
         appendedNodes[0];
-      // With sticky context headers on, the section's chip is docked at the top
-      // of the transcript by the time the card is aligned, so the card has to
-      // clear the chip as well as the inset.
-      const dockedHeaderHeight = () => {
-        if (!node.classList.contains("sidecar-assistant__chat--sticky-context")) return 0;
-        const separators = Array.from(
-          node.querySelectorAll<HTMLElement>(".sidecar-assistant__context-separator"),
-        );
-        const preceding = separators.filter(
-          (separator) =>
-            separator.compareDocumentPosition(anchorNode) & Node.DOCUMENT_POSITION_FOLLOWING,
-        );
-        return preceding.length ? preceding[preceding.length - 1].offsetHeight : 0;
-      };
       const alignTallAnchor = () => {
-        const chatRect = node.getBoundingClientRect();
-        const anchorRect = anchorNode.getBoundingClientRect();
-        const topTarget = Math.max(
-          0,
-          node.scrollTop +
-            (anchorRect.top - chatRect.top) -
-            TALL_CARD_TOP_INSET_PX -
-            dockedHeaderHeight(),
-        );
-        node.scrollTo({ top: topTarget, behavior: "auto" });
+        node.scrollTo({
+          top: cardTopScrollTarget(node, anchorNode),
+          behavior: "auto",
+        });
       };
 
       alignTallAnchor();
@@ -3467,8 +3587,15 @@ export function SidecarAssistant({
   // hold their controls mid-round-trip. The demo phone keeps typing enabled:
   // disabling the field would blur it and take the simulated keyboard down
   // with it after every send.
+  // A streaming routine card is still the agent talking, even though its loader
+  // is already gone, so the composer stays held until the last section lands.
   const agentReplying = useMemo(
-    () => messages.some((message) => message.kind === "agent_loader"),
+    () =>
+      messages.some(
+        (message) =>
+          message.kind === "agent_loader" ||
+          (message.kind === "agent_routine" && message.streaming === true),
+      ),
     [messages],
   );
   const composerDisabled = agentReplying && !simulateMobileKeyboard;
@@ -3654,6 +3781,7 @@ export function SidecarAssistant({
                 onAddToCart={(slug) => handleAddToCart(slug, 1)}
                 selectionLimitReached={selectedSet.size >= MAX_SELECTED_PRODUCTS}
                 accordion={accordionRecommendations}
+                streaming={message.streaming}
               />
             );
           case "agent_pdp":
