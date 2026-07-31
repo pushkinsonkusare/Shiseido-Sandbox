@@ -505,6 +505,14 @@ export function PauseIcon(props: IconProps) {
   );
 }
 
+export function StopIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor" />
+    </BaseIcon>
+  );
+}
+
 export function TagIcon(props: IconProps) {
   return (
     <BaseIcon {...props}>

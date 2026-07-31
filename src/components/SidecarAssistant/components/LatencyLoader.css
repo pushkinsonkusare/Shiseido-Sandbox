@@ -44,8 +44,62 @@
 
 .agent-loader__label {
   flex: 1 1 auto;
-  font-size: 16px;
+  /* Same size as the shopper bubble and the rest of the transcript copy. */
+  font-size: 14px;
   font-weight: var(--font-weight-medium, 500);
-  line-height: 24px;
+  line-height: 20px;
   color: var(--agentic-foreground);
+  /* Each stage is a fresh node, so it eases in instead of snapping over the
+     line it replaces. */
+  animation: agent-loader-label-in 200ms ease;
+}
+
+@keyframes agent-loader-label-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-loader__label {
+    animation: none;
+  }
+}
+
+/* Abandons the turn. Sits at the trailing edge so it reads as an action on the
+   loader rather than part of the status line. */
+.agent-loader__stop {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Matches the spinner's box, so the button doesn't stretch the loader. */
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #e5e5e5;
+  border-radius: 2px;
+  background: transparent;
+  /* Softened off the text black: the glyph is an escape hatch, not the thing
+     the loader is asking the shopper to look at. */
+  color: rgba(23, 23, 27, 0.62);
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.agent-loader__stop:hover {
+  border-color: #a3a3a3;
+  background: rgba(23, 23, 27, 0.06);
+  color: var(--agentic-foreground);
+}
+
+.agent-loader__stop:focus-visible {
+  outline: 2px solid #17171b;
+  outline-offset: 2px;
 }

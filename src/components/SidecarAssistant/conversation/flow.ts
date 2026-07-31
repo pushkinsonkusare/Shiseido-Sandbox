@@ -18,6 +18,11 @@ import {
   type ModelFamily,
   type SymptomEntry,
 } from "./symptomMap";
+import {
+  complementaryPair,
+  differentiatingSkinType,
+  priceSpread,
+} from "./compareAnswers";
 
 /* =============================================================
  * Conversation flow helpers for the SidecarAssistant.
@@ -1199,7 +1204,7 @@ export const ORDER_FOLLOWUP_NBAS = [
  * existing flow handlers (PLP/PDP/cart/order/support).
  * ============================================================= */
 
-export type NbaStage = "probing" | "plp" | "pdp" | "cart" | "order";
+export type NbaStage = "probing" | "plp" | "pdp" | "cart" | "order" | "compare";
 
 export type NbaLane =
   | "refinement"
@@ -1245,6 +1250,15 @@ export type StageNbaContext =
       orderProducts: CatalogProduct[];
       matchingBundle?: CatalogProduct;
       catalog?: CatalogProduct[];
+    }
+  | {
+      stage: "compare";
+      /** Every column of the comparison table, in display order. */
+      products: CatalogProduct[];
+      /** The column the closing recommendation picks out. */
+      recommended: CatalogProduct;
+      /** Slugs already in the cart, so the commit chip isn't re-offered. */
+      inCartSlugs?: string[];
     };
 
 /**
@@ -1575,6 +1589,61 @@ function buildOrderNbas(
   return dedupeLabels(items).slice(0, 4);
 }
 
+/** Price gap that makes "show me something cheaper" a real question rather
+ *  than a rounding difference. */
+const COMPARE_CHEAPER_THRESHOLD = 0.25;
+
+/**
+ * Follow-ups under a comparison table. The table already carries the
+ * attributes and a per-column "Add to cart", so these chips cover what it
+ * leaves open: the reasoning behind the recommendation, fit for this shopper,
+ * a one-tap commit to the pick, and whether two of the columns pair up.
+ *
+ * Every chip is gated on a grounded answer existing, so the fit chip only
+ * appears when the skin-type rows genuinely differ and "Can I use both?" only
+ * when the products really do sit at different steps.
+ */
+function buildCompareNbas(
+  products: CatalogProduct[],
+  recommended: CatalogProduct,
+  inCartSlugs: string[],
+): StageNbaItem[] {
+  const items: StageNbaItem[] = [
+    { label: `Why the ${recommended.title}?`, lane: "confidence" },
+  ];
+
+  const differentiator = differentiatingSkinType(products);
+  items.push(
+    differentiator
+      ? {
+          label: `Which suits ${differentiator.toLowerCase()} skin?`,
+          lane: "confidence",
+        }
+      : { label: "What's the main difference?", lane: "confidence" },
+  );
+
+  if (!inCartSlugs.includes(recommended.slug)) {
+    items.push({ label: `Add the ${recommended.title}`, lane: "conversion" });
+  }
+
+  if (complementaryPair(products)) {
+    items.push({ label: "Can I use both?", lane: "crossSell" });
+  } else {
+    // Only when the pick costs meaningfully more than another column, which is
+    // when "is there something cheaper?" is the shopper's actual objection.
+    const spread = priceSpread(products);
+    if (
+      spread &&
+      spread.fraction >= COMPARE_CHEAPER_THRESHOLD &&
+      spread.cheapest.slug !== recommended.slug
+    ) {
+      items.push({ label: "Show a cheaper option", lane: "refinement" });
+    }
+  }
+
+  return dedupeLabels(items).slice(0, 4);
+}
+
 /**
  * Build dynamic NBAs for a given conversation stage.
  * The host (`SidecarAssistant.tsx`) supplies stage-specific context;
@@ -1608,6 +1677,12 @@ export function buildStageNbas(context: StageNbaContext): StageNbaItem[] {
         context.orderProducts,
         context.matchingBundle,
         context.catalog,
+      );
+    case "compare":
+      return buildCompareNbas(
+        context.products,
+        context.recommended,
+        context.inCartSlugs ?? [],
       );
   }
 }

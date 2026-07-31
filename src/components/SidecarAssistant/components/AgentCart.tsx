@@ -368,12 +368,13 @@ export function AgentCart({
               value={promoCode}
               onChange={(event) => setPromoCode(event.target.value)}
               aria-label="Coupon code"
+              disabled={updating}
             />
             <button
               type="submit"
               className="agent-summary__promo-submit"
               aria-label="Apply coupon code"
-              disabled={!promoCode.trim()}
+              disabled={updating || !promoCode.trim()}
             >
               <ArrowRightIcon width={16} height={16} />
             </button>

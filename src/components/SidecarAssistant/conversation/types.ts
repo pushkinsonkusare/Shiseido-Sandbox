@@ -68,6 +68,11 @@ export type AgentLoaderMessage = {
   id: string;
   kind: "agent_loader";
   variant: LatencyLoaderVariant;
+  /** Stages to walk through while the turn runs, in place of the variant's
+   *  single line. Used by searches, which take long enough to narrate. */
+  steps?: string[];
+  /** How long each stage holds before the next one takes over. */
+  stepIntervalMs?: number;
 };
 
 export type AgentPlpMessage = {

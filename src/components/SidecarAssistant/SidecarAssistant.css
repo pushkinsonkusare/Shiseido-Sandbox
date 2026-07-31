@@ -207,6 +207,46 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   outline-offset: 1px;
 }
 
+/* The immersive stand-in for the floating cart button. Same shape as its
+   neighbours in the header, with the island's totals stack alongside it. */
+.sidecar-assistant__header-cart {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  /* The action row is packed at 2px; the cart is a different kind of control,
+     so it gets a little air before the icon buttons. */
+  margin-right: 6px;
+}
+
+.sidecar-assistant__header-cart-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 14px;
+  white-space: nowrap;
+}
+
+.sidecar-assistant__header-cart-total {
+  font-size: 12px;
+  font-weight: 600;
+  color: #17171b;
+}
+
+.sidecar-assistant__header-cart-count {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.sidecar-assistant__header-cart-btn {
+  /* Anchors the count badge. */
+  position: relative;
+}
+
+/* Brand red, as it was on the FAB this replaces. */
+.sidecar-assistant__header-cart-btn .sidecar-assistant__context-island-badge {
+  background: #8a1424;
+}
+
 /* Floats over the top of the chat rather than sitting in the header stack, so
    the transcript scrolls underneath it. Inset on all sides with a shadow so it
    reads as a raised island. */
@@ -429,8 +469,8 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
    transcript; the chip alone lifts off the messages passing underneath. */
 .sidecar-assistant__chat--sticky-context .sidecar-assistant__context-separator-chip {
   box-shadow:
-    0 1px 2px rgba(23, 23, 27, 0.06),
-    0 6px 16px rgba(23, 23, 27, 0.1);
+    0 1px 1px rgba(23, 23, 27, 0.03),
+    0 6px 14px rgba(23, 23, 27, 0.05);
 }
 
 .sidecar-assistant__context-separator-chip {
@@ -619,6 +659,20 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
     20px,
     calc((100% - var(--sxs-immersive-column)) / 2)
   );
+}
+
+/* The transcript column here is more than twice the docked one, so the bubble's
+   300px cap folds a long question into a narrow ribbon beside the full-width
+   cards. Take a share of the column instead - the same 300-of-380 it holds when
+   docked - so it scales with whatever the column is. */
+.sxs-layout__panel--detached .sidecar-assistant__user-bubble {
+  max-width: 80%;
+}
+
+/* Full width leaves the button hard against the panel edge, so it sits a touch
+   further in than the composer here. */
+.sxs-layout__panel--detached .sidecar-assistant__jump-to-latest {
+  right: calc(var(--sidecar-composer-inset) + 8px);
 }
 
 /* Floating cart button, parked just off the docked context chip so the two read
@@ -1198,13 +1252,38 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   color: rgba(23, 23, 27, 1);
 }
 
+/* Three states, told entirely through the border: grey at rest, ink when the
+   shopper is in the field, pale while the agent has the turn. */
 .sidecar-assistant__input-shell {
   display: flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid #17171b;
+  border: 1px solid #a3a3a3;
   padding: 12px;
   background: #ffffff;
+  transition: border-color 120ms ease;
+}
+
+.sidecar-assistant__input-shell:focus-within:not(.sidecar-assistant__input-shell--disabled) {
+  border-color: #17171b;
+}
+
+.sidecar-assistant__input-shell--disabled {
+  border-color: #e5e5e5;
+  cursor: not-allowed;
+}
+
+/* Holds the utterance that is in flight, so it reads as sent rather than
+   editable. */
+.sidecar-assistant__input:disabled {
+  color: rgba(23, 23, 27, 0.4);
+  cursor: not-allowed;
+}
+
+/* Carries the state on its own for turns the shopper never typed, so it has to
+   sit visibly below the resting placeholder rather than a shade under it. */
+.sidecar-assistant__input:disabled::placeholder {
+  color: rgba(23, 23, 27, 0.26);
 }
 
 .sidecar-assistant__input {

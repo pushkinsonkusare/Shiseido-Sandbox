@@ -65,6 +65,15 @@ import type { ChatMessage, RoutineSection } from "./conversation/types";
 import type { CatalogProduct } from "../../catalog/catalog";
 import type { AskAssistantEventDetail } from "../../pages/ProductDetailPage/PdpNbaPanel";
 import { resolveProductFaq } from "../SideBySideAssistant/conversation/productFaq";
+import {
+  buildCompareDifferenceAnswer,
+  buildCompareFitAnswer,
+  buildCompareRationale,
+  buildNoCheaperAnswer,
+  buildUseBothAnswer,
+  priceSpread,
+  type SkinType,
+} from "./conversation/compareAnswers";
 import { createOpenAIAgent, type AgentAction, type OpenAIAgent } from "./agent/openaiAgent";
 import { isLlmConfigured } from "../../lib/openaiClient";
 import { stripEmDashes } from "../../lib/sanitizeText";
@@ -77,6 +86,21 @@ const NUDGE_INTERVAL_MS = 90_000;
 const NUDGE_DURATION_MS = 2500;
 
 const RESPONSE_LATENCY_MS = 1200;
+/** An open-ended ask reads as real work, so the agent takes the time to narrate
+ * it. A query that already carries filters is closer to a lookup. */
+const DISCOVERY_LATENCY_MS = 5000;
+const NARROW_LATENCY_MS = 3000;
+const DISCOVERY_LOADER_STEPS = [
+  "Understanding your request",
+  "Looking through the range",
+  "Matching the best products",
+  "Getting your picks ready",
+];
+const NARROW_LOADER_STEPS = [
+  "Applying your filters",
+  "Checking what's in stock",
+  "Getting your picks ready",
+];
 /** Cart edits go through the agent rather than straight into local state, so a
  * quantity change holds the card's totals until the round trip lands. */
 const CART_UPDATE_LATENCY_MS = 3000;
@@ -339,6 +363,50 @@ const JUMP_TO_LATEST_SLACK_PX = 40;
  * end follows a beat later, which would otherwise blink the button on and off. */
 const JUMP_TO_LATEST_SHOW_DELAY_MS = 250;
 
+/** Message kinds that are an agent turn talking to the shopper, and so should
+ * never be the last thing in the transcript without suggestions under them. */
+const NEEDS_FOLLOW_UP_ROW = new Set<ChatMessage["kind"]>([
+  "agent_simple",
+  "agent_plp",
+  "agent_routine",
+  "agent_pdp",
+  "agent_compare",
+  "agent_cart",
+  "agent_order",
+]);
+/** Long enough for a flow to append its own row first, short enough that the
+ * pause doesn't read as the agent having nothing more to offer. */
+const NBA_FALLBACK_DELAY_MS = 500;
+
+const HYGIENE_TITLE: Record<HygieneTopic, string> = {
+  return: "Returns & refunds",
+  replacement: "Replacement service",
+  warranty: "Warranty & repair",
+  shipping: "Shipping & delivery",
+};
+
+/** A response waiting on its timer, kept whole so a cancelled turn can be put
+ * back on the clock exactly as it was scheduled. */
+type PendingResponse = {
+  timeoutId: number;
+  handler: () => void;
+  delay: number;
+};
+
+/** Everything needed to replay a turn the shopper stopped: the utterance to
+ * echo, the loaders that were pulled, and the work that never ran. */
+type CancelledTurn = {
+  prompt?: string;
+  loaders: ChatMessage[];
+  responses: Array<{ handler: () => void; delay: number }>;
+};
+
+const CANCELLED_TURN_BODY =
+  "You cancelled the last prompt. Let me know if you want to look for something else.";
+/** Leads the row after a cancellation, so a turn the shopper stopped - or one
+ * that stalled and had to be stopped - is one tap away from running again. */
+const RETRY_NBA_LABEL = "Retry last";
+
 let messageIdCounter = 0;
 function nextId(prefix: string) {
   messageIdCounter += 1;
@@ -514,6 +582,29 @@ function buildCompareRows(products: CatalogProduct[]): AgentCompareRow[] {
   return rows;
 }
 
+/** Slugs already in the cart, read off the single cart card `renderCartCard`
+ *  keeps up to date, so the compare row can skip a redundant commit chip. */
+function cartSlugsFromMessages(messages: ChatMessage[]): string[] {
+  const cart = [...messages]
+    .reverse()
+    .find((message): message is Extract<ChatMessage, { kind: "agent_cart" }> =>
+      message.kind === "agent_cart",
+    );
+  return cart ? cart.items.map((item) => item.id.replace(/^cart-/, "")) : [];
+}
+
+/** The skin type a fit chip asks about ("Which suits dry skin?"). */
+function skinTypeFromFitLabel(label: string): SkinType | null {
+  const match = /^which suits (\w+) skin/i.exec(label.trim());
+  if (!match) return null;
+  const candidates: SkinType[] = ["Oily", "Dry", "Combination", "Normal"];
+  return (
+    candidates.find(
+      (type) => type.toLowerCase() === match[1].toLowerCase(),
+    ) ?? null
+  );
+}
+
 function toCartItem(product: CatalogProduct, quantity: number): AgentCartItem {
   return {
     id: `cart-${product.slug}`,
@@ -617,6 +708,45 @@ function buildStageNbasMessage(
   });
 }
 
+/**
+ * How long a search should take, and what to say while it does.
+ *
+ * `Intent.kind` can't make this call: "help me choose a serum" names a
+ * category, so it classifies `direct` exactly like "serum under $100". What
+ * separates them is whether the query hands over anything to filter on.
+ */
+function buildSearchLoaderPlan(
+  query: string,
+  options: { refinement?: boolean } = {},
+): {
+  delayMs: number;
+  steps: string[];
+  stepIntervalMs: number;
+} {
+  const intent = classifyIntent(query);
+  const narrowing = Boolean(
+    intent.priceMax ||
+      intent.priceMin ||
+      intent.tier ||
+      intent.compatibleWith ||
+      intent.requiredTags?.length ||
+      intent.activities?.length ||
+      intent.subtypeHints?.length,
+  );
+  // Refining is never exploring: the shopper is already looking at results and
+  // only wants them cut down, whatever the pill's wording carries.
+  const exploring =
+    !options.refinement &&
+    (detectRoutineIntent(query).isRoutine || !narrowing);
+  const delayMs = exploring ? DISCOVERY_LATENCY_MS : NARROW_LATENCY_MS;
+  const steps = exploring ? DISCOVERY_LOADER_STEPS : NARROW_LOADER_STEPS;
+  return {
+    delayMs,
+    steps,
+    stepIntervalMs: Math.round(delayMs / steps.length),
+  };
+}
+
 function buildNbaItems(labels: ReadonlyArray<string>, idPrefix = "nba"): AgentNBA[] {
   return labels.map((label) => ({
     id: `${idPrefix}-${label.replace(/\W+/g, "-").toLowerCase()}-${nextId("nba")}`,
@@ -715,6 +845,9 @@ export function SidecarAssistant({
   const [hasUserOpenedFab, setHasUserOpenedFab] = useState(false);
   const [isNudging, setIsNudging] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  // The utterance the shopper just typed, kept only for the beat the composer
+  // is disabled so the field shows what is in flight instead of going blank.
+  const [sentDraft, setSentDraft] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [welcomeRefreshCount, setWelcomeRefreshCount] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -854,7 +987,11 @@ export function SidecarAssistant({
   const inputRef = useRef<HTMLInputElement>(null);
   const previousMessageIdsRef = useRef<string[]>([]);
   const panelRef = useRef<HTMLElement>(null);
-  const pendingTimeouts = useRef<number[]>([]);
+  // Scheduled work for the turn in flight. The handlers are kept alongside
+  // their timers so "Stop" can drop them and "Retry last" can put the very same
+  // turn back on the clock.
+  const pendingResponses = useRef<PendingResponse[]>([]);
+  const cancelledTurnRef = useRef<CancelledTurn | null>(null);
   const messagesRef = useRef<ChatMessage[]>([]);
   // Slug of the product the most recent context separator announced, so we
   // only drop a fresh divider when the FAQ context switches products.
@@ -874,6 +1011,15 @@ export function SidecarAssistant({
     stage: NbaStage | "welcome";
     lane?: NbaLane;
     label: string;
+  } | null>(null);
+  // The columns of the most recent comparison. Its follow-up chips speak about
+  // the whole set, but an NBA row only carries one product slug, so the set is
+  // kept here instead.
+  const lastCompareRef = useRef<{
+    slugs: string[];
+    recommendedSlug: string;
+    /** Chips already used, so re-offering the row doesn't repeat them. */
+    answered: string[];
   } | null>(null);
 
   useEffect(() => {
@@ -966,12 +1112,12 @@ export function SidecarAssistant({
   const scheduleResponse = useCallback(
     (handler: () => void, delay = RESPONSE_LATENCY_MS) => {
       const timeoutId = window.setTimeout(() => {
-        handler();
-        pendingTimeouts.current = pendingTimeouts.current.filter(
-          (id) => id !== timeoutId,
+        pendingResponses.current = pendingResponses.current.filter(
+          (entry) => entry.timeoutId !== timeoutId,
         );
+        handler();
       }, delay);
-      pendingTimeouts.current.push(timeoutId);
+      pendingResponses.current.push({ timeoutId, handler, delay });
     },
     [],
   );
@@ -1909,12 +2055,6 @@ export function SidecarAssistant({
 
       const hygieneTopic = classifyHygieneTopic(trimmed);
       if (hygieneTopic) {
-        const HYGIENE_TITLE: Record<HygieneTopic, string> = {
-          return: "Returns & refunds",
-          replacement: "Replacement service",
-          warranty: "Warranty & repair",
-          shipping: "Shipping & delivery",
-        };
         appendMessage({
           id: nextId("agent"),
           kind: "agent_simple",
@@ -1997,12 +2137,19 @@ export function SidecarAssistant({
       };
 
       appendMessage({ id: nextId("shopper"), kind: "shopper_text", text: label });
+      const refinePlan = buildSearchLoaderPlan(label, { refinement: true });
       const loaderId = nextId("loader");
-      appendMessage({ id: loaderId, kind: "agent_loader", variant: "answering" });
+      appendMessage({
+        id: loaderId,
+        kind: "agent_loader",
+        variant: "answering",
+        steps: refinePlan.steps,
+        stepIntervalMs: refinePlan.stepIntervalMs,
+      });
       scheduleResponse(() => {
         removeMessage(loaderId);
         renderRankedPlp(label, merged);
-      });
+      }, refinePlan.delayMs);
     },
     [appendMessage, removeMessage, renderRankedPlp, scheduleResponse],
   );
@@ -2014,8 +2161,15 @@ export function SidecarAssistant({
 
       appendMessage({ id: nextId("shopper"), kind: "shopper_text", text: trimmed });
 
+      const searchPlan = buildSearchLoaderPlan(trimmed);
       const loaderId = nextId("loader");
-      appendMessage({ id: loaderId, kind: "agent_loader", variant: "answering" });
+      appendMessage({
+        id: loaderId,
+        kind: "agent_loader",
+        variant: "answering",
+        steps: searchPlan.steps,
+        stepIntervalMs: searchPlan.stepIntervalMs,
+      });
 
       // Broad-intent routine requests are rendered deterministically as a
       // unified routine card on every turn, bypassing the LLM (which would
@@ -2036,7 +2190,7 @@ export function SidecarAssistant({
           } else {
             dispatchRuleBasedResponse(trimmed);
           }
-        });
+        }, searchPlan.delayMs);
         return;
       }
 
@@ -2045,7 +2199,7 @@ export function SidecarAssistant({
         scheduleResponse(() => {
           removeMessage(loaderId);
           dispatchRuleBasedResponse(trimmed);
-        });
+        }, searchPlan.delayMs);
         return;
       }
 
@@ -2079,7 +2233,7 @@ export function SidecarAssistant({
       scheduleResponse(() => {
         removeMessage(loaderId);
         dispatchRuleBasedResponse(trimmed);
-      });
+      }, searchPlan.delayMs);
     },
     [
       appendMessage,
@@ -2269,6 +2423,30 @@ export function SidecarAssistant({
             recommendation,
             recommendedSlug: recommended.slug,
           });
+          // The table answers "how do they differ on paper" and offers a
+          // per-column add, so the follow-up row covers what it can't: the
+          // reasoning behind the pick, fit, and whether two of them pair up.
+          lastCompareRef.current = {
+            slugs: comparedProducts.map((product) => product.slug),
+            recommendedSlug: recommended.slug,
+            answered: [],
+          };
+          const compareNbas = buildStageNbas({
+            stage: "compare",
+            products: comparedProducts,
+            recommended,
+            inCartSlugs: cartSlugsFromMessages(messagesRef.current),
+          });
+          appendMessage(
+            buildStageNbasMessage("compare", compareNbas, false, {
+              productSlug: recommended.slug,
+            }),
+          );
+          emitAssistantTelemetry("nba_impression", {
+            stage: "compare",
+            labels: compareNbas.map((item) => item.label),
+            lanes: compareNbas.map((item) => item.lane),
+          });
           setSelectedSlugs([]);
         });
         return;
@@ -2334,8 +2512,328 @@ export function SidecarAssistant({
     [appendMessage, removeMessage, scheduleResponse],
   );
 
+  /** A PDP hygiene pill ("What's the return policy?"). The answer is
+   * store-wide rather than product-specific, but the shopper asked it while
+   * looking at one product, so the turn opens the same context divider a
+   * product FAQ would and hands back that product's follow-ups instead of
+   * dropping them into generic discovery. */
+  const startPolicyThread = useCallback(
+    (product: CatalogProduct, prompt: string) => {
+      if (lastSeparatorSlugRef.current !== product.slug) {
+        appendMessage({
+          id: nextId("sep"),
+          kind: "context_separator",
+          productSlug: product.slug,
+        });
+        lastSeparatorSlugRef.current = product.slug;
+      }
+      appendMessage(
+        { id: nextId("shopper"), kind: "shopper_text", text: prompt },
+        { keepContext: true },
+      );
+      const loaderId = nextId("loader");
+      appendMessage({ id: loaderId, kind: "agent_loader", variant: "answering" });
+      const topic = classifyHygieneTopic(prompt) ?? "return";
+      scheduleResponse(() => {
+        removeMessage(loaderId);
+        appendMessage({
+          id: nextId("agent"),
+          kind: "agent_simple",
+          title: HYGIENE_TITLE[topic],
+          body: POLICY_BODIES[topic],
+        });
+        appendMessage({
+          id: nextId("nbas"),
+          kind: "agent_nbas",
+          contextual: true,
+          productSlug: product.slug,
+          regenerateButton: false,
+          nbas: buildNbaItems(
+            buildContextualFollowupLabels(
+              product,
+              answeredFaqsBySlugRef.current.get(product.slug) ?? new Set<string>(),
+            ),
+            "nba-followup",
+          ),
+        });
+        setContextualThreadActive(true);
+      });
+    },
+    [appendMessage, removeMessage, scheduleResponse],
+  );
+
+  /** Follow-ups under a comparison table. They speak about every column, so
+   * the compared set comes from `lastCompareRef` rather than the row's single
+   * product slug, and the answers are catalog-derived so they hold without an
+   * API key. */
+  const handleComparePill = useCallback(
+    (label: string) => {
+      const snapshot = lastCompareRef.current;
+      const compared = (snapshot?.slugs ?? [])
+        .map((slug) => getProductBySlug(slug))
+        .filter((product): product is CatalogProduct => Boolean(product));
+      const recommended = snapshot
+        ? getProductBySlug(snapshot.recommendedSlug)
+        : undefined;
+      // Without the compared set there is nothing grounded to say, so let the
+      // label take the normal free-text path.
+      if (!snapshot || compared.length < 2 || !recommended) {
+        dispatchShopperMessage(label);
+        return;
+      }
+
+      if (/^add the /i.test(label)) {
+        handleAddToCart(recommended.slug, 1);
+        return;
+      }
+
+      // A stage row is consumed on click, so re-offer what's left of it after
+      // the answer — otherwise the comparison dead-ends again one turn later.
+      lastCompareRef.current = {
+        ...snapshot,
+        answered: [...snapshot.answered, label.trim().toLowerCase()],
+      };
+      const offerRemainingPills = () => {
+        const answered = new Set(lastCompareRef.current?.answered ?? []);
+        const remaining = buildStageNbas({
+          stage: "compare",
+          products: compared,
+          recommended,
+          inCartSlugs: cartSlugsFromMessages(messagesRef.current),
+        }).filter((item) => !answered.has(item.label.trim().toLowerCase()));
+        if (remaining.length === 0) return;
+        appendMessage(
+          buildStageNbasMessage("compare", remaining, false, {
+            productSlug: recommended.slug,
+          }),
+        );
+        emitAssistantTelemetry("nba_impression", {
+          stage: "compare",
+          labels: remaining.map((item) => item.label),
+          lanes: remaining.map((item) => item.lane),
+        });
+      };
+
+      appendMessage({ id: nextId("shopper"), kind: "shopper_text", text: label });
+      const loaderId = nextId("loader");
+      appendMessage({ id: loaderId, kind: "agent_loader", variant: "answering" });
+
+      if (/^show a cheaper option/i.test(label)) {
+        scheduleResponse(() => {
+          removeMessage(loaderId);
+          const spread = priceSpread(compared);
+          // The chip only shows when the pick isn't the cheapest column, so
+          // "cheaper" means cheaper than the pick, not than the whole table.
+          const ceiling = recommended.price ?? 0;
+          const comparedSlugs = new Set(compared.map((product) => product.slug));
+          const cheaper = products
+            .filter(
+              (product) =>
+                product.category === recommended.category &&
+                !comparedSlugs.has(product.slug) &&
+                (product.price ?? 0) > 0 &&
+                (product.price ?? 0) < ceiling,
+            )
+            .sort(
+              (a, b) =>
+                (b.rating ?? 0) - (a.rating ?? 0) ||
+                (a.price ?? 0) - (b.price ?? 0),
+            );
+          if (cheaper.length === 0) {
+            appendMessage({
+              id: nextId("agent"),
+              kind: "agent_simple",
+              body: buildNoCheaperAnswer(spread?.cheapest ?? recommended),
+            });
+            offerRemainingPills();
+            return;
+          }
+          const firstPage = cheaper.slice(0, PLP_PAGE_SIZE);
+          const rest = cheaper.slice(PLP_PAGE_SIZE);
+          renderPlpCard(
+            `Here's what comes in under ${recommended.priceFormatted}:`,
+            firstPage.map((product) => product.slug),
+            rest.length > 0,
+            { remainingSlugs: rest.map((product) => product.slug) },
+          );
+          offerRemainingPills();
+        });
+        return;
+      }
+
+      const fitSkinType = skinTypeFromFitLabel(label);
+      const body = /^why the /i.test(label)
+        ? buildCompareRationale(compared, recommended)
+        : fitSkinType
+          ? buildCompareFitAnswer(compared, fitSkinType)
+          : /^can i use both/i.test(label)
+            ? buildUseBothAnswer(compared)
+            : buildCompareDifferenceAnswer(compared);
+
+      scheduleResponse(() => {
+        removeMessage(loaderId);
+        appendMessage({ id: nextId("agent"), kind: "agent_simple", body });
+        offerRemainingPills();
+      });
+    },
+    [
+      appendMessage,
+      dispatchShopperMessage,
+      getProductBySlug,
+      handleAddToCart,
+      products,
+      removeMessage,
+      renderPlpCard,
+      scheduleResponse,
+    ],
+  );
+
+  // The row a turn falls back to when the flow that produced it didn't append
+  // one: product context wins, then the cart, then a fresh probe.
+  const buildFallbackNbaRow = useCallback((): ChatMessage => {
+    const contextProductForRow =
+      threadContextProduct ??
+      (lastCompareRef.current
+        ? getProductBySlug(lastCompareRef.current.recommendedSlug)
+        : undefined);
+    if (contextProductForRow) {
+      const items = buildStageNbas({
+        stage: "pdp",
+        product: contextProductForRow,
+        matchingBundle: findMatchingBundle(contextProductForRow, products),
+        catalog: products,
+      });
+      return buildStageNbasMessage("pdp", items, false, {
+        productSlug: contextProductForRow.slug,
+      });
+    }
+
+    const latestCart = [...messagesRef.current]
+      .reverse()
+      .find((message): message is Extract<ChatMessage, { kind: "agent_cart" }> =>
+        message.kind === "agent_cart",
+      );
+    const cartProducts = cartSlugsFromMessages(messagesRef.current)
+      .map((slug) => getProductBySlug(slug))
+      .filter((product): product is CatalogProduct => Boolean(product));
+    if (cartProducts.length > 0) {
+      const items = buildStageNbas({
+        stage: "cart",
+        cartProducts,
+        matchingBundle: findMatchingBundle(cartProducts[0], products),
+        catalog: products,
+      }).filter(
+        // The promo chip is the likeliest reason this row is a fallback at
+        // all, so don't hand it straight back after the code has landed.
+        (item) => !(latestCart?.appliedPromo && /^apply promo/i.test(item.label)),
+      );
+      return buildStageNbasMessage("cart", items, false);
+    }
+
+    const items = buildStageNbas({
+      stage: "probing",
+      intent: activePlpIntentRef.current ?? undefined,
+    });
+    return buildStageNbasMessage("probing", items, false);
+  }, [getProductBySlug, products, threadContextProduct]);
+
+  /** The utterance a loader is answering, so a stopped turn can be replayed
+   * under the same words. Only the run of messages immediately before the
+   * loader counts - an older bubble further up belongs to a finished turn. */
+  const promptBehindLoader = useCallback((loaderIndex: number) => {
+    for (let index = loaderIndex - 1; index >= 0; index -= 1) {
+      const message = messagesRef.current[index];
+      if (message.kind === "shopper_text") return message.text;
+      if (message.kind !== "context_separator" && message.kind !== "context_end") {
+        return undefined;
+      }
+    }
+    return undefined;
+  }, []);
+
+  /** "Stop" on the loader. Drops the work in flight and hands the turn back to
+   * the shopper rather than leaving them watching a spinner that may never
+   * resolve. */
+  const handleCancelResponse = useCallback(() => {
+    const pending = pendingResponses.current;
+    pendingResponses.current = [];
+    pending.forEach((entry) => window.clearTimeout(entry.timeoutId));
+
+    const loaderIndex = messagesRef.current.findIndex(
+      (message) => message.kind === "agent_loader",
+    );
+    const loaders = messagesRef.current.filter(
+      (message) => message.kind === "agent_loader",
+    );
+    cancelledTurnRef.current = {
+      prompt: loaderIndex >= 0 ? promptBehindLoader(loaderIndex) : undefined,
+      loaders,
+      responses: pending.map(({ handler, delay }) => ({ handler, delay })),
+    };
+    loaders.forEach((loader) => removeMessage(loader.id));
+    // A cart edit rides its own timer with the steppers held; cancelling the
+    // timer has to release them or the card stays locked.
+    setUpdatingCart(null);
+
+    appendMessage({
+      id: nextId("agent"),
+      kind: "agent_simple",
+      body: CANCELLED_TURN_BODY,
+    });
+
+    const row = buildFallbackNbaRow();
+    const contextual = row.kind === "agent_nbas" ? row.nbas.slice(0, 2) : [];
+    const cancelRow: ChatMessage = {
+      ...(row as Extract<ChatMessage, { kind: "agent_nbas" }>),
+      id: nextId("nbas"),
+      nbas: [...buildNbaItems([RETRY_NBA_LABEL], "nba-retry"), ...contextual],
+    };
+    appendMessage(cancelRow);
+    emitAssistantTelemetry("response_cancelled", {
+      loaders: loaders.length,
+      pending: pending.length,
+      labels: cancelRow.kind === "agent_nbas"
+        ? cancelRow.nbas.map((nba) => nba.label)
+        : [],
+    });
+  }, [appendMessage, buildFallbackNbaRow, promptBehindLoader, removeMessage]);
+
+  /** "Retry last". Puts the cancelled turn's own scheduled work back on the
+   * clock, so the shopper gets the answer they stopped waiting for rather than
+   * an approximation of it. */
+  const retryCancelledTurn = useCallback(() => {
+    const turn = cancelledTurnRef.current;
+    cancelledTurnRef.current = null;
+    if (!turn) return;
+    emitAssistantTelemetry("response_retried", { prompt: turn.prompt });
+
+    // Nothing was left to run (the answer landed as the shopper hit stop), so
+    // re-ask instead of replaying an empty turn.
+    if (turn.responses.length === 0) {
+      if (turn.prompt) dispatchShopperMessage(turn.prompt);
+      return;
+    }
+
+    if (turn.prompt) {
+      appendMessage({
+        id: nextId("shopper"),
+        kind: "shopper_text",
+        text: turn.prompt,
+      });
+    }
+    // Same ids the pending handlers close over, so they still clear their own
+    // loaders when they run.
+    turn.loaders.forEach((loader) => appendMessage(loader));
+    turn.responses.forEach(({ handler, delay }) => scheduleResponse(handler, delay));
+  }, [appendMessage, dispatchShopperMessage, scheduleResponse]);
+
   const handleNbaSelect = useCallback(
     (messageId: string, label: string) => {
+      if (label === RETRY_NBA_LABEL && cancelledTurnRef.current) {
+        removeMessage(messageId);
+        retryCancelledTurn();
+        return;
+      }
       if (messageId === welcomeNbasMessageIdRef.current) {
         const lane = getLandingNbaLane(label);
         emitAssistantTelemetry("landing_nba_click", {
@@ -2401,6 +2899,13 @@ export function SidecarAssistant({
         }
       }
 
+      // Comparison follow-ups are about the whole table above, so they never
+      // go through the single-product contextual handler.
+      if (clicked?.kind === "agent_nbas" && clicked.stage === "compare") {
+        handleComparePill(label);
+        return;
+      }
+
       if (isPlpRefinement && activePlpIntentRef.current?.categories?.length) {
         dispatchPlpRefinement(label);
         return;
@@ -2410,8 +2915,10 @@ export function SidecarAssistant({
     [
       dispatchPlpRefinement,
       dispatchShopperMessage,
+      handleComparePill,
       handleContextualPill,
       removeMessage,
+      retryCancelledTurn,
       welcomeRefreshCount,
     ],
   );
@@ -2536,6 +3043,12 @@ export function SidecarAssistant({
           handleContextualPill(prompt, product.slug);
           return;
         }
+        // Policy pills read as context-free once they land in the transcript,
+        // so they carry their product across too.
+        if (product && pillKind === "hygiene") {
+          startPolicyThread(product, prompt);
+          return;
+        }
         dispatchShopperMessage(prompt);
       });
     },
@@ -2544,6 +3057,7 @@ export function SidecarAssistant({
       getProductBySlug,
       handleContextualPill,
       startOpenQuestionThread,
+      startPolicyThread,
     ],
   );
 
@@ -2630,6 +3144,35 @@ export function SidecarAssistant({
       thresholds: LANDING_NBA_SUCCESS_THRESHOLDS,
     });
   }, [isOpen, messages.length, userTestingLock]);
+
+  // No agent turn should dead-end. Most flows append their own follow-up row;
+  // this covers the ones that don't - policy and promo replies, "no matches",
+  // and any answer that exhausts its own suggestions - once the turn has
+  // settled, so the shopper always has somewhere to go next.
+  useEffect(() => {
+    const last = messages[messages.length - 1];
+    if (!last || !NEEDS_FOLLOW_UP_ROW.has(last.kind)) return;
+    const timer = window.setTimeout(() => {
+      // A scheduled response is still mid-flight, and it may well append the
+      // row itself; its own message will re-run this effect either way.
+      if (pendingResponses.current.length > 0) return;
+      const settled = messagesRef.current;
+      if (settled[settled.length - 1]?.id !== last.id) return;
+      const row = buildFallbackNbaRow();
+      appendMessage(row);
+      if (row.kind === "agent_nbas" && row.stage) {
+        emitAssistantTelemetry("nba_impression", {
+          stage: row.stage,
+          labels: row.nbas.map((nba) => nba.label),
+          lanes: row.laneByLabel
+            ? row.nbas.map((nba) => row.laneByLabel?.[nba.label])
+            : [],
+          fallback: true,
+        });
+      }
+    }, NBA_FALLBACK_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [messages, appendMessage, buildFallbackNbaRow]);
 
   // Hybrid auto-scroll:
   // - Small new cards stay bottom-oriented.
@@ -2905,8 +3448,10 @@ export function SidecarAssistant({
   // Clear pending response timers on unmount / close.
   useEffect(() => {
     return () => {
-      pendingTimeouts.current.forEach((id) => window.clearTimeout(id));
-      pendingTimeouts.current = [];
+      pendingResponses.current.forEach((entry) =>
+        window.clearTimeout(entry.timeoutId),
+      );
+      pendingResponses.current = [];
     };
   }, []);
 
@@ -2918,6 +3463,29 @@ export function SidecarAssistant({
 
   const simulateMobileKeyboard = docked && viewportMode === "mobile";
 
+  // The composer holds while the agent is answering, the same way its cards
+  // hold their controls mid-round-trip. The demo phone keeps typing enabled:
+  // disabling the field would blur it and take the simulated keyboard down
+  // with it after every send.
+  const agentReplying = useMemo(
+    () => messages.some((message) => message.kind === "agent_loader"),
+    [messages],
+  );
+  const composerDisabled = agentReplying && !simulateMobileKeyboard;
+  const composerDisabledRef = useRef(false);
+  composerDisabledRef.current = composerDisabled;
+  // Disabling the input blurs it, so remember that the shopper was mid-thought
+  // and hand focus back once the answer lands.
+  const composerHadFocusRef = useRef(false);
+  useEffect(() => {
+    if (composerDisabled) return;
+    // The turn is over, so the sent utterance hands the field back empty.
+    setSentDraft("");
+    if (!composerHadFocusRef.current) return;
+    composerHadFocusRef.current = false;
+    inputRef.current?.focus({ preventScroll: true });
+  }, [composerDisabled]);
+
   const dismissSimulatedKeyboard = () => {
     setSimKeyboardOpen(false);
     inputRef.current?.blur();
@@ -2927,6 +3495,7 @@ export function SidecarAssistant({
     const value = inputValue.trim();
     if (!value) return false;
     setInputValue("");
+    setSentDraft(value);
 
     /* With a selection open, typed "compare" / "show similar" / FAQ copy
      * should take the same path as the tray pills — not the generic probe. */
@@ -3048,7 +3617,15 @@ export function SidecarAssistant({
               </div>
             );
           case "agent_loader":
-            return <LatencyLoader key={message.id} variant={message.variant} />;
+            return (
+              <LatencyLoader
+                key={message.id}
+                variant={message.variant}
+                steps={message.steps}
+                stepIntervalMs={message.stepIntervalMs}
+                onCancel={handleCancelResponse}
+              />
+            );
           case "agent_plp":
             return (
               <AgentPLPCard
@@ -3209,6 +3786,7 @@ export function SidecarAssistant({
     [
       handleAddToCart,
       handleApplyPromo,
+      handleCancelResponse,
       handleCartQuantityChange,
       handleCheckout,
       handleContextualPill,
@@ -3257,15 +3835,20 @@ export function SidecarAssistant({
 
   const handleClearChat = () => {
     setIsMenuOpen(false);
-    pendingTimeouts.current.forEach((id) => window.clearTimeout(id));
-    pendingTimeouts.current = [];
+    pendingResponses.current.forEach((entry) =>
+      window.clearTimeout(entry.timeoutId),
+    );
+    pendingResponses.current = [];
+    cancelledTurnRef.current = null;
     welcomeNbasMessageIdRef.current = null;
     firstShopperTurnHandledRef.current = false;
     lastSeparatorSlugRef.current = null;
+    lastCompareRef.current = null;
     answeredFaqsBySlugRef.current.clear();
     setWelcomeRefreshCount(0);
     setSelectedSlugs([]);
     setUpdatingCart(null);
+    setSentDraft("");
     // Emptying the list lets the welcome-seed effect re-run and restore the
     // greeting card + NBA row, matching a fresh session.
     setMessages([]);
@@ -3296,6 +3879,35 @@ export function SidecarAssistant({
           <span className="sidecar-assistant__header-label">Beauty Advisor</span>
         </div>
         <div className="sidecar-assistant__header-actions">
+          {/* Immersive has no floating cart button - the panel is full-bleed,
+              so a button parked over the transcript has nothing to anchor to.
+              The cart moves into the header instead, keeping the island's
+              totals-beside-the-button reading. */}
+          {!contextIsland && detached && cartItemCount > 0 ? (
+            <div className="sidecar-assistant__header-cart">
+              <span className="sidecar-assistant__header-cart-summary">
+                {cartTotals.total ? (
+                  <span className="sidecar-assistant__header-cart-total">
+                    Total {cartTotals.total}
+                  </span>
+                ) : null}
+                <span className="sidecar-assistant__header-cart-count">
+                  {cartItemCount} item{cartItemCount === 1 ? "" : "s"}
+                </span>
+              </span>
+              <button
+                type="button"
+                className="sidecar-assistant__header-btn sidecar-assistant__header-cart-btn"
+                aria-label={`Cart: ${cartItemCount} item${cartItemCount === 1 ? "" : "s"}`}
+                onClick={showCartCard}
+              >
+                <ShoppingCartIcon width={18} height={18} />
+                <span className="sidecar-assistant__context-island-badge">
+                  {cartItemCount}
+                </span>
+              </button>
+            </div>
+          ) : null}
           <div className="sidecar-assistant__menu" ref={menuRef}>
             <button
               type="button"
@@ -3422,7 +4034,7 @@ export function SidecarAssistant({
             ) : null}
           </div>
         ) : null}
-        {!contextIsland && cartItemCount > 0 ? (
+        {!contextIsland && !detached && cartItemCount > 0 ? (
           <button
             type="button"
             className="sidecar-assistant__cart-fab sidecar-assistant__context-island-cart"
@@ -3500,13 +4112,18 @@ export function SidecarAssistant({
             )}
           </div>
         ) : null}
-        <div className="sidecar-assistant__input-shell">
+        <div
+          className={`sidecar-assistant__input-shell${
+            composerDisabled ? " sidecar-assistant__input-shell--disabled" : ""
+          }`}
+        >
           <input
             ref={inputRef}
             type="text"
             className="sidecar-assistant__input"
             placeholder={inputPlaceholder}
-            value={inputValue}
+            value={composerDisabled ? sentDraft : inputValue}
+            disabled={composerDisabled}
             onChange={(event) => setInputValue(event.target.value)}
             onKeyDown={(event) => {
               if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
@@ -3516,9 +4133,15 @@ export function SidecarAssistant({
               submitComposer();
             }}
             onFocus={() => {
+              composerHadFocusRef.current = true;
               if (simulateMobileKeyboard) setSimKeyboardOpen(true);
             }}
             onBlur={() => {
+              // The blur that disabling causes isn't the shopper leaving, so
+              // it must not clear the flag that restores their focus.
+              if (!composerDisabledRef.current) {
+                composerHadFocusRef.current = false;
+              }
               if (!simulateMobileKeyboard) return;
               /* Defer so keyboard key pointerdown / NBA mousedown preventDefault
                * can keep focus when the tap should both act and dismiss. */
@@ -3543,7 +4166,7 @@ export function SidecarAssistant({
             type="submit"
             className="sidecar-assistant__send"
             aria-label="Send message"
-            disabled={!inputValue.trim()}
+            disabled={composerDisabled || !inputValue.trim()}
             onPointerDown={(event) => {
               /* Keep focus on the input through the click so blur does not
                * unmount the demo keyboard before submit lands. */

@@ -1092,7 +1092,10 @@
 .sxs-layout__panel--detached .agent-summary__details {
   flex-direction: row;
   flex-wrap: wrap;
-  align-items: flex-start;
+  /* Stretch rather than flex-start so the totals column runs the height of the
+     item list beside it, and the rule between them spans the whole row instead
+     of stopping at the last total. */
+  align-items: stretch;
   gap: 12px 24px;
 }
 
@@ -1108,12 +1111,19 @@
   min-width: 0;
   padding-top: 0;
   padding-left: 24px;
-  border-left: 1px solid var(--agentic-card-border);
+  border-left: 1px solid rgba(236, 236, 236, 1);
 }
 
 .sxs-layout__panel--detached .agent-summary__chips--cart {
   order: 3;
   flex-basis: 100%;
+}
+
+/* Docked, this rule closes the item list off from the totals stacked beneath
+   it. Side by side there is nothing below it to divide, so it reads as a line
+   trailing off under one column. */
+.sxs-layout__panel--detached .agent-summary__box .agent-summary__item:last-child {
+  border-bottom: none;
 }
 
 .agent-pdp__title {
@@ -1461,7 +1471,7 @@
 }
 
 .agent-summary__box .agent-summary__item:last-child {
-  border-bottom: 1px solid var(--agentic-card-border);
+  border-bottom: 1px solid rgba(236, 236, 236, 1);
 }
 
 .agent-summary__box-summary {
@@ -1512,7 +1522,9 @@
   gap: 16px;
   align-items: flex-start;
   padding: 16px 0;
-  border-bottom: 1px solid var(--agentic-card-border);
+  /* Same light rule the summary cards are drawn with, so the list reads as one
+     surface instead of items boxed by a heavier line than their container. */
+  border-bottom: 1px solid rgba(236, 236, 236, 1);
 }
 
 .agent-summary__item:last-child {
@@ -1552,7 +1564,9 @@
 
 .agent-summary__item-title {
   margin: 0;
-  font-size: 18px;
+  /* Same size the product cards title with, so a product reads the same in the
+     cart as it does in the carousel it came from. */
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.4;
   letter-spacing: -0.025em;
@@ -1889,28 +1903,43 @@
   padding: 0 20px 0;
 }
 
+/* Same three states as the composer shell — medium grey at rest, near-black on
+   focus, light grey when it can't be typed in — so the two text fields in the
+   panel don't answer to different rules. */
 .agent-summary__promo-input {
   appearance: none;
   flex: 1 1 auto;
   min-width: 0;
   height: 36px;
   background: var(--agentic-input-bg);
-  border: 1px solid var(--agentic-card-border);
+  border: 1px solid #a3a3a3;
   padding: 8px 12px;
   font-family: inherit;
   font-size: 14px;
   line-height: 20px;
-  color: var(--agentic-foreground);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  color: #17171b;
+  transition: border-color 120ms ease;
 }
 
 .agent-summary__promo-input::placeholder {
-  color: var(--agentic-muted-foreground);
+  color: rgba(23, 23, 27, 0.45);
 }
 
-.agent-summary__promo-input:focus-visible {
+/* Plain `:focus`, not `:focus-visible`: the composer border reacts to a click
+   into the field, and a shopper reaching for a coupon box expects the same. */
+.agent-summary__promo-input:focus {
   outline: none;
-  box-shadow: 0 0 0 3px var(--agentic-focus);
+  border-color: #17171b;
+}
+
+.agent-summary__promo-input:disabled {
+  border-color: #e5e5e5;
+  color: rgba(23, 23, 27, 0.4);
+  cursor: not-allowed;
+}
+
+.agent-summary__promo-input:disabled::placeholder {
+  color: rgba(23, 23, 27, 0.26);
 }
 
 .agent-summary__promo-submit {
@@ -1922,11 +1951,14 @@
   width: 36px;
   height: 36px;
   background: var(--agentic-secondary-bg);
-  border: 1px solid var(--agentic-card-border);
+  /* Sits flush against the input, so it has to carry the same resting grey or
+     the pair reads as two unrelated controls. */
+  border: 1px solid #a3a3a3;
   color: var(--agentic-secondary-foreground);
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  transition: background-color 120ms ease;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
 }
 
 .agent-summary__promo-submit:hover:not(:disabled) {
@@ -1934,13 +1966,14 @@
 }
 
 .agent-summary__promo-submit:disabled {
+  border-color: #e5e5e5;
   cursor: not-allowed;
   opacity: 0.6;
 }
 
 .agent-summary__promo-submit:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px var(--agentic-focus);
+  border-color: #17171b;
 }
 
 .agent-summary__ctas {
@@ -1948,6 +1981,22 @@
   flex-direction: column;
   gap: 8px;
   padding: 0 20px;
+}
+
+/* Stacked, the two full-width buttons run the whole width of the immersive
+   card and read as a wall. Side by side they stay the size of an action. */
+.sxs-layout__panel--detached .agent-summary__ctas {
+  flex-direction: row;
+  gap: 12px;
+}
+
+/* Half the row each, gap included. A `0` basis would only split the free space
+   evenly, and since the two buttons carry different padding and only one has a
+   border, they'd land at visibly different widths. */
+.sxs-layout__panel--detached .agent-summary__ctas > .agent-msg__btn {
+  flex: 1 1 calc(50% - 6px);
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .agent-summary__footnote {
