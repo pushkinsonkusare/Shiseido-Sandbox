@@ -40,13 +40,19 @@ Copy that URL — you'll feed it to the frontend build.
 
 ## Wire the frontend up
 
-In the **frontend repo root** (one directory up from this `worker/` folder),
-build with the proxy URL inlined:
+Already done. The deployed Worker is:
+
+```
+https://sa26-llm-proxy.psonkusare.workers.dev
+```
+
+The root `build` script pins that URL and blanks `VITE_OPENAI_API_KEY`, so
+the published bundle in `docs/` can never pick up the key from a local
+`.env.local`:
 
 ```bash
-VITE_LLM_PROXY_URL=https://sa26-llm-proxy.<your-subdomain>.workers.dev \
-  npm run build
-git add docs && git commit -m "deploy: wire frontend to LLM proxy" && git push
+npm run build
+git add docs && git commit -m "Rebuild docs for GitHub Pages deploy." && git push
 ```
 
 The Vite build resolves `import.meta.env.VITE_LLM_PROXY_URL` at compile
