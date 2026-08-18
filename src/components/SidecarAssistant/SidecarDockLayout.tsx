@@ -17,7 +17,7 @@ type Props = {
 const FAB_REVEAL_DELAY_MS = 280;
 
 export function SidecarDockLayout({ children }: Props) {
-  const { viewportMode, userTestingLock } = useAgentMode();
+  const { viewportMode, userTestingLock, sidecarAvailable } = useAgentMode();
   const isMobileViewport = viewportMode === "mobile";
 
   const [panelOpen, setPanelOpen] = useState(() => userTestingLock);
@@ -39,6 +39,18 @@ export function SidecarDockLayout({ children }: Props) {
   useEffect(() => {
     panelMountedRef.current = panelMounted;
   }, [panelMounted]);
+
+  // Read inside the document listeners alongside `panelMountedRef`.
+  const sidecarAvailableRef = useRef(sidecarAvailable);
+  useEffect(() => {
+    sidecarAvailableRef.current = sidecarAvailable;
+  }, [sidecarAvailable]);
+
+  // Inline-answer mode is meant to look like a storefront with no assistant at
+  // all, so a panel left open when the flag flips has to go with it.
+  useEffect(() => {
+    if (!sidecarAvailable) setPanelOpen(false);
+  }, [sidecarAvailable]);
 
   const panelRef = useRef<HTMLElement | null>(null);
   const swipeStartXRef = useRef<number | null>(null);
@@ -95,9 +107,16 @@ export function SidecarDockLayout({ children }: Props) {
   // let the assistant pick it up once mounted.
   // UserTesting lock opens the panel on load (initial state above) but does
   // not auto-dispatch a prompt — testers click/type the welcome NBA instead.
+  // While the PDP widget answers inline, nothing may open the panel: its own
+  // pills answer on the page, and any other surface that still fires these
+  // events would otherwise reintroduce the assistant the mode is hiding.
   useEffect(() => {
-    const onOpen = () => openPanel();
+    const onOpen = () => {
+      if (!sidecarAvailableRef.current) return;
+      openPanel();
+    };
     const onAsk = (event: Event) => {
+      if (!sidecarAvailableRef.current) return;
       if (!panelMountedRef.current) {
         const detail = (event as CustomEvent<AskAssistantEventDetail>).detail;
         if (detail?.prompt?.trim()) {
@@ -144,7 +163,7 @@ export function SidecarDockLayout({ children }: Props) {
     if (panelOpen) resetSwipeTransform();
   }, [panelOpen]);
 
-  const panel = panelMounted ? (
+  const panel = panelMounted && sidecarAvailable ? (
     <aside
       ref={panelRef}
       className={
@@ -235,7 +254,7 @@ export function SidecarDockLayout({ children }: Props) {
         {desktopPanel}
       </div>
       {mobilePanel}
-      {fabVisible ? (
+      {fabVisible && sidecarAvailable ? (
         <button
           type="button"
           className="sxs-layout__fab"

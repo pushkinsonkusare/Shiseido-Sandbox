@@ -793,6 +793,63 @@ function buildSetC(
   return pills;
 }
 
+/* ---------- questions-only filter ----------
+ *
+ * The inline-answer widget answers in place, as text. Pills whose answer is a
+ * product carousel or a routine card (`upsell`, `bundle`) have nowhere to land
+ * there, so they get swapped for pills the widget can actually answer. The
+ * lane's confidence pool is the natural donor: four FAQs per lane against at
+ * most two slots to fill, with the hygiene rotation behind it as a backstop.
+ * `downsell` is in the kind union but no pill declares it today; it is listed
+ * here so a future downsell pill doesn't leak into inline mode. */
+
+const INLINE_ANSWERABLE_KINDS: ReadonlySet<PdpNbaPillKind> = new Set([
+  "faq",
+  "hygiene",
+  "open",
+]);
+
+function toQuestionsOnly(
+  pills: PdpNbaPill[],
+  product: CatalogProduct,
+  pack: LanePack,
+): PdpNbaPill[] {
+  // Ids already on screen, so a swap-in never duplicates a pill (which would
+  // also collide on the React key).
+  const used = new Set(pills.map((pill) => pill.id));
+  const donors = [...pack.confidenceFaqs(product), ...HYGIENE_ROTATION];
+  let cursor = 0;
+
+  const nextDonor = (): PdpNbaPill | null => {
+    while (cursor < donors.length) {
+      const donor = donors[cursor];
+      cursor += 1;
+      if (used.has(donor.id)) continue;
+      used.add(donor.id);
+      return donor;
+    }
+    return null;
+  };
+
+  const swapped: PdpNbaPill[] = [];
+  for (const pill of pills) {
+    if (INLINE_ANSWERABLE_KINDS.has(pill.kind)) {
+      swapped.push(pill);
+      continue;
+    }
+    // Dropped rather than kept when the pools run dry: a short row beats a
+    // pill that leads to an answer the widget cannot render.
+    const donor = nextDonor();
+    if (donor) swapped.push(donor);
+  }
+  return swapped;
+}
+
+export type BuildPdpNbaPillsOptions = {
+  /** Restrict the set to pills answerable as text, for inline-answer mode. */
+  questionsOnly?: boolean;
+};
+
 /**
  * Build the contextual NBA pill set for the PDP Ask Assistant module.
  *
@@ -809,13 +866,17 @@ export function buildPdpNbaPills(
   product: CatalogProduct,
   catalog: CatalogProduct[],
   setIndex = 0,
+  options: BuildPdpNbaPillsOptions = {},
 ): PdpNbaPill[] {
   const lane = resolveLane(product);
   const pack = LANE_PACKS[lane];
   const builders = [buildSetA, buildSetB, buildSetC];
   const builder =
     builders[((setIndex % builders.length) + builders.length) % builders.length];
-  return builder(product, catalog, pack);
+  const pills = builder(product, catalog, pack);
+  return options.questionsOnly
+    ? toQuestionsOnly(pills, product, pack)
+    : pills;
 }
 
 /** Total number of curated rotations, exported for telemetry & tests. */

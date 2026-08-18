@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { Settings, X } from "lucide-react";
 import "./AgentModeBar.css";
-import { AGENT_MODES, useAgentMode } from "./AgentModeContext";
+import {
+  AGENT_MODES,
+  PDP_INLINE_WIDGET_POSITIONS,
+  PDP_INLINE_WIDGET_TYPES,
+  useAgentMode,
+} from "./AgentModeContext";
 import type { AgentMode } from "./AgentModeContext";
 
 type DemoTheme = "sf-next" | "consumer-electronics";
@@ -26,6 +31,12 @@ export function AgentModeBar() {
     setAccordionRecommendations,
     contextIsland,
     setContextIsland,
+    pdpInlineWidget,
+    setPdpInlineWidget,
+    pdpInlineWidgetType,
+    setPdpInlineWidgetType,
+    pdpInlineWidgetPosition,
+    setPdpInlineWidgetPosition,
     userTestingLock,
   } = useAgentMode();
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
@@ -218,6 +229,73 @@ export function AgentModeBar() {
                     Context island
                   </span>
                 </label>
+                <label className="agent-mode-bar__feature">
+                  <input
+                    type="checkbox"
+                    className="agent-mode-bar__feature-checkbox"
+                    checked={pdpInlineWidget}
+                    onChange={(event) => setPdpInlineWidget(event.target.checked)}
+                  />
+                  <span className="agent-mode-bar__feature-label">
+                    PDP inline widget
+                  </span>
+                </label>
+                {/* Sibling of the label, not a child: nested inside it, every
+                    click on a sub-option would also toggle the checkbox. */}
+                {pdpInlineWidget && (
+                  <div className="agent-mode-bar__sub-options">
+                    <div
+                      className="agent-mode-bar__sub-group"
+                      role="group"
+                      aria-label="PDP inline widget type"
+                    >
+                      <span className="agent-mode-bar__sub-title">Type</span>
+                      <div className="agent-mode-bar__option-grid">
+                        {PDP_INLINE_WIDGET_TYPES.map(({ id, label }) => (
+                          <button
+                            key={id}
+                            type="button"
+                            className={
+                              "agent-mode-bar__option-button agent-mode-bar__option-button--sm" +
+                              (pdpInlineWidgetType === id
+                                ? " agent-mode-bar__option-button--active"
+                                : "")
+                            }
+                            aria-pressed={pdpInlineWidgetType === id}
+                            onClick={() => setPdpInlineWidgetType(id)}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div
+                      className="agent-mode-bar__sub-group"
+                      role="group"
+                      aria-label="PDP inline widget position"
+                    >
+                      <span className="agent-mode-bar__sub-title">Position</span>
+                      <div className="agent-mode-bar__option-grid">
+                        {PDP_INLINE_WIDGET_POSITIONS.map(({ id, label }) => (
+                          <button
+                            key={id}
+                            type="button"
+                            className={
+                              "agent-mode-bar__option-button agent-mode-bar__option-button--sm" +
+                              (pdpInlineWidgetPosition === id
+                                ? " agent-mode-bar__option-button--active"
+                                : "")
+                            }
+                            aria-pressed={pdpInlineWidgetPosition === id}
+                            onClick={() => setPdpInlineWidgetPosition(id)}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

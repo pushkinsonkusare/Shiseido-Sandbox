@@ -96,7 +96,17 @@
 .figma-pdp__page-inner {
   width: min(100%, 1536px);
   margin: 0 auto;
-  padding: var(--pdp-space-lg) var(--pdp-space-md) var(--pdp-space-lg);
+  /* Same page gutter as the storefront and listing pages: 64px on desktop,
+     stepping down to the tablet and mobile values with the shared token. */
+  padding: var(--pdp-space-lg) var(--space-page-desktop, 64px) var(--pdp-space-lg);
+}
+
+/* The simulated phone is a 402px frame inside a desktop window, so the width
+   media queries behind the token never fire for it. */
+html[data-demo-viewport="mobile"] .figma-pdp__page-inner {
+  padding: 16px max(var(--space-page-mobile, 16px), var(--safe-area-left, 0px))
+    calc(24px + var(--safe-area-bottom, 0px))
+    max(var(--space-page-mobile, 16px), var(--safe-area-right, 0px));
 }
 
 .figma-pdp__breadcrumbs {
@@ -399,6 +409,159 @@
 }
 
 .pdp-nba__regen:focus-visible {
+  outline: 2px solid var(--primary, #131315);
+  outline-offset: 2px;
+}
+
+/* ---------- inline-answer mode ---------- */
+/* One query-and-answer slot plus a composer, so the widget answers on the page
+ * instead of handing the question to the assistant panel. Same square, bordered
+ * language as the pills above. */
+
+/* Answering in place makes the widget a place rather than a pill rail, so it
+ * gets a container of its own: a tinted panel that holds the header, the
+ * conversation slot, the composer and the pills together and separates them
+ * from the product page around it. */
+.pdp-nba[data-answer-mode="inline"] {
+  padding: var(--pdp-space-md);
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  box-sizing: border-box;
+}
+
+/* Spacing follows the assistant transcript: 16px between the question and the
+ * answer, the same as the gap between two messages in the panel. */
+.pdp-nba__slot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pdp-space-md);
+  width: 100%;
+}
+
+/* The question the answer belongs to, trailing-aligned the way a sent message
+ * reads. Tinted rather than bordered so it never competes with the answer, and
+ * padded like the panel's shopper bubble. */
+.pdp-nba__query {
+  align-self: flex-end;
+  max-width: 80%;
+  margin: 0;
+  padding: var(--pdp-space-md) 20px;
+  background: #dbeafe;
+  color: var(--card-foreground, #3f3f46);
+  font-size: 14px;
+  line-height: 20px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+/* The shared latency loader, pulled onto the widget's border colour so the
+ * thinking state and the answer that replaces it occupy the same box. */
+.pdp-nba .pdp-nba__thinking {
+  border-color: var(--input, #d1d5db);
+  padding: var(--pdp-space-sm);
+}
+
+/* Padded like the panel's text reply card: 24px over the copy, 20px under it,
+ * 20px in from the sides. */
+.pdp-nba__answer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pdp-space-xs);
+  padding: var(--pdp-space-lg) 20px var(--pdp-space-md);
+  background: #fff;
+  border: 1px solid var(--input, #d1d5db);
+}
+
+.pdp-nba__answer-body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--card-foreground, #3f3f46);
+  overflow-wrap: anywhere;
+}
+
+.pdp-nba__answer-link {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--pdp-space-2xs);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--primary, #131315);
+}
+
+.pdp-nba__composer {
+  display: flex;
+  /* The field grows downward as the question wraps, so the send button rides
+     the last line rather than floating in the middle of the block. */
+  align-items: flex-end;
+  gap: var(--pdp-space-xs);
+  width: 100%;
+  padding: var(--pdp-space-sm);
+  background: #fff;
+  border: 1px solid var(--input, #d1d5db);
+  transition: border-color 0.15s ease;
+}
+
+.pdp-nba__composer:focus-within {
+  border-color: var(--primary, #131315);
+}
+
+/* A textarea, so a long question wraps onto a second line instead of scrolling
+   out of sight to the right. Height is set from `scrollHeight` on every
+   keystroke, and the cap turns a very long question into a scroll rather than
+   letting the composer push the pills off the page. */
+.pdp-nba__composer-input {
+  appearance: none;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: block;
+  padding: var(--pdp-space-2xs) 0 var(--pdp-space-2xs) var(--pdp-space-2xs);
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--card-foreground, #3f3f46);
+  resize: none;
+  overflow-y: auto;
+  max-height: 88px;
+  scrollbar-width: thin;
+}
+
+.pdp-nba__composer-input::placeholder {
+  color: rgba(23, 23, 27, 0.45);
+}
+
+.pdp-nba__composer-send {
+  appearance: none;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--primary, #131315);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  font-family: inherit;
+}
+
+.pdp-nba__composer-send:hover:not(:disabled) {
+  background: #f8f8f8;
+}
+
+.pdp-nba__composer-send:disabled {
+  color: rgba(23, 23, 27, 0.35);
+  cursor: not-allowed;
+}
+
+.pdp-nba__composer-send:focus-visible {
   outline: 2px solid var(--primary, #131315);
   outline-offset: 2px;
 }

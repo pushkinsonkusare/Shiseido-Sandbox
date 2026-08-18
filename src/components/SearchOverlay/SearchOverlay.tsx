@@ -139,7 +139,7 @@ export function SearchOverlay() {
   const { isOpen, closeSearchOverlay } = useSearchOverlay();
   const { products, featuredProducts, searchProducts, searchIndex } = useCatalog();
   const { navigate, navigateToProduct } = usePrototypeNavigation();
-  const { mode } = useAgentMode();
+  const { mode, sidecarAvailable } = useAgentMode();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -149,8 +149,9 @@ export function SearchOverlay() {
   // assistant" suggestion list. Both should only surface in the
   // assistant-enabled experiences. The Native Storefront
   // (basic-website) mode is meant to represent a baseline e-com flow
-  // with no agent affordances.
-  const showAssistantPromo = mode !== "basic-website";
+  // with no agent affordances. The PDP inline-answer mode hides them for the
+  // same reason: both rows lead to a panel that mode does not mount.
+  const showAssistantPromo = mode !== "basic-website" && sidecarAvailable;
 
   const bestsellers = useMemo(
     () => pickBestsellers(products, featuredProducts),

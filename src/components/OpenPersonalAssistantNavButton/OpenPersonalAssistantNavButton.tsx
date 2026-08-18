@@ -4,8 +4,10 @@ import "./OpenPersonalAssistantNavButton.css";
 
 /** Dispatches `agentic:open-assistant`. Sidecar listens; SideBySideLayout opens the panel when collapsed. */
 export function OpenPersonalAssistantNavButton() {
-  const { mode } = useAgentMode();
-  if (mode === "basic-website") return null;
+  const { mode, sidecarAvailable } = useAgentMode();
+  // Nothing to open on the native storefront, and nothing to open while the PDP
+  // widget answers inline either.
+  if (mode === "basic-website" || !sidecarAvailable) return null;
 
   return (
     <button

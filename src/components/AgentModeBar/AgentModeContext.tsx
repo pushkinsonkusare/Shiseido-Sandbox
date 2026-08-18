@@ -14,6 +14,29 @@ export const AGENT_MODES: { id: AgentMode; label: string }[] = [
 
 export type DemoViewportMode = "desktop" | "mobile";
 
+/** How the PDP inline widget responds to a shopper question: answer in place,
+ *  or hand the conversation over to the assistant panel. */
+export type PdpInlineWidgetType = "inline-answer" | "agent-redirect";
+
+/** Where the PDP inline widget sits on the product page. */
+export type PdpInlineWidgetPosition = "left-under-image" | "right-rail";
+
+export const PDP_INLINE_WIDGET_TYPES: {
+  id: PdpInlineWidgetType;
+  label: string;
+}[] = [
+  { id: "agent-redirect", label: "Agent redirect" },
+  { id: "inline-answer", label: "Inline answer" },
+];
+
+export const PDP_INLINE_WIDGET_POSITIONS: {
+  id: PdpInlineWidgetPosition;
+  label: string;
+}[] = [
+  { id: "left-under-image", label: "Left under image" },
+  { id: "right-rail", label: "Right rail" },
+];
+
 export type UserTestingVariant = "a" | "b";
 
 /** Single welcome NBA shown under UserTesting lock (`?ut=a|b`). */
@@ -37,6 +60,21 @@ type AgentModeContextValue = {
   /** Context island feature toggle (behavior TBD). */
   contextIsland: boolean;
   setContextIsland: (enabled: boolean) => void;
+  /** PDP inline widget feature toggle (behavior TBD). */
+  pdpInlineWidget: boolean;
+  setPdpInlineWidget: (enabled: boolean) => void;
+  /** Sub-options of the above; only meaningful while `pdpInlineWidget` is on,
+   *  and retained when it is off so re-checking restores the last pick. */
+  pdpInlineWidgetType: PdpInlineWidgetType;
+  setPdpInlineWidgetType: (type: PdpInlineWidgetType) => void;
+  pdpInlineWidgetPosition: PdpInlineWidgetPosition;
+  setPdpInlineWidgetPosition: (position: PdpInlineWidgetPosition) => void;
+  /**
+   * False while the PDP widget answers inline, which is the point of that
+   * mode: it shows what the storefront looks like for a customer who never
+   * bought the sidecar, so every entry point into the panel has to go.
+   */
+  sidecarAvailable: boolean;
   /**
    * True when the page was opened with `?ut=a` or `?ut=b`. Locks the
    * experience for UserTesting (hides AgentModeBar, single welcome NBA).
@@ -54,6 +92,10 @@ const DEFAULT_AGENT_MODE: AgentMode = "assistant-only";
 const DEFAULT_VIEWPORT_MODE: DemoViewportMode = "desktop";
 const DEFAULT_ACCORDION_RECOMMENDATIONS = true;
 const DEFAULT_CONTEXT_ISLAND = false;
+const DEFAULT_PDP_INLINE_WIDGET = false;
+const DEFAULT_PDP_INLINE_WIDGET_TYPE: PdpInlineWidgetType = "agent-redirect";
+const DEFAULT_PDP_INLINE_WIDGET_POSITION: PdpInlineWidgetPosition =
+  "left-under-image";
 
 function readUserTestingBootstrap(): UserTestingBootstrap {
   if (typeof window === "undefined") {
@@ -108,6 +150,13 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
     UT_BOOTSTRAP.accordionRecommendations,
   );
   const [contextIsland, setContextIsland] = useState<boolean>(DEFAULT_CONTEXT_ISLAND);
+  const [pdpInlineWidget, setPdpInlineWidget] = useState<boolean>(
+    DEFAULT_PDP_INLINE_WIDGET,
+  );
+  const [pdpInlineWidgetType, setPdpInlineWidgetType] =
+    useState<PdpInlineWidgetType>(DEFAULT_PDP_INLINE_WIDGET_TYPE);
+  const [pdpInlineWidgetPosition, setPdpInlineWidgetPosition] =
+    useState<PdpInlineWidgetPosition>(DEFAULT_PDP_INLINE_WIDGET_POSITION);
 
   const value = useMemo(
     () => ({
@@ -119,9 +168,24 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       setAccordionRecommendations,
       contextIsland,
       setContextIsland,
+      pdpInlineWidget,
+      setPdpInlineWidget,
+      pdpInlineWidgetType,
+      setPdpInlineWidgetType,
+      pdpInlineWidgetPosition,
+      setPdpInlineWidgetPosition,
+      sidecarAvailable: !(pdpInlineWidget && pdpInlineWidgetType === "inline-answer"),
       userTestingLock: UT_BOOTSTRAP.userTestingLock,
     }),
-    [mode, viewportMode, accordionRecommendations, contextIsland],
+    [
+      mode,
+      viewportMode,
+      accordionRecommendations,
+      contextIsland,
+      pdpInlineWidget,
+      pdpInlineWidgetType,
+      pdpInlineWidgetPosition,
+    ],
   );
 
   return <AgentModeContext.Provider value={value}>{children}</AgentModeContext.Provider>;

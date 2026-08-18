@@ -19,12 +19,25 @@ export default function ProductDetailPage() {
   const { featuredProducts, getProductBySlug, getRelatedProducts, products } = useCatalog();
   const { currentProductSlug, navigate, navigateToProduct } = usePrototypeNavigation();
   const { openSearchOverlay } = useSearchOverlay();
-  const { mode: agentMode } = useAgentMode();
-  // The "Ask Assistant" contextual FAQ pill rail is an AI-only affordance: it
-  // surfaces shopper prompts that get dispatched into the Sidecar / SxS
-  // assistants. We only render it when one of those assistant surfaces is
-  // actually mounted, otherwise the pills lead nowhere on the native PDP.
-  const showNbaPanel = agentMode === "assistant-only" || agentMode === "side-by-side";
+  const {
+    mode: agentMode,
+    pdpInlineWidget,
+    pdpInlineWidgetPosition,
+    pdpInlineWidgetType,
+  } = useAgentMode();
+  /* The "Ask Assistant" widget is entirely behind the PDP inline widget feature
+   * flag: unchecked means the PDP carries no assistant affordance at all.
+   * Checking it brings the widget up in its default state, and the Type and
+   * Position sub-options take it from there. In `agent-redirect` the pills hand
+   * their prompt to the assistant panel, so that mode additionally needs one of
+   * the assistant experiences mounted or the pills would lead nowhere;
+   * `inline-answer` answers on the page and needs nothing. */
+  const nbaAnswerMode = pdpInlineWidgetType;
+  const nbaPlacement = pdpInlineWidgetPosition;
+  const assistantMounted =
+    agentMode === "assistant-only" || agentMode === "side-by-side";
+  const showNbaPanel =
+    pdpInlineWidget && (nbaAnswerMode === "inline-answer" || assistantMounted);
   const product = getProductBySlug(currentProductSlug) ?? featuredProducts[0] ?? products[0];
   const gallery = product.gallery.length > 0 ? product.gallery : [product.imageUrl];
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -87,6 +100,14 @@ export default function ProductDetailPage() {
                 />
               ))}
             </div>
+
+            {showNbaPanel && nbaPlacement === "left-under-image" ? (
+              <PdpNbaPanel
+                product={product}
+                catalog={products}
+                answerMode={nbaAnswerMode}
+              />
+            ) : null}
           </div>
 
           <aside className="figma-pdp__info">
@@ -130,7 +151,13 @@ export default function ProductDetailPage() {
             <button className="figma-pdp__paypal">PayPal</button>
             <p className="figma-pdp__pay-note">Pay in 4 interest-free payments of $12.25 with PayPal. Learn more</p>
 
-            {showNbaPanel ? <PdpNbaPanel product={product} catalog={products} /> : null}
+            {showNbaPanel && nbaPlacement === "right-rail" ? (
+              <PdpNbaPanel
+                product={product}
+                catalog={products}
+                answerMode={nbaAnswerMode}
+              />
+            ) : null}
 
             <p className="figma-pdp__desc">{product.shortDescription}</p>
 
