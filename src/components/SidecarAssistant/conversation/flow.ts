@@ -282,6 +282,18 @@ export function buildWelcomeNbas(refreshCount = 0): string[] {
 
 export type IntentKind = "broad" | "direct" | "empty";
 
+export type CategoryConcernKey =
+  | "dark-spots"
+  | "wrinkles"
+  | "firmness"
+  | "texture"
+  | "dryness"
+  | "oily"
+  | "gentle"
+  | "daily"
+  | "best-value"
+  | "skip";
+
 export type Intent = {
   kind: IntentKind;
   /** Original normalized query used for activity-specific constraints. */
@@ -326,6 +338,11 @@ export type Intent = {
    * category-label allow-list which spans every variant in the bucket.
    */
   subtypeHints?: string[];
+  /**
+   * Concern the shopper picked (or named) after a category-only ask.
+   * Soft-ranks the PLP and drives the acknowledgement intro.
+   */
+  categoryConcern?: CategoryConcernKey;
 };
 
 const BUNDLE_QUERY_PATTERN =
@@ -552,7 +569,7 @@ const ROUTINE_CONCERN_PATTERNS: Array<{ test: RegExp; key: string }> = [
     key: "firming",
   },
   {
-    test: /\b(hydrat\w*|dryness|dehydrat\w*|moisture|plump\w*)\b/i,
+    test: /\b(hydrat\w*|dryness|dehydrat\w*|moisture|plump\w*|tight(?:ness)?)\b/i,
     key: "hydration",
   },
 ];
@@ -597,6 +614,328 @@ export function detectRoutineIntent(query: string): RoutineIntent {
   };
 }
 
+/* =============================================================
+ * Category-only clarify: a bare "help me choose a serum" has one
+ * clue (the product family). Ask for a concern before ranking a
+ * carousel, and keep the category in host state so a short pill
+ * like "Dark spots" does not collapse into a full routine card.
+ * ============================================================= */
+
+export type PendingCategoryClarify = {
+  categories: string[];
+  categoryLabel: string;
+};
+
+const CATEGORY_CONCERN_PILL_KEYS: Record<string, CategoryConcernKey> = {
+  "dark spots": "dark-spots",
+  "help with dark spots": "dark-spots",
+  wrinkles: "wrinkles",
+  "something for wrinkles": "wrinkles",
+  firmness: "firmness",
+  "i want more firmness": "firmness",
+  texture: "texture",
+  "texture feels uneven": "texture",
+  dryness: "dryness",
+  "my skin feels dry": "dryness",
+  "best value": "best-value",
+  "what's a good value": "best-value",
+  "whats a good value": "best-value",
+  skip: "skip",
+  "just show me a few": "skip",
+  "just show me": "skip",
+  "oily skin": "oily",
+  oily: "oily",
+  "too much shine": "oily",
+  gentle: "gentle",
+  "i need something gentle": "gentle",
+  daily: "daily",
+  "for everyday wear": "daily",
+};
+
+const CATEGORY_CONCERN_PATTERNS: Array<{
+  test: RegExp;
+  key: CategoryConcernKey;
+}> = [
+  {
+    test: /^(skip|just\s+browse|just\s+show\s+me(\s+a\s+few)?|show\s+(me\s+)?all)$/i,
+    key: "skip",
+  },
+  {
+    test: /\b(best\s*value|good\s*value|most\s*affordable)\b/i,
+    key: "best-value",
+  },
+  {
+    test: /\b(dark\s*spots?|discolor\w*|hyperpigment\w*|pigment\w*|uneven\s*(skin\s*)?tone|brighten\w*|dull\w*)\b/i,
+    key: "dark-spots",
+  },
+  {
+    test: /\b(wrinkl\w*|fine\s*lines?|anti[-\s]?ag(?:e|ing|eing))\b/i,
+    key: "wrinkles",
+  },
+  {
+    test: /\b(firm\w*|lift\w*|sag\w*|elasticity|contour\w*|bounce)\b/i,
+    key: "firmness",
+  },
+  {
+    test: /\b(texture|pores?|refine|rough|smooth(?:ing|er)?)\b/i,
+    key: "texture",
+  },
+  {
+    test: /\b(dryness|dry\s*skin|hydrat\w*|dehydrat\w*|plump\w*)\b/i,
+    key: "dryness",
+  },
+  { test: /\b(oily|oil[-\s]?control|shine|greasy)\b/i, key: "oily" },
+  { test: /\b(gentle|sensitive|sooth\w*)\b/i, key: "gentle" },
+  { test: /\b(daily\s+(spf|sunscreen|wear)|everyday\s+wear)\b/i, key: "daily" },
+];
+
+const CONCERN_KEYWORDS: Record<
+  Exclude<CategoryConcernKey, "skip" | "best-value">,
+  string[]
+> = {
+  "dark-spots": [
+    "dark spot",
+    "brighten",
+    "brightening",
+    "discolor",
+    "pigment",
+    "luminance",
+    "radiance",
+    "uneven",
+    "tone",
+    "dull",
+    "wrinklespot",
+  ],
+  wrinkles: [
+    "wrinkle",
+    "fine line",
+    "smoothing",
+    "anti-age",
+    "anti-aging",
+    "wrinklespot",
+    "age",
+  ],
+  firmness: [
+    "firm",
+    "lift",
+    "liftdefine",
+    "contour",
+    "bounce",
+    "elasticity",
+    "sag",
+    "brilliance",
+  ],
+  texture: [
+    "texture",
+    "refine",
+    "pore",
+    "smooth",
+    "smoothing",
+    "micro-click",
+    "concentrate",
+  ],
+  dryness: ["hydrat", "dry", "plump", "filler", "moisture", "dehydr"],
+  oily: ["oily", "oil control", "lightweight", "matte", "shine", "pore", "gel"],
+  gentle: ["gentle", "sensitive", "sooth", "mild", "calming"],
+  daily: ["daily", "everyday", "lightweight", "urban", "spf"],
+};
+
+const HELP_WITH_DARK_SPOTS = "Help with dark spots";
+const SOMETHING_FOR_WRINKLES = "Something for wrinkles";
+const WANT_MORE_FIRMNESS = "I want more firmness";
+const TEXTURE_FEELS_UNEVEN = "Texture feels uneven";
+const SKIN_FEELS_DRY = "My skin feels dry";
+const WHATS_A_GOOD_VALUE = "What's a good value";
+const JUST_SHOW_ME_A_FEW = "Just show me a few";
+const TOO_MUCH_SHINE = "Too much shine";
+const NEED_SOMETHING_GENTLE = "I need something gentle";
+const FOR_EVERYDAY_WEAR = "For everyday wear";
+
+const SERUM_CONCERN_PILLS = [
+  HELP_WITH_DARK_SPOTS,
+  SOMETHING_FOR_WRINKLES,
+  WANT_MORE_FIRMNESS,
+  TEXTURE_FEELS_UNEVEN,
+  SKIN_FEELS_DRY,
+  WHATS_A_GOOD_VALUE,
+  JUST_SHOW_ME_A_FEW,
+] as const;
+
+const CONCERN_PILLS_BY_CATEGORY: Record<string, readonly string[]> = {
+  "Serums & Treatments": SERUM_CONCERN_PILLS,
+  Moisturizers: [
+    SKIN_FEELS_DRY,
+    TOO_MUCH_SHINE,
+    WANT_MORE_FIRMNESS,
+    SOMETHING_FOR_WRINKLES,
+    WHATS_A_GOOD_VALUE,
+    JUST_SHOW_ME_A_FEW,
+  ],
+  Cleansers: [
+    TOO_MUCH_SHINE,
+    SKIN_FEELS_DRY,
+    NEED_SOMETHING_GENTLE,
+    WHATS_A_GOOD_VALUE,
+    JUST_SHOW_ME_A_FEW,
+  ],
+  Softeners: [
+    SKIN_FEELS_DRY,
+    TOO_MUCH_SHINE,
+    WHATS_A_GOOD_VALUE,
+    JUST_SHOW_ME_A_FEW,
+  ],
+  Sunscreen: [
+    FOR_EVERYDAY_WEAR,
+    TOO_MUCH_SHINE,
+    WHATS_A_GOOD_VALUE,
+    JUST_SHOW_ME_A_FEW,
+  ],
+  "Eye & Lip Care": [
+    SOMETHING_FOR_WRINKLES,
+    SKIN_FEELS_DRY,
+    WANT_MORE_FIRMNESS,
+    WHATS_A_GOOD_VALUE,
+    JUST_SHOW_ME_A_FEW,
+  ],
+  Masks: [
+    HELP_WITH_DARK_SPOTS,
+    SKIN_FEELS_DRY,
+    WHATS_A_GOOD_VALUE,
+    JUST_SHOW_ME_A_FEW,
+  ],
+};
+
+const DEFAULT_CONCERN_PILLS = [
+  HELP_WITH_DARK_SPOTS,
+  SOMETHING_FOR_WRINKLES,
+  SKIN_FEELS_DRY,
+  WHATS_A_GOOD_VALUE,
+  JUST_SHOW_ME_A_FEW,
+] as const;
+
+/** Map a shopper utterance or NBA pill to a category concern, if any. */
+export function detectCategoryConcern(
+  text: string,
+): CategoryConcernKey | undefined {
+  const trimmed = text.trim();
+  if (!trimmed) return undefined;
+  const exact = CATEGORY_CONCERN_PILL_KEYS[trimmed.toLowerCase()];
+  if (exact) return exact;
+  for (const rule of CATEGORY_CONCERN_PATTERNS) {
+    if (rule.test.test(trimmed)) return rule.key;
+  }
+  return undefined;
+}
+
+/**
+ * True when the shopper named a product family and nothing else to
+ * filter on: no budget, tier, skin type, or concern. Those asks get a
+ * clarifying question instead of a generic carousel.
+ */
+export function isCategoryOnlyAsk(intent: Intent): boolean {
+  if (intent.kind !== "direct") return false;
+  if (!intent.categories?.length) return false;
+  if (typeof intent.priceMax === "number" || typeof intent.priceMin === "number") {
+    return false;
+  }
+  if (intent.tier) return false;
+  if (intent.requiredTags && intent.requiredTags.length > 0) return false;
+  if (intent.includeBundles) return false;
+  if (intent.compatibleWith) return false;
+  if (intent.subtypeHints && intent.subtypeHints.length > 0) return false;
+  const concern = detectCategoryConcern(intent.rawQuery ?? "");
+  if (concern && concern !== "skip") return false;
+  return true;
+}
+
+/**
+ * A short concern pill (or typed equivalent) while a category clarify
+ * is pending. Must NOT include routine-cue phrases ("skincare for oily
+ * skin") or a newly named product category ("serum for dark spots").
+ */
+export function isBareCategoryConcernPick(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  if (!detectCategoryConcern(trimmed)) return false;
+  if (EXPLICIT_PRODUCT_CATEGORY_PATTERN.test(trimmed)) return false;
+  if (ROUTINE_CUE_PATTERN.test(trimmed)) return false;
+  return true;
+}
+
+export function mergeCategoryClarify(
+  pending: PendingCategoryClarify,
+  concern: CategoryConcernKey,
+  label: string,
+): Intent {
+  return {
+    kind: "direct",
+    rawQuery: label,
+    categories: pending.categories,
+    categoryLabel: pending.categoryLabel,
+    categoryConcern: concern,
+  };
+}
+
+/** Stamp a detected concern onto an intent that does not already have one. */
+export function withCategoryConcern(intent: Intent): Intent {
+  if (intent.categoryConcern) return intent;
+  const key = detectCategoryConcern(intent.rawQuery ?? "");
+  if (!key) return intent;
+  return { ...intent, categoryConcern: key };
+}
+
+export function buildCategoryClarifyBody(intent: Intent): string {
+  const noun = categorySingular(intent);
+  const article = /^[aeiou]/i.test(noun) ? "an" : "a";
+  return `Happy to help you pick ${article} ${noun}. What are you most looking to improve?`;
+}
+
+export function buildCategoryClarifyNbas(intent: Intent): StageNbaItem[] {
+  const category = intent.categories?.[0] ?? "";
+  const labels = CONCERN_PILLS_BY_CATEGORY[category] ?? DEFAULT_CONCERN_PILLS;
+  return labels.map((label) => ({
+    label,
+    lane: detectCategoryConcern(label) === "skip" ? "escape" : "capture",
+  }));
+}
+
+function categorySingular(intent: Intent): string {
+  const plural = humanCategory(intent.categories?.[0]);
+  if (plural === "eye & lip care") return "eye cream";
+  if (plural === "sets & bundles") return "set";
+  if (plural === "sunscreen") return "sunscreen";
+  if (plural.endsWith("s")) return plural.slice(0, -1);
+  return plural || "product";
+}
+
+function concernHaystack(product: CatalogProduct): string {
+  return [
+    product.title,
+    product.overview,
+    ...(product.keyBenefits ?? []),
+    ...(product.primaryActivities ?? []),
+    ...(product.useCaseTags ?? []),
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
+function scoreCategoryConcernFit(
+  product: CatalogProduct,
+  concern: CategoryConcernKey,
+): number {
+  if (concern === "skip" || concern === "best-value") return 0;
+  const keywords = CONCERN_KEYWORDS[concern];
+  const hay = concernHaystack(product);
+  const title = product.title.toLowerCase();
+  let score = 0;
+  for (const keyword of keywords) {
+    if (title.includes(keyword)) score += 8;
+    else if (hay.includes(keyword)) score += 2;
+  }
+  return score;
+}
+
 /** Fixed 5-step routine (Cleanse -> Soften -> Treat -> Moisturize -> Protect),
  * each mapped to the catalog category that fulfils it. */
 export const ROUTINE_STEPS: Array<{
@@ -619,6 +958,23 @@ export const ROUTINE_STEPS: Array<{
   { stepLabel: "5. Protect", categoryTitle: "Sunscreen", categoryKey: "Sunscreen" },
 ];
 
+function routineConcernLabel(key: string): string {
+  switch (key) {
+    case "acne":
+      return "breakouts";
+    case "brightening":
+      return "dark spots";
+    case "anti-aging":
+      return "wrinkles";
+    case "firming":
+      return "firmness";
+    case "hydration":
+      return "dryness";
+    default:
+      return key;
+  }
+}
+
 /**
  * Warm, store-associate-style opener tailored to the detected concern / skin
  * type. Structured as: brief acknowledgement of the request + light rationale
@@ -626,12 +982,30 @@ export const ROUTINE_STEPS: Array<{
  * no products, and hedges outcome language to avoid overpromising.
  */
 export function buildRoutineAcknowledgement(intent: RoutineIntent): string {
+  if (intent.skinType && intent.concernKey) {
+    const skin = intent.skinType;
+    const concern = intent.concernKey;
+    if (skin === "oily" && concern === "acne") {
+      return "Oily skin and breakouts, got it. I'd keep the steps lightweight and clarifying so you're managing shine without stripping. Here's the routine with that in mind.";
+    }
+    if (skin === "oily" && concern === "brightening") {
+      return "Oily skin and dark spots, noted. I'd stay with lightweight formulas that also help even tone, not heavy creams. Here's the routine with both in mind.";
+    }
+    if (skin === "dry" && concern === "acne") {
+      return "Dry skin and breakouts is a tricky mix, so I'd clarify gently without stripping. Here's a routine that tries to do both.";
+    }
+    if (skin === "dry" && (concern === "brightening" || concern === "hydration")) {
+      return `Dry skin and ${routineConcernLabel(concern)}, got it. I'd keep every step hydrating while still aiming at that concern. Here's where I'd start.`;
+    }
+    return `Got it, ${skin} skin and ${routineConcernLabel(concern)}. I'd keep the routine aimed at both, not just one. Here's where I'd start.`;
+  }
+
   const key = intent.concernKey ?? intent.skinType;
   switch (key) {
     case "acne":
       return "Breakouts are frustrating, so I'd focus on gentle, clarifying steps that won't strip your skin. Here's a simple routine to help keep pores clear and calm things down.";
     case "oily":
-      return "Got it, for oily skin I'd lean on lightweight, balancing formulas that manage shine without over-drying. Here's a simple routine to help keep pores clear and comfortable through the day.";
+      return "Got it, for oily skin I'd lean on lightweight, balancing formulas that help manage shine without over-drying. Here's a simple routine to help keep pores clear and comfortable through the day.";
     case "dry":
     case "hydration":
       return "For dry skin, I'd prioritize gentle, deeply hydrating formulas that rebuild comfort. Here's a routine to help restore moisture morning and night.";
@@ -647,37 +1021,304 @@ export function buildRoutineAcknowledgement(intent: RoutineIntent): string {
   }
 }
 
-/** Per-step description, with an optional concern/skin-type clause. */
+/** Per-step description: why this slot exists, then a concern/skin-type cue
+ *  so Soften and Treat reason as hard as Cleanse, not as a generic label. */
 export function buildRoutineSectionDescription(
   categoryKey: string,
   intent: RoutineIntent,
 ): string {
   const concern = intent.concernKey ?? intent.skinType;
   const base: Record<string, string> = {
-    Cleansers: "Start by washing away impurities and excess oil to prep your skin.",
-    Softeners: "Balance and hydrate so the next steps absorb better.",
-    "Serums & Treatments": "Target your main concern with a concentrated treatment.",
-    Moisturizers: "Lock in hydration and strengthen your skin barrier.",
-    Sunscreen: "Finish every morning with SPF to protect against UV damage.",
+    Cleansers:
+      "Start by washing away impurities and excess oil to prep your skin.",
+    Softeners:
+      "After cleansing, a softener puts water back so treatments absorb instead of sitting on tight skin.",
+    "Serums & Treatments":
+      "This is the step that actually works on the concern you named — a concentrated treatment, not a general lotion.",
+    Moisturizers:
+      "Seal what you just applied so it doesn't evaporate, and give the barrier something to hold onto.",
+    Sunscreen:
+      "Finish every morning with SPF — UV undoes the brightening, firming, and barrier work you just did.",
   };
   const clause: Record<string, Record<string, string>> = {
     Cleansers: {
       acne: " Look for formulas that help clear pore-clogging buildup.",
       oily: " Gel and foaming textures help control excess oil.",
+      dry: " A milky or cream cleanser cleans without taking the moisture dry skin is already short on.",
+      hydration:
+        " A milky or cream cleanser cleans without taking the moisture dry skin is already short on.",
+      brightening:
+        " A thorough cleanse lets brightening actives sit on even skin instead of residue.",
+      "anti-aging":
+        " A gentle cleanse preps skin so firming steps can actually reach the surface they're meant for.",
+      combination:
+        " Focus on the T-zone without drying the cheeks — gel textures usually hit that balance.",
+      firming:
+        " A gentle cleanse preps skin so firming steps can actually reach the surface they're meant for.",
+      normal:
+        " A balanced cleanser leaves skin comfortable, not tight or filmy.",
+    },
+    Softeners: {
+      acne: " A calming, non-stripping lotion keeps the barrier comfortable so clarifying treatments don't irritate.",
+      oily: " Lightweight, watery textures hydrate without feeding shine.",
+      dry: " This is the step that makes dry skin receptive again — skip it and richer creams just sit on top.",
+      hydration:
+        " This is the step that makes dry skin receptive again — skip it and richer creams just sit on top.",
+      brightening:
+        " Well-prepped, hydrated skin lets brightening serums penetrate more evenly.",
+      "anti-aging":
+        " Soften first so smoothing serums work on plump, ready skin rather than a dehydrated surface.",
+      combination:
+        " Hydrate the dry patches without loading the oily ones — lotions do that better than creams here.",
+      firming:
+        " Soften first so smoothing serums work on plump, ready skin rather than a dehydrated surface.",
+      normal:
+        " A light lotion is enough here — you're prepping, not correcting.",
     },
     "Serums & Treatments": {
-      brightening: " Brightening actives help fade dark spots over time.",
-      "anti-aging": " Look for firming, wrinkle-smoothing actives.",
-      acne: " Soothing, clarifying actives help calm breakouts.",
+      acne: " Soothing, clarifying actives calm breakouts at the source instead of just washing the surface.",
+      oily: " Oil-balancing, lightweight actives refine texture where a cleanser only preps.",
+      dry: " A hydrating or barrier-repair treatment does the heavy lifting a moisturizer can't do alone.",
+      hydration:
+        " A hydrating or barrier-repair treatment does the heavy lifting a moisturizer can't do alone.",
+      brightening:
+        " Brightening actives fade dullness and dark spots over time — this is where that work happens.",
+      "anti-aging":
+        " Firming and wrinkle-smoothing actives belong here, layered on skin that's already prepped.",
+      combination:
+        " Pick a treatment that evens oil and dryness rather than pushing skin in one direction.",
+      firming:
+        " Firming and wrinkle-smoothing actives belong here, layered on skin that's already prepped.",
+      normal:
+        " Even balanced skin benefits from one targeted treatment — pick the concern you care about most.",
     },
     Moisturizers: {
-      dry: " Richer creams give dry skin lasting comfort.",
-      hydration: " Richer creams give dry skin lasting comfort.",
-      oily: " Lightweight, oil-free gels keep skin balanced.",
+      acne: " A non-comedogenic moisturizer keeps the barrier intact so clarifying steps don't leave skin tight and reactive.",
+      oily: " A lightweight, oil-free gel seals hydration without the shine a cream would add.",
+      dry: " A richer cream is the difference between a routine that feels nice for an hour and one that lasts.",
+      hydration:
+        " A richer cream is the difference between a routine that feels nice for an hour and one that lasts.",
+      brightening:
+        " Sealing brightening actives under a moisturizer helps them stay in contact with skin longer.",
+      "anti-aging":
+        " A nourishing cream supports the firming work and keeps fine lines from looking more pronounced.",
+      combination:
+        " Use a lighter lotion overall, and add a richer cream only where you're dry.",
+      firming:
+        " A nourishing cream supports the firming work and keeps fine lines from looking more pronounced.",
+      normal:
+        " A medium-weight moisturizer is enough to lock the routine in without feeling heavy.",
+    },
+    Sunscreen: {
+      acne: " A non-comedogenic SPF keeps pores clear while you protect the skin you're trying to calm.",
+      oily: " A lightweight, oil-control sunscreen protects without adding shine on top of an already oily day.",
+      dry: " A moisturizing SPF doubles as the last hydrating layer so dry skin isn't left exposed.",
+      hydration:
+        " A moisturizing SPF doubles as the last hydrating layer so dry skin isn't left exposed.",
+      brightening:
+        " Without SPF, the dark spots you're treating just come back — this step protects that progress.",
+      "anti-aging":
+        " Daily SPF is the one step that actually prevents new lines from UV, not just softening the ones you have.",
+      combination:
+        " A balanced, lightweight SPF covers the T-zone and drier areas without tipping either.",
+      firming:
+        " Daily SPF is the one step that actually prevents new lines from UV, not just softening the ones you have.",
+      normal:
+        " A lightweight daily SPF is the habit that keeps an easy routine from being undone.",
     },
   };
   const extra = concern ? clause[categoryKey]?.[concern] ?? "" : "";
   return (base[categoryKey] ?? "") + extra;
+}
+
+/** One-line product cue for a folded step. The long description waits until
+ *  the shopper opens the accordion. */
+export function buildRoutineSectionCue(
+  categoryKey: string,
+  intent: RoutineIntent,
+): string {
+  const concern = intent.concernKey ?? intent.skinType;
+  const byStep: Record<string, Record<string, string> & { default: string }> = {
+    Cleansers: {
+      default: "Daily cleanser",
+      oily: "Gel or foaming cleanser",
+      acne: "Clarifying gel cleanser",
+      dry: "Cream or milky cleanser",
+      hydration: "Cream or milky cleanser",
+      brightening: "Gentle daily cleanser",
+      "anti-aging": "Gentle cream cleanser",
+      firming: "Gentle cream cleanser",
+      combination: "Gel cleanser",
+      normal: "Daily cleanser",
+    },
+    Softeners: {
+      default: "Hydrating softener",
+      oily: "Watery toner or light lotion",
+      acne: "Calming lotion",
+      dry: "Hydrating lotion",
+      hydration: "Hydrating lotion",
+      brightening: "Hydrating softener",
+      "anti-aging": "Hydrating lotion",
+      firming: "Hydrating lotion",
+      combination: "Light lotion",
+      normal: "Light lotion",
+    },
+    "Serums & Treatments": {
+      default: "Targeted treatment",
+      oily: "Lightweight oil-balancing treatment",
+      acne: "Clarifying treatment",
+      dry: "Hydrating serum",
+      hydration: "Hydrating serum",
+      brightening: "Brightening serum",
+      "anti-aging": "Firming serum",
+      firming: "Firming serum",
+      combination: "Balancing treatment",
+      normal: "Targeted treatment",
+    },
+    Moisturizers: {
+      default: "Daily moisturizer",
+      oily: "Oil-free gel moisturizer",
+      acne: "Oil-free moisturizer",
+      dry: "Rich cream",
+      hydration: "Rich cream",
+      brightening: "Daily moisturizer",
+      "anti-aging": "Nourishing cream",
+      firming: "Nourishing cream",
+      combination: "Light lotion",
+      normal: "Daily moisturizer",
+    },
+    Sunscreen: {
+      default: "Daily SPF 30+",
+      oily: "Matte SPF 30+ sunscreen",
+      acne: "Non-comedogenic SPF",
+      dry: "Moisturizing SPF",
+      hydration: "Moisturizing SPF",
+      brightening: "Daily SPF",
+      "anti-aging": "Daily SPF",
+      firming: "Daily SPF",
+      combination: "Lightweight SPF",
+      normal: "Daily SPF 30+",
+    },
+  };
+  const step = byStep[categoryKey];
+  if (!step) return "";
+  return (concern && step[concern]) || step.default;
+}
+
+function productHaystack(product: CatalogProduct): string {
+  const type = product.specs.find((spec) => spec.label === "Type")?.value ?? "";
+  return `${product.title} ${type} ${product.useCaseTags.join(" ")}`.toLowerCase();
+}
+
+function routineSkinFit(product: CatalogProduct, concern?: string): number {
+  if (!concern) return 0;
+  const types = product.subtypes;
+  if (types.includes(concern) && types.length === 1) return 4;
+  if (types.includes(concern)) return 2;
+  if (types.includes("all")) return 0;
+  return -8;
+}
+
+function routineTextureFit(
+  product: CatalogProduct,
+  categoryKey: string,
+  concern?: string,
+): number {
+  const text = productHaystack(product);
+  const oily = concern === "oily" || concern === "acne";
+  const dry = concern === "dry" || concern === "hydration";
+
+  if (categoryKey === "Cleansers") {
+    if (/makeup\s*remover|cleansing tool|brush/.test(text)) return -20;
+    if (oily) {
+      if (/foam|gel|microfoam/.test(text)) return 6;
+      if (/\boil\b|water|milk|micellar/.test(text)) return -6;
+    }
+    if (dry) {
+      if (/milk|cream|rich/.test(text)) return 6;
+      if (/foam/.test(text)) return 2;
+      if (/water/.test(text)) return -3;
+    }
+  }
+
+  if (categoryKey === "Softeners") {
+    if (oily && /enriched/.test(text)) return -4;
+    if (dry && /enriched/.test(text)) return 4;
+    if (oily && /lotion/.test(text)) return 2;
+  }
+
+  if (categoryKey === "Serums & Treatments") {
+    if (oily && /facial oil|\boil\b/.test(text)) return -6;
+    if (dry && /\boil\b/.test(text)) return 3;
+    if (concern === "brightening" && /bright|luminance|dark spot|radiance/.test(text)) {
+      return 5;
+    }
+    if (
+      (concern === "anti-aging" || concern === "firming") &&
+      /wrinkle|firm|lift|age/.test(text)
+    ) {
+      return 5;
+    }
+  }
+
+  if (categoryKey === "Moisturizers") {
+    if (oily && /extra light|fluid|gel|oil-free|oil free/.test(text)) return 6;
+    if (oily && /enriched|rich|cream/.test(text)) return -3;
+    if (dry && /enriched|rich|cream/.test(text)) return 3;
+    if (dry && /fluid|gel|extra light/.test(text)) return -2;
+  }
+
+  if (categoryKey === "Sunscreen") {
+    if (oily && /oil-control|oil control|matte/.test(text)) return 6;
+    if (oily && /moisture|cream|primer/.test(text)) return -3;
+    if (dry && /moisture|cream/.test(text)) return 4;
+    if (dry && /oil-control|oil control/.test(text)) return -3;
+  }
+
+  return 0;
+}
+
+/** Rank a routine step's products against the same claim the copy makes.
+ *  Texture is two layers: a hard exclude for real mismatches (cleanser oil
+ *  next to "gel and foaming"), and a soft rank so a cream moisturizer tagged
+ *  oily still appears — just behind a lightweight fluid. */
+const ROUTINE_SKIN_TYPE_KEYS = new Set(["dry", "oily", "combination", "normal"]);
+
+export function pickRoutineProducts(
+  products: CatalogProduct[],
+  categoryKey: string,
+  concern?: string,
+  limit = 24,
+  skinType?: string,
+): CatalogProduct[] {
+  const HARD_TEXTURE_EXCLUDE = -6;
+  const skinKey =
+    skinType ??
+    (concern && ROUTINE_SKIN_TYPE_KEYS.has(concern) ? concern : undefined);
+  const textureKey = concern ?? skinType;
+  const scored = products
+    .filter((product) => Boolean(product.imageUrl))
+    .map((product) => {
+      const skin = routineSkinFit(product, skinKey);
+      const texture = routineTextureFit(product, categoryKey, textureKey);
+      return { product, skin, texture, score: skin + texture };
+    });
+  const kept = scored.filter((entry) => {
+    if (entry.texture <= HARD_TEXTURE_EXCLUDE) return false;
+    if (!skinKey) return true;
+    return entry.skin > 0;
+  });
+  const pool =
+    kept.length > 0
+      ? kept
+      : scored.filter((entry) => entry.texture > HARD_TEXTURE_EXCLUDE);
+  return pool
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return (b.product.rating ?? 0) - (a.product.rating ?? 0);
+    })
+    .map((entry) => entry.product)
+    .slice(0, limit);
 }
 
 /* =============================================================
@@ -1023,9 +1664,10 @@ export function filterProducts(
 
 /**
  * Pick the first N products that have a usable image. Sort priorities:
- *  1. Required-tag match count (more matched tags first).
- *  2. Tier-aligned price ordering (pro = price desc, beginner = price asc).
- *  3. Catalog order (already rating/review-sorted upstream).
+ *  1. Category-concern fit (title/overview keywords) or best-value price.
+ *  2. Required-tag match count (more matched tags first).
+ *  3. Tier-aligned price ordering (pro = price desc, beginner = price asc).
+ *  4. Catalog order (already rating/review-sorted upstream).
  */
 export function pickRecommendations(
   products: CatalogProduct[],
@@ -1034,6 +1676,7 @@ export function pickRecommendations(
 ): CatalogProduct[] {
   const usable = products.filter((product) => Boolean(product.imageUrl));
   const required = intent?.requiredTags ?? [];
+  const concern = intent?.categoryConcern;
 
   const tagScore = (product: CatalogProduct) =>
     required.length === 0
@@ -1043,8 +1686,25 @@ export function pickRecommendations(
           0,
         );
 
+  const valueTierRank = (product: CatalogProduct) =>
+    product.tier === "beginner" ? 0 : product.tier === "intermediate" ? 1 : 2;
+
   return [...usable]
     .sort((a, b) => {
+      if (concern && concern !== "skip") {
+        if (concern === "best-value") {
+          const tierDelta = valueTierRank(a) - valueTierRank(b);
+          if (tierDelta !== 0) return tierDelta;
+          return (
+            (a.price ?? Number.MAX_SAFE_INTEGER) -
+            (b.price ?? Number.MAX_SAFE_INTEGER)
+          );
+        }
+        const fitDelta =
+          scoreCategoryConcernFit(b, concern) - scoreCategoryConcernFit(a, concern);
+        if (fitDelta !== 0) return fitDelta;
+      }
+
       const tagDelta = tagScore(b) - tagScore(a);
       if (tagDelta !== 0) return tagDelta;
 
@@ -1195,11 +1855,124 @@ export const ORDER_FOLLOWUP_NBAS = [
   "Help with returns",
 ] as const;
 
-export const ROUTINE_FOLLOWUP_NBAS = [
-  "Show a simpler routine",
-  "Best for sensitive skin",
-  "Budget-friendly picks",
-] as const;
+const ALSO_GET_BREAKOUTS = "I also get breakouts";
+const PORES_LOOK_LARGER = "Pores look larger";
+const WHICH_CLEANSER = "Which cleanser should I use";
+const HELP_PICK_SERUM = "Help me pick a serum";
+const WHAT_ABOUT_SUNSCREEN = "What about sunscreen";
+const TIGHT_BY_AFTERNOON = "It feels tight by afternoon";
+const TZONE_GETS_SHINY = "T-zone gets shiny";
+const CHEEKS_FEEL_DRY = "Cheeks feel dry";
+const SKIN_IS_OILY_TOO = "My skin is oily too";
+
+/**
+ * Follow-ups after a routine card. The shopper already gave a broad ask
+ * plus a skin type or concern, so chips add a third clue (another concern
+ * or a single routine step) instead of restarting with budget / sensitive
+ * / simpler-routine filters.
+ */
+export function buildRoutineFollowupNbas(routine: RoutineIntent): string[] {
+  const { skinType, concernKey } = routine;
+  const items: string[] = [];
+
+  if (skinType === "oily") {
+    if (concernKey !== "acne") {
+      items.push(ALSO_GET_BREAKOUTS, PORES_LOOK_LARGER);
+    } else {
+      items.push(WHICH_CLEANSER);
+    }
+    items.push(HELP_PICK_SERUM);
+  } else if (skinType === "dry") {
+    if (concernKey !== "hydration") items.push(TIGHT_BY_AFTERNOON);
+    if (concernKey !== "brightening") items.push(HELP_WITH_DARK_SPOTS);
+    items.push(HELP_PICK_SERUM);
+  } else if (skinType === "combination") {
+    items.push(TZONE_GETS_SHINY, CHEEKS_FEEL_DRY, HELP_PICK_SERUM);
+  } else if (skinType === "normal") {
+    items.push(HELP_WITH_DARK_SPOTS, SOMETHING_FOR_WRINKLES, HELP_PICK_SERUM);
+  } else if (concernKey && !skinType) {
+    items.push(SKIN_IS_OILY_TOO, SKIN_FEELS_DRY, HELP_PICK_SERUM);
+  } else {
+    items.push(HELP_WITH_DARK_SPOTS, ALSO_GET_BREAKOUTS, SKIN_FEELS_DRY);
+  }
+
+  if (concernKey && skinType && !items.includes(WHAT_ABOUT_SUNSCREEN)) {
+    if (items.length < 4) items.push(WHAT_ABOUT_SUNSCREEN);
+  }
+
+  return items.slice(0, 4);
+}
+
+export const ROUTINE_FOLLOWUP_NBAS = buildRoutineFollowupNbas({
+  isRoutine: true,
+});
+
+/**
+ * If the shopper just saw a routine, a thin follow-up should keep that
+ * skin type / concern instead of starting over. Pills that name a
+ * product family become a PLP in that family; concern- or skin-adds
+ * continue the routine (LLM first, host fallback) instead of collapsing
+ * to a single concern-mapped category like Cleansers.
+ */
+export function mergeRoutineFollowup(
+  last: RoutineIntent,
+  text: string,
+):
+  | { kind: "continue"; routine: RoutineIntent }
+  | { kind: "plp"; intent: Intent }
+  | null {
+  const namedFamily = EXPLICIT_PRODUCT_CATEGORY_PATTERN.test(text);
+  const intent = classifyIntent(text);
+  const next = detectRoutineIntent(text);
+
+  if (namedFamily && intent.categories && intent.categories.length > 0) {
+    const requiredTags = Array.from(
+      new Set(
+        [...(last.skinType ? [last.skinType] : []), ...(intent.requiredTags ?? [])],
+      ),
+    );
+    return {
+      kind: "plp",
+      intent: {
+        ...intent,
+        kind: "direct",
+        requiredTags: requiredTags.length > 0 ? requiredTags : undefined,
+      },
+    };
+  }
+
+  if (!namedFamily && (next.concernKey || next.skinType || next.isRoutine)) {
+    return {
+      kind: "continue",
+      routine: {
+        isRoutine: true,
+        skinType: next.skinType ?? last.skinType,
+        concernKey: next.concernKey ?? last.concernKey,
+        rawQuery: text,
+      },
+    };
+  }
+
+  return null;
+}
+
+/** User message sent to the LLM so a host-gated first routine is still in context. */
+export function buildRoutineContinuePrompt(
+  last: RoutineIntent,
+  next: RoutineIntent,
+  shopperText: string,
+): string {
+  const skin = next.skinType ?? last.skinType;
+  const concern = next.concernKey ?? last.concernKey;
+  const skinBit = skin ? `${skin} skin` : "the skin type already discussed";
+  const concernBit = concern ? ` and ${routineConcernLabel(concern)}` : "";
+  return [
+    `Context: the shopper is already in a full skincare routine for ${skinBit}.`,
+    `They just added: "${shopperText.trim()}".`,
+    `Rebuild the FULL multi-step routine for ${skinBit}${concernBit}.`,
+    "Acknowledge both clues in the intro. Do not show a single product carousel.",
+  ].join(" ");
+}
 
 /* =============================================================
  * Stage-aware NBA framework.
@@ -1210,7 +1983,14 @@ export const ROUTINE_FOLLOWUP_NBAS = [
  * existing flow handlers (PLP/PDP/cart/order/support).
  * ============================================================= */
 
-export type NbaStage = "probing" | "plp" | "pdp" | "cart" | "order" | "compare";
+export type NbaStage =
+  | "probing"
+  | "clarify"
+  | "plp"
+  | "pdp"
+  | "cart"
+  | "order"
+  | "compare";
 
 export type NbaLane =
   | "refinement"
@@ -1230,6 +2010,7 @@ export type StageNbaItem = {
 
 export type StageNbaContext =
   | { stage: "probing"; intent?: Intent }
+  | { stage: "clarify"; intent: Intent }
   | {
       stage: "plp";
       intent: Intent;
@@ -1654,6 +2435,8 @@ export function buildStageNbas(context: StageNbaContext): StageNbaItem[] {
   switch (context.stage) {
     case "probing":
       return buildProbingNbas(context.intent);
+    case "clarify":
+      return buildCategoryClarifyNbas(context.intent);
     case "plp":
       return buildPlpNbas(
         context.intent,
@@ -2114,7 +2897,13 @@ export function buildPlpIntro(query: string, intent: Intent, count: number): str
   }
 
   const category = intent.categoryLabel ?? "";
-  const noun = category || "options";
+  const noun =
+    humanCategory(intent.categories?.[0]) !== "products"
+      ? humanCategory(intent.categories?.[0])
+      : category || "options";
+  const concernIntro = buildConcernPlpIntro(intent, noun);
+  if (concernIntro) return concernIntro;
+
   const budget = typeof intent.priceMax === "number" ? intent.priceMax : null;
   const skinTag = intent.requiredTags?.find((tag) =>
     ["dry", "oily", "combination", "normal"].includes(tag),
@@ -2149,4 +2938,31 @@ export function buildPlpIntro(query: string, intent: Intent, count: number): str
   }
 
   return `Good question — here's what I'd start with for "${query.trim()}":`;
+}
+
+function buildConcernPlpIntro(intent: Intent, noun: string): string | undefined {
+  const concern = intent.categoryConcern;
+  if (!concern) return undefined;
+  switch (concern) {
+    case "dark-spots":
+      return `Dark spots it is. I kept this to ${noun} that target discoloration and uneven tone, not the whole ${noun} shelf.`;
+    case "wrinkles":
+      return `Got it, wrinkles. These ${noun} are built for fine lines and smoothing, not just hydration.`;
+    case "firmness":
+      return `Firmness, noted. These are the lifting formulas I'd start with for bounce and contour.`;
+    case "texture":
+      return `Texture is a good one to be specific about. These help refine the surface so skin feels smoother.`;
+    case "dryness":
+      return `Dryness first, then. I kept this to hydrating, plumping ${noun} rather than firming or brightening treatments.`;
+    case "oily":
+      return `Oily skin, understood. I leaned into lighter ${noun} that help manage shine without stripping.`;
+    case "gentle":
+      return `Gentle it is. These are the milder ${noun} I'd reach for when skin needs a softer touch.`;
+    case "daily":
+      return `Daily wear, got it. These are the ${noun} I'd actually use every morning.`;
+    case "best-value":
+      return `Best value, understood. These do the most without jumping to prestige pricing.`;
+    case "skip":
+      return `No problem. Here are a few standout ${noun} to browse; tell me a concern if you want this tighter.`;
+  }
 }

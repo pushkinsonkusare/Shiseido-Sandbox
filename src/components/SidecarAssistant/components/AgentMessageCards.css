@@ -50,7 +50,7 @@
   font-size: 14px;
   font-weight: var(--font-weight-regular);
   line-height: 20px;
-  color: rgba(64, 64, 64, 1);
+  color: var(--agentic-body, #545454);
 }
 
 .agent-msg__caption {
@@ -238,8 +238,9 @@
   margin: 0;
   padding: 0 20px;
   font-size: 14px;
+  font-weight: var(--font-weight-regular);
   line-height: 20px;
-  color: var(--agentic-foreground);
+  color: var(--agentic-body, #545454);
 }
 
 /* Same inset as `.agent-plp__carousel`, so the placeholder tiles start where
@@ -269,8 +270,9 @@
   margin: 0;
   padding: 0 20px;
   font-size: 14px;
+  font-weight: var(--font-weight-regular);
   line-height: 20px;
-  color: var(--agentic-foreground);
+  color: var(--agentic-body, #545454);
 }
 
 .agent-routine__section {
@@ -293,7 +295,7 @@
 
 .agent-routine__section-header {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   gap: 8px;
   padding: 0 20px;
 }
@@ -306,20 +308,51 @@
   padding: 0;
   width: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
+  gap: 24px;
   cursor: pointer;
   font: inherit;
   color: inherit;
   text-align: left;
 }
 
+.agent-routine__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .agent-routine__chevron {
   flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
   display: inline-flex;
   align-items: center;
-  color: var(--agentic-muted-foreground);
+  justify-content: center;
+  box-sizing: border-box;
+  background: transparent;
+  color: var(--agentic-secondary-foreground);
+  border: 1px solid transparent;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.agent-routine__section-toggle:hover .agent-routine__chevron {
+  background: var(--agentic-secondary-bg);
+  border-color: var(--agentic-card-border);
+}
+
+.agent-routine__section-toggle:focus-visible {
+  outline: none;
+}
+
+.agent-routine__section-toggle:focus-visible .agent-routine__chevron {
+  box-shadow: 0 0 0 3px var(--agentic-focus);
 }
 
 .agent-routine__step {
@@ -332,10 +365,10 @@
 
 .agent-routine__description {
   margin: 0;
-  padding: 0 20px;
-  font-size: 13px;
-  line-height: 19px;
-  color: var(--agentic-muted-foreground);
+  font-size: 14px;
+  font-weight: var(--font-weight-regular);
+  line-height: 20px;
+  color: var(--agentic-body, #545454);
 }
 
 /* Placeholders for content a card is still writing. Shared by the routine
@@ -496,8 +529,9 @@
   margin-bottom: 16px;
   padding: 0 20px;
   font-size: 14px;
+  font-weight: var(--font-weight-regular);
   line-height: 20px;
-  color: var(--agentic-foreground);
+  color: var(--agentic-body, #545454);
 }
 
 .agent-compare__scroll {
@@ -696,8 +730,9 @@
   padding: 16px 20px 0;
   border-top: 1px solid rgba(236, 236, 236, 1);
   font-size: 14px;
+  font-weight: var(--font-weight-regular);
   line-height: 20px;
-  color: var(--agentic-foreground);
+  color: var(--agentic-body, #545454);
 }
 
 .agent-compare__recommendation strong {
@@ -963,8 +998,9 @@
 .agent-product-card__desc {
   margin: 0;
   font-size: 14px;
+  font-weight: var(--font-weight-regular);
   line-height: 20px;
-  color: var(--agentic-foreground);
+  color: var(--agentic-body, #545454);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -1065,8 +1101,9 @@
 .agent-product-card__show-more-body {
   margin: 8px 0 0;
   font-size: 14px;
+  font-weight: var(--font-weight-regular);
   line-height: 20px;
-  color: var(--agentic-foreground);
+  color: var(--agentic-body, #545454);
 }
 
 /* ---------- PDP card (#5) ---------- */
@@ -1229,7 +1266,7 @@
   padding: 0 20px;
   font-size: 13px;
   line-height: 1;
-  color: rgba(64, 64, 64, 1);
+  color: var(--agentic-body, #545454);
 }
 
 .agent-pdp__rating-value {
@@ -1303,7 +1340,7 @@
   font-size: 14px;
   font-weight: var(--font-weight-regular);
   line-height: 20px;
-  color: rgba(64, 64, 64, 1);
+  color: var(--agentic-body, #545454);
   white-space: pre-line;
 }
 
@@ -1332,7 +1369,7 @@
   font-size: 14px;
   line-height: 20px;
   font-weight: var(--font-weight-medium, 500);
-  color: rgba(64, 64, 64, 1);
+  color: var(--agentic-body, #545454);
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
@@ -1517,7 +1554,7 @@
   font-size: 14px;
   font-weight: var(--font-weight-regular);
   line-height: 20px;
-  color: rgba(64, 64, 64, 1);
+  color: var(--agentic-body, #545454);
 }
 
 /* Nested summary accordion (AgentCart + AgentOrderSummary) */
@@ -1567,7 +1604,7 @@
   font-size: 14px;
   font-weight: var(--font-weight-regular);
   line-height: 20px;
-  color: rgba(64, 64, 64, 1);
+  color: var(--agentic-body, #545454);
 }
 
 .agent-summary__toggle {

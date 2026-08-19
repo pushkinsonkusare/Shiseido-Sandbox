@@ -100,8 +100,11 @@ export type RoutineSection = {
   categoryTitle: string;
   /** Catalog category name, used to page in more products on "Show more". */
   categoryKey: string;
-  /** Concern/skin-type aware description shown under the heading. */
+  /** Concern/skin-type aware description shown under the heading when the
+   *  step is open. */
   description: string;
+  /** One-line product cue shown while the step is folded. */
+  cue: string;
   /** Products currently shown in this section's carousel. */
   products: AgentPLPProduct[];
   /** When true, append the "Show more" tile to this section's carousel. */

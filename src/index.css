@@ -59,6 +59,7 @@
   --agentic-card-border: var(--color-border);
   --agentic-card-foreground: var(--color-heading);
   --agentic-foreground: var(--color-text);
+  --agentic-body: #545454;
   --agentic-muted-foreground: var(--color-text-muted);
   --agentic-secondary-bg: var(--color-surface-muted);
   --agentic-secondary-foreground: var(--color-secondary-fg);

@@ -1363,15 +1363,21 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__input {
   justify-content: center;
   color: #17171b;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 0;
   transition: background-color 120ms ease, color 120ms ease;
 }
 
-.sidecar-assistant__send:hover:not(:disabled) {
-  background: rgba(23, 23, 27, 0.06);
+.sidecar-assistant__send:not(:disabled):not(.sidecar-assistant__send--stop) {
+  background: #131315;
+  color: #ffffff;
+}
+
+.sidecar-assistant__send:hover:not(:disabled):not(.sidecar-assistant__send--stop) {
+  background: #000000;
 }
 
 .sidecar-assistant__send:disabled {
+  background: #ececec;
   color: rgba(23, 23, 27, 0.35);
   cursor: not-allowed;
 }

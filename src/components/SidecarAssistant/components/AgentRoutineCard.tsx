@@ -11,8 +11,10 @@ export type AgentRoutineSection = {
   stepLabel: string;
   /** Human category title, e.g. "Cleansers". */
   categoryTitle: string;
-  /** Concern/skin-type aware description shown under the heading. */
+  /** Concern/skin-type aware description shown when the step is open. */
   description: string;
+  /** One-line product cue shown while the step is folded. */
+  cue?: string;
   /** Products shown in this section's carousel. */
   products: AgentCarouselProduct[];
   /** When true, append the "Show more" tile to this section's carousel. */
@@ -88,7 +90,10 @@ export function AgentRoutineCard({
         return (
           <section
             key={section.categoryTitle}
-            className="agent-routine__section"
+            className={
+              "agent-routine__section" +
+              (isOpen ? " agent-routine__section--open" : "")
+            }
           >
             <header className="agent-routine__section-header">
               {accordion ? (
@@ -100,8 +105,15 @@ export function AgentRoutineCard({
                     setOpenIndex((cur) => (cur === index ? null : index))
                   }
                 >
-                  <h3 className="agent-routine__step">{section.stepLabel}</h3>
-                  <span className="agent-routine__chevron">
+                  <div className="agent-routine__copy">
+                    <h3 className="agent-routine__step">{section.stepLabel}</h3>
+                    <p className="agent-routine__description">
+                      {isOpen
+                        ? section.description
+                        : (section.cue ?? section.description)}
+                    </p>
+                  </div>
+                  <span className="agent-routine__chevron" aria-hidden="true">
                     {isOpen ? (
                       <ChevronUpIcon width={18} height={18} />
                     ) : (
@@ -110,15 +122,14 @@ export function AgentRoutineCard({
                   </span>
                 </button>
               ) : (
-                <h3 className="agent-routine__step">{section.stepLabel}</h3>
+                <div className="agent-routine__copy">
+                  <h3 className="agent-routine__step">{section.stepLabel}</h3>
+                  <p className="agent-routine__description">
+                    {section.description}
+                  </p>
+                </div>
               )}
             </header>
-            {/* The blurb stays on a folded step so "Soften" isn't the only
-                cue for what that slot is. The carousel is the part that
-                opens and closes. */}
-            <p className="agent-routine__description">
-              {section.description}
-            </p>
             {isOpen ? (
               <AgentProductCarousel
                 products={section.products}
