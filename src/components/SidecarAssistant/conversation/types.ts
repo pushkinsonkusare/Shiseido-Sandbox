@@ -73,6 +73,9 @@ export type AgentLoaderMessage = {
   steps?: string[];
   /** How long each stage holds before the next one takes over. */
   stepIntervalMs?: number;
+  /** Live override from an in-flight tool call. When set, the host should
+   *  clear `steps` so the timer does not walk over this line. */
+  label?: string;
 };
 
 export type AgentPlpMessage = {

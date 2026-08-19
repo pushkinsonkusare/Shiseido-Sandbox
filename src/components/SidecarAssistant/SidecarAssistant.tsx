@@ -77,6 +77,7 @@ import {
   detectForWhom,
   isBareWhoForUtterance,
   applyWhoForChip,
+  buildResearchLoaderPlan,
   ITS_A_GIFT,
   LOOKING_AT_MENS_LINE,
   ROUTINE_STEPS,
@@ -136,17 +137,8 @@ const GUARDRAIL_LATENCY_MS = 700;
  * it. A query that already carries filters is closer to a lookup. */
 const DISCOVERY_LATENCY_MS = 5000;
 const NARROW_LATENCY_MS = 3000;
-const DISCOVERY_LOADER_STEPS = [
-  "Understanding your request",
-  "Looking through the range",
-  "Matching the best products",
-  "Getting your picks ready",
-];
-const NARROW_LOADER_STEPS = [
-  "Applying your filters",
-  "Checking what's in stock",
-  "Getting your picks ready",
-];
+/** Lining products up is a real look, not a lookup — same beat as discovery. */
+const COMPARE_LATENCY_MS = 5000;
 /** Cart edits go through the agent rather than straight into local state, so a
  * quantity change holds the card's totals until the round trip lands. */
 const CART_UPDATE_LATENCY_MS = 3000;
@@ -668,6 +660,21 @@ function toCompareColumn(product: CatalogProduct): AgentCompareColumn {
   };
 }
 
+function compactProductTitle(title: string): string {
+  return title
+    .replace(/^(Shiseido)\s+/i, "")
+    .replace(/\s+\(.*?\)\s*$/, "")
+    .trim();
+}
+
+function joinProductNames(products: CatalogProduct[]): string {
+  const names = products.map((product) => compactProductTitle(product.title));
+  if (names.length === 0) return "those products";
+  if (names.length === 1) return names[0];
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+}
+
 /** How the shopper's own turn reads when they trigger a comparison: the pill
  * label alone ("Compare") loses which products they picked, so the bubble names
  * them the way someone would ask out loud. */
@@ -679,6 +686,33 @@ function buildCompareQuery(products: CatalogProduct[]): string {
   const last = titles[titles.length - 1];
   if (titles.length === 2) return `Compare ${titles[0]} and ${last}`;
   return `Compare ${titles.slice(0, -1).join(", ")}, and ${last}`;
+}
+
+function buildCompareLoaderPlan(products: CatalogProduct[]): {
+  steps: string[];
+  stepIntervalMs: number;
+} {
+  const lineup =
+    products.length <= 1
+      ? `${joinProductNames(products)} with similar products`
+      : joinProductNames(products);
+  const steps = [
+    `Lining up ${lineup}`,
+    "Checking skin type, targets, and collection",
+    "Weighing which one to recommend",
+    "Getting the side-by-side ready",
+  ];
+  return {
+    steps,
+    stepIntervalMs: Math.round(COMPARE_LATENCY_MS / steps.length),
+  };
+}
+
+function buildCompareIntro(products: CatalogProduct[]): string {
+  if (products.length === 2) {
+    return `Here's how the ${compactProductTitle(products[0].title)} and the ${compactProductTitle(products[1].title)} stack up.`;
+  }
+  return `Here's how ${joinProductNames(products)} stack up side by side.`;
 }
 
 /* Preferred order for spec rows in the comparison table; any remaining
@@ -851,9 +885,9 @@ function buildStageNbasMessage(
 /**
  * How long a search should take, and what to say while it does.
  *
- * `Intent.kind` can't make this call: "help me choose a serum" names a
- * category, so it classifies `direct` exactly like "serum under $100". What
- * separates them is whether the query hands over anything to filter on.
+ * Copy is query-grounded (`buildResearchLoaderPlan`) so a chip like
+ * "skincare for oily skin" does not share a spinner with "Find sunscreen
+ * under $60". Timing still splits exploring vs already-narrowed asks.
  */
 function buildSearchLoaderPlan(
   query: string,
@@ -879,11 +913,11 @@ function buildSearchLoaderPlan(
     !options.refinement &&
     (detectRoutineIntent(query).isRoutine || !narrowing);
   const delayMs = exploring ? DISCOVERY_LATENCY_MS : NARROW_LATENCY_MS;
-  const steps = exploring ? DISCOVERY_LOADER_STEPS : NARROW_LOADER_STEPS;
+  const steps = buildResearchLoaderPlan(query, options).steps;
   return {
     delayMs,
     steps,
-    stepIntervalMs: Math.round(delayMs / steps.length),
+    stepIntervalMs: Math.round(delayMs / Math.max(steps.length, 1)),
   };
 }
 
@@ -2894,7 +2928,17 @@ export function SidecarAssistant({
       const agent = agentRef.current;
       if (agent) {
         agent
-          .respond(trimmed)
+          .respond(trimmed, (line) => {
+            updateMessage(loaderId, (message) => {
+              if (message.kind !== "agent_loader") return message;
+              return {
+                ...message,
+                label: line,
+                steps: undefined,
+                stepIntervalMs: undefined,
+              };
+            });
+          })
           .then((actions) => {
             removeMessage(loaderId);
             if (!applyAgentActions(actions)) {
@@ -2921,6 +2965,7 @@ export function SidecarAssistant({
       removeMessage,
       renderGuardrailResponse,
       scheduleResponse,
+      updateMessage,
     ],
   );
 
@@ -3057,24 +3102,36 @@ export function SidecarAssistant({
           kind: "shopper_text",
           text: buildCompareQuery(selectedProducts),
         });
+        const comparePlan = buildCompareLoaderPlan(selectedProducts);
         const loaderId = nextId("loader");
-        appendMessage({ id: loaderId, kind: "agent_loader", variant: "answering" });
-        scheduleResponse(() => {
-          removeMessage(loaderId);
-          const compareProducts = [...selectedProducts];
-          const included = new Set(compareProducts.map((p) => p.slug));
-          // Pad with related products so a single-selection compare still
-          // produces a meaningful multi-column table.
-          if (compareProducts.length < 2) {
-            for (const candidate of getRelatedProducts(firstProduct.slug, 6)) {
-              if (included.has(candidate.slug)) continue;
-              included.add(candidate.slug);
-              compareProducts.push(candidate);
-              if (compareProducts.length >= MAX_SELECTED_PRODUCTS) break;
-            }
+        appendMessage({
+          id: loaderId,
+          kind: "agent_loader",
+          variant: "answering",
+          steps: comparePlan.steps,
+          stepIntervalMs: comparePlan.stepIntervalMs,
+        });
+
+        const compareProducts = [...selectedProducts];
+        const included = new Set(compareProducts.map((p) => p.slug));
+        // Pad with related products so a single-selection compare still
+        // produces a meaningful multi-column table.
+        if (compareProducts.length < 2) {
+          for (const candidate of getRelatedProducts(firstProduct.slug, 6)) {
+            if (included.has(candidate.slug)) continue;
+            included.add(candidate.slug);
+            compareProducts.push(candidate);
+            if (compareProducts.length >= MAX_SELECTED_PRODUCTS) break;
           }
-          const comparedProducts = compareProducts.slice(0, MAX_SELECTED_PRODUCTS);
-          const columns = comparedProducts.map(toCompareColumn);
+        }
+        const comparedProducts = compareProducts.slice(0, MAX_SELECTED_PRODUCTS);
+        const columns = comparedProducts.map(toCompareColumn);
+
+        const finishCompare = (
+          recommended: CatalogProduct,
+          recommendation: string,
+        ) => {
+          removeMessage(loaderId);
           if (columns.length < 2) {
             appendMessage({
               id: nextId("agent"),
@@ -3083,28 +3140,15 @@ export function SidecarAssistant({
             });
             return;
           }
-          const otherCount = comparedProducts.length - 1;
-          const recommended = [...comparedProducts].sort(
-            (a, b) =>
-              (b.rating ?? 0) - (a.rating ?? 0) ||
-              (b.reviewCount ?? 0) - (a.reviewCount ?? 0),
-          )[0];
-          const recommendation =
-            recommended.rating != null
-              ? `I'd recommend the ${recommended.title}. It has the highest rating (${recommended.rating.toFixed(1)}${recommended.reviewCount != null ? ` from ${recommended.reviewCount} reviews` : ""}) and is priced at ${recommended.priceFormatted}.`
-              : `I'd recommend the ${recommended.title}, priced at ${recommended.priceFormatted}.`;
           appendMessage({
             id: nextId("compare"),
             kind: "agent_compare",
-            intro: `Here's a side-by-side comparison of ${firstProduct.title} and ${otherCount} other ${otherCount === 1 ? "item" : "items"}.`,
+            intro: buildCompareIntro(comparedProducts),
             columns,
             rows: buildCompareRows(comparedProducts),
             recommendation,
             recommendedSlug: recommended.slug,
           });
-          // The table answers "how do they differ on paper" and offers a
-          // per-column add, so the follow-up row covers what it can't: the
-          // reasoning behind the pick, fit, and whether two of them pair up.
           lastCompareRef.current = {
             slugs: comparedProducts.map((product) => product.slug),
             recommendedSlug: recommended.slug,
@@ -3127,7 +3171,79 @@ export function SidecarAssistant({
             lanes: compareNbas.map((item) => item.lane),
           });
           setSelectedSlugs([]);
-        });
+        };
+
+        if (columns.length < 2) {
+          scheduleResponse(
+            () => finishCompare(firstProduct, ""),
+            COMPARE_LATENCY_MS,
+          );
+          return;
+        }
+
+        const ratingWinner = [...comparedProducts].sort(
+          (a, b) =>
+            (b.rating ?? 0) - (a.rating ?? 0) ||
+            (b.reviewCount ?? 0) - (a.reviewCount ?? 0),
+        )[0];
+        const hostRecommendation = buildCompareRationale(
+          comparedProducts,
+          ratingWinner,
+        );
+        const agent = agentRef.current;
+        if (!agent) {
+          scheduleResponse(
+            () => finishCompare(ratingWinner, hostRecommendation),
+            COMPARE_LATENCY_MS,
+          );
+          return;
+        }
+
+        const startedAt = Date.now();
+        const applyLiveStatus = (line: string) => {
+          updateMessage(loaderId, (message) => {
+            if (message.kind !== "agent_loader") return message;
+            return {
+              ...message,
+              label: line,
+              steps: undefined,
+              stepIntervalMs: undefined,
+            };
+          });
+        };
+        agent
+          .recommendComparison(comparedProducts, { onStatus: applyLiveStatus })
+          .then((pick) => {
+            const recommended = pick
+              ? (comparedProducts.find(
+                  (product) => product.slug === pick.recommendedSlug,
+                ) ?? ratingWinner)
+              : ratingWinner;
+            const recommendation =
+              pick?.recommendation.trim() || hostRecommendation;
+            const wait = Math.max(
+              0,
+              COMPARE_LATENCY_MS - (Date.now() - startedAt),
+            );
+            window.setTimeout(
+              () => finishCompare(recommended, recommendation),
+              wait,
+            );
+          })
+          .catch((error) => {
+            console.error(
+              "[SidecarAssistant] Comparison recommendation failed",
+              error,
+            );
+            const wait = Math.max(
+              0,
+              COMPARE_LATENCY_MS - (Date.now() - startedAt),
+            );
+            window.setTimeout(
+              () => finishCompare(ratingWinner, hostRecommendation),
+              wait,
+            );
+          });
         return;
       }
 
@@ -3143,6 +3259,7 @@ export function SidecarAssistant({
       removeMessage,
       dispatchShopperMessage,
       handleAddToCart,
+      updateMessage,
     ],
   );
 
@@ -3343,7 +3460,7 @@ export function SidecarAssistant({
       }
 
       const fitSkinType = skinTypeFromFitLabel(label);
-      const body = /^why the /i.test(label)
+      const hostBody = /^why the /i.test(label)
         ? buildCompareRationale(compared, recommended)
         : fitSkinType
           ? buildCompareFitAnswer(compared, fitSkinType)
@@ -3351,11 +3468,43 @@ export function SidecarAssistant({
             ? buildUseBothAnswer(compared)
             : buildCompareDifferenceAnswer(compared);
 
-      scheduleResponse(() => {
+      const finishAnswer = (body: string) => {
         removeMessage(loaderId);
         appendMessage({ id: nextId("agent"), kind: "agent_simple", body });
         offerRemainingPills();
-      });
+      };
+
+      const agent = agentRef.current;
+      if (agent && /^why the /i.test(label)) {
+        agent
+          .recommendComparison(compared, {
+            explainSlug: recommended.slug,
+            onStatus: (line) => {
+              updateMessage(loaderId, (message) => {
+                if (message.kind !== "agent_loader") return message;
+                return {
+                  ...message,
+                  label: line,
+                  steps: undefined,
+                  stepIntervalMs: undefined,
+                };
+              });
+            },
+          })
+          .then((pick) => {
+            finishAnswer(pick?.recommendation.trim() || hostBody);
+          })
+          .catch((error) => {
+            console.error(
+              "[SidecarAssistant] Comparison why-follow-up failed",
+              error,
+            );
+            finishAnswer(hostBody);
+          });
+        return;
+      }
+
+      scheduleResponse(() => finishAnswer(hostBody));
     },
     [
       appendMessage,
@@ -3366,6 +3515,7 @@ export function SidecarAssistant({
       removeMessage,
       renderPlpCard,
       scheduleResponse,
+      updateMessage,
     ],
   );
 
@@ -4342,6 +4492,7 @@ export function SidecarAssistant({
               <LatencyLoader
                 key={message.id}
                 variant={message.variant}
+                label={message.label}
                 steps={message.steps}
                 stepIntervalMs={message.stepIntervalMs}
               />

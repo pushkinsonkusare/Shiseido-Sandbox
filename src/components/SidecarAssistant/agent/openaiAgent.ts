@@ -118,9 +118,11 @@ export type ProposeBroadRecipeSpec = {
 /* =============================================================
  * OpenAI-powered agent for the SidecarAssistant.
  *
- * The host (SidecarAssistant.tsx) calls `agent.respond(text)` and
- * receives a list of UI-facing AgentActions, which it then maps onto
+ * The host (SidecarAssistant.tsx) calls `agent.respond(text, onStatus)`
+ * and receives a list of UI-facing AgentActions, which it then maps onto
  * the existing card-rendering helpers (PLP, PDP, cart, order, NBAs).
+ * `onStatus` is fired before each local tool run so the sidecar loader
+ * can name the work in flight.
  *
  * Tools are evaluated locally: read-only tools (search_catalog,
  * lookup_policy) return data back to the model, while render/mutate
@@ -214,8 +216,27 @@ export type OpenAIAgentDeps = {
   getProductBySlug: (slug: string) => CatalogProduct | undefined;
 };
 
+export type ComparisonPick = {
+  recommendedSlug: string;
+  recommendation: string;
+};
+
 export type OpenAIAgent = {
-  respond: (userText: string) => Promise<AgentAction[]>;
+  respond: (
+    userText: string,
+    onStatus?: (line: string) => void,
+  ) => Promise<AgentAction[]>;
+  /**
+   * Separate from `respond` so a compare turn does not pollute shopping
+   * history. Table specs stay host-built; this only writes the pick.
+   */
+  recommendComparison: (
+    products: CatalogProduct[],
+    options?: {
+      explainSlug?: string;
+      onStatus?: (line: string) => void;
+    },
+  ) => Promise<ComparisonPick | null>;
   reset: () => void;
 };
 
@@ -818,6 +839,181 @@ function buildSystemPrompt(products: CatalogProduct[]): string {
   ].join("\n");
 }
 
+/* ---------- live loader copy ---------- */
+
+const TOOL_FAMILY_SHORT: Record<string, string> = {
+  "serums & treatments": "serums",
+  serums: "serums",
+  serum: "serums",
+  treatments: "serums",
+  moisturizers: "moisturizers",
+  moisturizer: "moisturizers",
+  cleansers: "cleansers",
+  cleanser: "cleansers",
+  sunscreen: "sunscreen",
+  softeners: "softeners",
+  softener: "softeners",
+  "eye & lip care": "eye and lip care",
+  "eye and lip care": "eye and lip care",
+  masks: "masks",
+  mask: "masks",
+  "sets & bundles": "sets",
+  sets: "sets",
+};
+
+function shortToolAsk(value: string): string {
+  const t = value.trim().replace(/\s+/g, " ");
+  if (t.length <= 42) return t;
+  return `${t.slice(0, 40).trimEnd()}…`;
+}
+
+function familyFromToolCategory(raw: unknown): string | undefined {
+  if (typeof raw !== "string") return undefined;
+  const key = raw.trim().toLowerCase();
+  if (!key) return undefined;
+  return TOOL_FAMILY_SHORT[key];
+}
+
+function searchCatalogStatusLine(args: Record<string, unknown>): string {
+  const useCases = Array.isArray(args.useCases)
+    ? args.useCases.map((t) => String(t).trim().toLowerCase())
+    : [];
+  const skin = useCases.find((t) => SKIN_TYPE_VALUES.has(t) && t !== "all");
+  const family = familyFromToolCategory(args.category);
+  const priceMax =
+    typeof args.priceMax === "number" && Number.isFinite(args.priceMax)
+      ? args.priceMax
+      : undefined;
+  const series =
+    typeof args.series === "string" ? args.series.trim().toLowerCase() : "";
+  const query = typeof args.query === "string" ? args.query.trim() : "";
+
+  const bits: string[] = [];
+  if (skin) bits.push(`${skin}-skin`);
+  if (family) bits.push(family);
+  if (priceMax !== undefined) bits.push(`under $${priceMax}`);
+  if (series === "shiseido-men") bits.push("from the Men's line");
+
+  if (bits.length > 0) return `Searching the catalog for ${bits.join(" ")}`;
+  if (query) return `Searching the catalog for ${shortToolAsk(query)}`;
+  return "Searching the catalog";
+}
+
+/** One present-tense line for the sidecar loader. Never dumps JSON. */
+function statusLineForTool(
+  name: string,
+  args: Record<string, unknown>,
+): string | undefined {
+  switch (name) {
+    case "search_catalog":
+      return searchCatalogStatusLine(args);
+    case "propose_broad_recipe":
+      return "Building a routine from those matches";
+    case "show_product_listing":
+    case "show_broad_listing":
+      return "Laying out the products";
+    case "show_product_detail":
+      return "Opening the product";
+    case "add_to_cart":
+      return "Adding to your bag";
+    case "apply_promo":
+      return "Applying the promo";
+    case "checkout":
+      return "Completing checkout";
+    case "lookup_policy":
+      return "Checking our store policy";
+    case "find_accessories":
+      return "Looking for complementary steps";
+    case "suggest_nbas":
+      return "Getting a few next questions ready";
+    default:
+      return undefined;
+  }
+}
+
+const CHOOSE_COMPARISON_PICK_TOOL: ChatCompletionTool = {
+  type: "function",
+  function: {
+    name: "choose_comparison_pick",
+    description:
+      "Pick exactly one of the compared products and write the closing recommendation under the spec table.",
+    parameters: {
+      type: "object",
+      properties: {
+        recommendedSlug: {
+          type: "string",
+          description:
+            "Catalog slug of the product you are recommending. Must be one of the slugs in the fact sheet.",
+        },
+        recommendation: {
+          type: "string",
+          description:
+            "2-3 short sentences: who the pick is for, why it wins on formula / skin / use versus the other column(s), and when the other is the better choice. Do not invent facts.",
+        },
+      },
+      required: ["recommendedSlug", "recommendation"],
+      additionalProperties: false,
+    },
+  },
+};
+
+function clipFact(value: string, max = 280): string {
+  const t = value.trim().replace(/\s+/g, " ");
+  if (t.length <= max) return t;
+  return `${t.slice(0, max - 1).trimEnd()}…`;
+}
+
+/** Compact, model-grounding sheet for a compare turn. */
+function comparisonFactSheet(products: CatalogProduct[]): string {
+  return products
+    .map((product, index) => {
+      const specs = product.specs
+        .filter((spec) => spec.label && spec.value)
+        .map((spec) => `${spec.label}: ${spec.value}`)
+        .join("; ");
+      const benefits = product.keyBenefits.slice(0, 3).join("; ");
+      const lines = [
+        `${index + 1}. ${product.title}`,
+        `slug: ${product.slug}`,
+        `category: ${product.category || "n/a"}`,
+        `collection: ${product.series ?? "n/a"}`,
+        `price: ${product.priceFormatted}`,
+        `rating: ${product.rating ?? "n/a"}${
+          product.reviewCount != null ? ` from ${product.reviewCount} reviews` : ""
+        }`,
+        `skin types: ${product.subtypes.filter(Boolean).join(", ") || "n/a"}`,
+        `concerns: ${product.primaryActivities.filter(Boolean).join(", ") || "n/a"}`,
+      ];
+      if (specs) lines.push(`specs: ${specs}`);
+      if (product.shortDescription) {
+        lines.push(`about: ${clipFact(product.shortDescription)}`);
+      }
+      if (benefits) lines.push(`benefits: ${clipFact(benefits, 360)}`);
+      return lines.join("\n");
+    })
+    .join("\n\n");
+}
+
+function parseComparisonPick(
+  rawArgs: string,
+  allowedSlugs: Set<string>,
+): ComparisonPick | null {
+  let args: Record<string, unknown> = {};
+  try {
+    args = rawArgs ? (JSON.parse(rawArgs) as Record<string, unknown>) : {};
+  } catch {
+    return null;
+  }
+  const recommendedSlug =
+    typeof args.recommendedSlug === "string" ? args.recommendedSlug.trim() : "";
+  const recommendation =
+    typeof args.recommendation === "string" ? args.recommendation.trim() : "";
+  if (!recommendedSlug || !allowedSlugs.has(recommendedSlug) || !recommendation) {
+    return null;
+  }
+  return { recommendedSlug, recommendation };
+}
+
 /* ---------- agent factory ---------- */
 
 export function createOpenAIAgent({
@@ -1383,7 +1579,10 @@ export function createOpenAIAgent({
     }
   }
 
-  async function respond(userText: string): Promise<AgentAction[]> {
+  async function respond(
+    userText: string,
+    onStatus?: (line: string) => void,
+  ): Promise<AgentAction[]> {
     const actions: AgentAction[] = [];
     history.push({ role: "user", content: userText });
 
@@ -1418,6 +1617,16 @@ export function createOpenAIAgent({
 
       for (const call of toolCalls) {
         if (call.type !== "function") continue;
+        let parsed: Record<string, unknown> = {};
+        try {
+          parsed = call.function.arguments
+            ? (JSON.parse(call.function.arguments) as Record<string, unknown>)
+            : {};
+        } catch {
+          parsed = {};
+        }
+        const line = statusLineForTool(call.function.name, parsed);
+        if (line) onStatus?.(line);
         const result = executeTool(call.function.name, call.function.arguments, actions);
         history.push({
           role: "tool",
@@ -1430,9 +1639,68 @@ export function createOpenAIAgent({
     return actions;
   }
 
+  async function recommendComparison(
+    products: CatalogProduct[],
+    options: {
+      explainSlug?: string;
+      onStatus?: (line: string) => void;
+    } = {},
+  ): Promise<ComparisonPick | null> {
+    const allowed = new Set(products.map((product) => product.slug));
+    if (allowed.size < 2) return null;
+
+    const explainSlug =
+      options.explainSlug && allowed.has(options.explainSlug)
+        ? options.explainSlug
+        : undefined;
+    options.onStatus?.(
+      explainSlug
+        ? "Explaining that pick"
+        : "Weighing formula, skin type, and who each one is for",
+    );
+
+    const system = [
+      "You are the Shiseido Personal Beauty Advisor.",
+      "The shopper asked to compare the products in the fact sheet. A spec table already shows category, collection, skin type, targets, and price.",
+      "Your job is ONLY the closing recommendation under that table.",
+      "Pick exactly one product and pass its catalog slug.",
+      "Write 2-3 short sentences: who the pick is for, why it wins on formula / skin / texture / when-to-use versus the other column(s), and when the other is the better choice.",
+      "Reason from the facts given. Do not invent ingredients, clinical claims, or prices.",
+      "Do not lead with star rating unless that is genuinely the only difference.",
+      "Do not start with \"I'd point you to\". Sound like a store associate, not a spec sheet.",
+      explainSlug
+        ? `The shopper is asking why you recommended slug "${explainSlug}". Keep that as recommendedSlug and explain the reasoning.`
+        : "Choose the better fit for a typical shopper given the differences on the sheet.",
+    ].join(" ");
+
+    const user = `Compared products:\n\n${comparisonFactSheet(products)}`;
+
+    const completion = await client!.chat.completions.create({
+      model: resolvedModel,
+      temperature: 0.5,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+      tools: [CHOOSE_COMPARISON_PICK_TOOL],
+      tool_choice: {
+        type: "function",
+        function: { name: "choose_comparison_pick" },
+      },
+    });
+
+    const call = completion.choices[0]?.message?.tool_calls?.find(
+      (entry) =>
+        entry.type === "function" &&
+        entry.function.name === "choose_comparison_pick",
+    );
+    if (!call || call.type !== "function") return null;
+    return parseComparisonPick(call.function.arguments, allowed);
+  }
+
   function reset() {
     history = [];
   }
 
-  return { respond, reset };
+  return { respond, recommendComparison, reset };
 }

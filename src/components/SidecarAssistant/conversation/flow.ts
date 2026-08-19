@@ -853,6 +853,158 @@ export function isCategoryOnlyAsk(intent: Intent): boolean {
   return true;
 }
 
+const FAMILY_SHORT: Record<string, string> = {
+  "serums & treatments": "serums",
+  "Serums & Treatments": "serums",
+  serums: "serums",
+  moisturizers: "moisturizers",
+  Moisturizers: "moisturizers",
+  cleansers: "cleansers",
+  Cleansers: "cleansers",
+  sunscreen: "sunscreen",
+  Sunscreen: "sunscreen",
+  softeners: "softeners",
+  Softeners: "softeners",
+  "eye & lip care": "eye and lip care",
+  "Eye & Lip Care": "eye and lip care",
+  masks: "masks",
+  Masks: "masks",
+  "sets & bundles": "sets",
+  "Sets & Bundles": "sets",
+};
+
+const CONCERN_SHORT: Record<string, string> = {
+  acne: "breakouts",
+  brightening: "dark spots",
+  "anti-aging": "wrinkles",
+  firming: "firmness",
+  hydration: "hydration",
+};
+
+function shortenAsk(query: string): string {
+  const t = query.trim().replace(/\s+/g, " ");
+  if (t.length <= 42) return t;
+  return `${t.slice(0, 40).trimEnd()}…`;
+}
+
+function familyShort(label?: string): string | undefined {
+  if (!label) return undefined;
+  return FAMILY_SHORT[label] ?? FAMILY_SHORT[label.toLowerCase()];
+}
+
+/**
+ * Loader lines that name the shopper's ask, so the wait reads as research
+ * rather than a generic spinner. Used by the sidecar before (and unless)
+ * live tool-call status takes over.
+ */
+export function buildResearchLoaderPlan(
+  query: string,
+  options: { refinement?: boolean } = {},
+): { steps: string[] } {
+  const trimmed = query.trim();
+  const intent = classifyIntent(trimmed);
+  const routine = detectRoutineIntent(trimmed);
+  const who = detectForWhom(trimmed);
+  const family = routine.isRoutine
+    ? undefined
+    : familyShort(intent.categoryLabel);
+  const skin = routine.skinType;
+  const concern = CONCERN_SHORT[routine.concernKey ?? ""] ?? routine.concernKey;
+  const quote = shortenAsk(trimmed);
+  const steps: string[] = [];
+
+  if (options.refinement) {
+    steps.push(`Narrowing to ${quote}`);
+    if (typeof intent.priceMax === "number") {
+      steps.push(`Keeping picks under $${intent.priceMax}`);
+    } else if (skin) {
+      steps.push(`Applying ${skin} skin`);
+    } else if (concern) {
+      steps.push(`Focusing on ${concern}`);
+    } else {
+      steps.push("Applying that filter");
+    }
+    steps.push("Checking what's in stock");
+    steps.push("Getting those picks ready");
+    return { steps };
+  }
+
+  steps.push(`Reading "${quote}"`);
+
+  if (who === "men" && !/\bmen'?s\b/i.test(quote)) {
+    steps.push("Looking at the Men's line");
+  } else if (who === "gift" && !/\bgift\b/i.test(quote)) {
+    steps.push("Keeping this as a gift");
+  }
+
+  // Skin-type / concern asks with no product family are routines, even
+  // when classifyIntent tagged a concern bucket like "pore & oil care".
+  if (routine.isRoutine && !family) {
+    if (skin || concern) {
+      const forWhom = skin ? `${skin} skin` : concern;
+      steps.push(`Checking cleanser, serum, and moisturizer for ${forWhom}`);
+      steps.push(
+        skin === "oily"
+          ? "Putting a lightweight routine together"
+          : skin === "dry"
+            ? "Putting a hydrating routine together"
+            : "Putting a routine together",
+      );
+    } else {
+      steps.push("Checking cleanser, serum, and moisturizer");
+      steps.push("Putting a routine together");
+    }
+    steps.push("Getting those picks ready");
+    return { steps };
+  }
+
+  const clarifyFamily = isCategoryOnlyAsk(intent);
+  if (clarifyFamily && family) {
+    steps.push(`Looking at ${family}`);
+    steps.push("Deciding what to ask next");
+    return { steps };
+  }
+
+  if (family && typeof intent.priceMax === "number") {
+    steps.push(`Looking at ${family}`);
+    steps.push(`Keeping picks under $${intent.priceMax}`);
+    steps.push("Checking what's in stock");
+    steps.push("Getting those picks ready");
+    return { steps };
+  }
+
+  if (family && (skin || concern || intent.requiredTags?.length)) {
+    const skinFromTags = intent.requiredTags?.find((tag) =>
+      ["oily", "dry", "combination", "normal"].includes(tag),
+    );
+    const clue = skin
+      ? `${skin} skin`
+      : concern
+        ? concern
+        : skinFromTags
+          ? `${skinFromTags} skin`
+          : undefined;
+    steps.push(
+      clue ? `Looking at ${family} for ${clue}` : `Looking at ${family}`,
+    );
+    steps.push("Checking what's in stock");
+    steps.push("Getting those picks ready");
+    return { steps };
+  }
+
+  if (family) {
+    steps.push(`Looking at ${family}`);
+    steps.push("Checking what's in stock");
+    steps.push("Getting those picks ready");
+    return { steps };
+  }
+
+  steps.push("Looking through the range");
+  steps.push("Matching the best products");
+  steps.push("Getting those picks ready");
+  return { steps };
+}
+
 /**
  * A short concern pill (or typed equivalent) while a category clarify
  * is pending. Must NOT include routine-cue phrases ("skincare for oily
