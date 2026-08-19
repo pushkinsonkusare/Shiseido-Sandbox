@@ -19,6 +19,7 @@ import {
   ShoppingCartIcon,
   ShrinkIcon,
   SparkleIcon,
+  StopIcon,
   Trash2Icon,
 } from "../icons/StorefrontIcons";
 import {
@@ -3028,8 +3029,8 @@ export function SidecarAssistant({
     return undefined;
   }, []);
 
-  /** "Stop" on the loader. Drops the work in flight and hands the turn back to
-   * the shopper rather than leaving them watching a spinner that may never
+  /** "Stop" on the composer. Drops the work in flight and hands the turn back
+   * to the shopper rather than leaving them watching a spinner that may never
    * resolve. */
   const handleCancelResponse = useCallback(() => {
     const pending = pendingResponses.current;
@@ -3942,7 +3943,6 @@ export function SidecarAssistant({
                 variant={message.variant}
                 steps={message.steps}
                 stepIntervalMs={message.stepIntervalMs}
-                onCancel={handleCancelResponse}
               />
             );
           case "agent_plp":
@@ -4128,7 +4128,6 @@ export function SidecarAssistant({
     [
       handleAddToCart,
       handleApplyPromo,
-      handleCancelResponse,
       handleCartQuantityChange,
       handleCheckout,
       handleContextualPill,
@@ -4496,19 +4495,36 @@ export function SidecarAssistant({
             inputMode={simulateMobileKeyboard ? "none" : undefined}
             aria-label="Ask the personal assistant"
           />
-          <button
-            type="submit"
-            className="sidecar-assistant__send"
-            aria-label="Send message"
-            disabled={composerDisabled || !inputValue.trim()}
-            onPointerDown={(event) => {
-              /* Keep focus on the input through the click so blur does not
-               * unmount the demo keyboard before submit lands. */
-              if (simulateMobileKeyboard) event.preventDefault();
-            }}
-          >
-            <SendHorizontalIcon width={20} height={20} />
-          </button>
+          {agentReplying ? (
+            <button
+              type="button"
+              className="sidecar-assistant__send sidecar-assistant__send--stop"
+              aria-label="Stop"
+              title="Stop"
+              onClick={handleCancelResponse}
+              onPointerDown={(event) => {
+                /* Keep focus on the input through the click so blur does not
+                 * unmount the demo keyboard before the stop lands. */
+                if (simulateMobileKeyboard) event.preventDefault();
+              }}
+            >
+              <StopIcon width={12} height={12} />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              className="sidecar-assistant__send"
+              aria-label="Send message"
+              disabled={!inputValue.trim()}
+              onPointerDown={(event) => {
+                /* Keep focus on the input through the click so blur does not
+                 * unmount the demo keyboard before submit lands. */
+                if (simulateMobileKeyboard) event.preventDefault();
+              }}
+            >
+              <SendHorizontalIcon width={20} height={20} />
+            </button>
+          )}
         </div>
         <p className="sidecar-assistant__disclaimer">
           AI generated content may be wrong. Refer to{" "}

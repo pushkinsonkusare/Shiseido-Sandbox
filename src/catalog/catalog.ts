@@ -59,6 +59,14 @@ export type CatalogProduct = {
   shortDescription: string;
   /** Long-form marketing overview copy from the source dataset. */
   overview: string;
+  /**
+   * The dataset's "Key Benefits" bullets, exactly as authored and empty when
+   * the row has none. `featureBlocks` falls back to the overview text so
+   * downstream FAQ copy always has something to quote; this one does not, so
+   * the PDP can show benefits and overview as distinct sections instead of
+   * printing the same paragraphs twice.
+   */
+  keyBenefits: string[];
   featureBlocks: string[];
   /** Raw ingredient copy from the source dataset (key highlights + INCI list).
    * Empty string when the dataset has no meaningful ingredient data ("N/A"). */
@@ -631,6 +639,7 @@ function normalizeProduct(record: ShiseidoRecord): CatalogProduct {
     gallery: gallery.length > 0 ? gallery : primaryImage ? [primaryImage] : [],
     shortDescription: record.shortDescription,
     overview: isPlaceholderCopy(record.overview) ? "" : record.overview,
+    keyBenefits: realBenefits,
     featureBlocks,
     ingredients: isPlaceholderCopy(record.ingredients) ? "" : record.ingredients,
     howToUse: record.howToUse

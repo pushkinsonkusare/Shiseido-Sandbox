@@ -1381,6 +1381,21 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__input {
   outline-offset: 2px;
 }
 
+/* Same stop control that used to sit on the latency loader, now in the
+   send slot while a turn is in flight. The bordered square is the tell
+   that this is "stop", not a disabled send. */
+.sidecar-assistant__send--stop {
+  border: 1px solid #e5e5e5;
+  border-radius: 2px;
+  color: rgba(23, 23, 27, 0.62);
+}
+
+.sidecar-assistant__send--stop:hover {
+  border-color: #a3a3a3;
+  background: rgba(23, 23, 27, 0.06);
+  color: #17171b;
+}
+
 /* ---------- Collapsed FAB ---------- */
 
 .sidecar-assistant__fab {

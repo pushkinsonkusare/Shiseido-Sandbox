@@ -8,7 +8,9 @@ import { useSearchOverlay } from "../../components/SearchOverlay/SearchOverlayCo
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
+  ChevronDownIcon,
   ChevronRightIcon,
+  ChevronUpIcon,
 } from "../../components/icons/StorefrontIcons";
 import { ROUTES, usePrototypeNavigation } from "../../prototypeRoutes";
 import { SITE_BRAND, SITE_FOOTER_COPY } from "../../siteContent";
@@ -48,10 +50,48 @@ export default function ProductDetailPage() {
 
   const activeImage = gallery[activeImageIndex] ?? gallery[0];
   const relatedProducts = getRelatedProducts(product.slug, 15);
-  const detailBenefits = (product.specs.length > 0 ? product.specs : product.featureBlocks.map((block, index) => ({
-    label: `Feature ${index + 1}`,
-    value: block,
-  }))).slice(0, 3);
+  /* Labels for the "Key Specs" chips, which stay on the spec table. */
+  const keySpecs = (
+    product.specs.length > 0
+      ? product.specs
+      : product.featureBlocks.map((block, index) => ({
+          label: `Feature ${index + 1}`,
+          value: block,
+        }))
+  ).slice(0, 3);
+  /* Overview, Key Benefits and How To Use, straight from those dataset columns.
+   * A section the dataset has nothing for is dropped rather than rendered
+   * empty, so the first section with copy is the one that opens. */
+  const detailSections = [
+    {
+      id: "overview",
+      title: "Overview",
+      items: product.overview
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter(Boolean),
+      list: false,
+    },
+    {
+      id: "key-benefits",
+      title: "Key Benefits",
+      items: product.keyBenefits,
+      list: true,
+    },
+    {
+      id: "how-to-use",
+      title: "How to Use",
+      items: product.howToUse,
+      list: true,
+    },
+  ].filter((section) => section.items.length > 0);
+  const [openDetailIndex, setOpenDetailIndex] = useState<number | null>(0);
+
+  // A different product means a different set of sections, so the accordion
+  // goes back to opening the first one.
+  useEffect(() => {
+    setOpenDetailIndex(0);
+  }, [product.slug]);
 
   return (
     <div className="figma-pdp">
@@ -123,7 +163,7 @@ export default function ProductDetailPage() {
             <div className="figma-pdp__field">
               <label>Key Specs:</label>
               <div className="figma-pdp__chips">
-                {detailBenefits.slice(0, 3).map((benefit, index) => (
+                {keySpecs.map((benefit, index) => (
                   <button key={benefit.label} className={index === 0 ? "is-active" : undefined}>{benefit.label}</button>
                 ))}
               </div>
@@ -162,12 +202,49 @@ export default function ProductDetailPage() {
             <p className="figma-pdp__desc">{product.shortDescription}</p>
 
             <div className="figma-pdp__benefits">
-              {detailBenefits.map((benefit) => (
-                <article key={benefit.label}>
-                  <h3>{benefit.label}</h3>
-                  <p>{benefit.value}</p>
-                </article>
-              ))}
+              {detailSections.map((section, index) => {
+                const isOpen = openDetailIndex === index;
+                return (
+                  <article key={section.id}>
+                    <button
+                      type="button"
+                      className="figma-pdp__detail-toggle"
+                      aria-expanded={isOpen}
+                      aria-controls={`pdp-detail-${section.id}`}
+                      onClick={() =>
+                        setOpenDetailIndex((current) =>
+                          current === index ? null : index,
+                        )
+                      }
+                    >
+                      <h3>{section.title}</h3>
+                      <span className="figma-pdp__detail-chevron" aria-hidden="true">
+                        {isOpen ? (
+                          <ChevronUpIcon width={18} height={18} />
+                        ) : (
+                          <ChevronDownIcon width={18} height={18} />
+                        )}
+                      </span>
+                    </button>
+                    {isOpen ? (
+                      <div
+                        className="figma-pdp__detail-body"
+                        id={`pdp-detail-${section.id}`}
+                      >
+                        {section.list ? (
+                          <ul className="figma-pdp__detail-list">
+                            {section.items.map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          section.items.map((item) => <p key={item}>{item}</p>)
+                        )}
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              })}
             </div>
           </aside>
         </section>

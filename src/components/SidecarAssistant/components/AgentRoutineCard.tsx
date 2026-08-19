@@ -113,21 +113,22 @@ export function AgentRoutineCard({
                 <h3 className="agent-routine__step">{section.stepLabel}</h3>
               )}
             </header>
+            {/* The blurb stays on a folded step so "Soften" isn't the only
+                cue for what that slot is. The carousel is the part that
+                opens and closes. */}
+            <p className="agent-routine__description">
+              {section.description}
+            </p>
             {isOpen ? (
-              <>
-                <p className="agent-routine__description">
-                  {section.description}
-                </p>
-                <AgentProductCarousel
-                  products={section.products}
-                  showMoreCard={Boolean(section.showMoreCard)}
-                  onShowMore={() => onShowMore?.(index)}
-                  selectedIds={selectedIds}
-                  onToggleSelect={onToggleSelect}
-                  onAddToCart={onAddToCart}
-                  selectionLimitReached={selectionLimitReached}
-                />
-              </>
+              <AgentProductCarousel
+                products={section.products}
+                showMoreCard={Boolean(section.showMoreCard)}
+                onShowMore={() => onShowMore?.(index)}
+                selectedIds={selectedIds}
+                onToggleSelect={onToggleSelect}
+                onAddToCart={onAddToCart}
+                selectionLimitReached={selectionLimitReached}
+              />
             ) : null}
           </section>
         );

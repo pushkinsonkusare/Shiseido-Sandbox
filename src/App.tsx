@@ -13,6 +13,7 @@ import { SearchOverlayProvider } from "./components/SearchOverlay/SearchOverlayC
 import ShoppingCartPage from "./pages/ShoppingCartPage/ShoppingCartPage";
 import { SideBySideLayout } from "./components/SideBySideAssistant/SideBySideLayout";
 import { SidecarDockLayout } from "./components/SidecarAssistant/SidecarDockLayout";
+import { SiteGate } from "./components/SiteGate/SiteGate.tsx";
 import StorefrontPage from "./pages/StorefrontPage/StorefrontPage";
 import { PrototypeNavigationProvider, ROUTES, usePrototypeNavigation } from "./prototypeRoutes";
 
@@ -66,17 +67,19 @@ function ModeAwareRoot() {
 
 function App() {
   return (
-    <AgentModeProvider>
-      <PrototypeNavigationProvider>
-        <CatalogProvider>
-          <SearchOverlayProvider>
-            <AgentModeBar />
-            <ModeAwareRoot />
-            <SearchOverlay />
-          </SearchOverlayProvider>
-        </CatalogProvider>
-      </PrototypeNavigationProvider>
-    </AgentModeProvider>
+    <SiteGate>
+      <AgentModeProvider>
+        <PrototypeNavigationProvider>
+          <CatalogProvider>
+            <SearchOverlayProvider>
+              <AgentModeBar />
+              <ModeAwareRoot />
+              <SearchOverlay />
+            </SearchOverlayProvider>
+          </CatalogProvider>
+        </PrototypeNavigationProvider>
+      </AgentModeProvider>
+    </SiteGate>
   );
 }
 

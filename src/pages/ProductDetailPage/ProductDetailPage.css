@@ -278,10 +278,72 @@ html[data-demo-viewport="mobile"] .figma-pdp__page-inner {
 .figma-pdp__paypal { background: #ffc43a; color: #111; }
 .figma-pdp__pay-note { font-size: 12px; margin: 0 0 var(--pdp-space-sm); }
 
+/* Overview / Key Benefits / How to Use, one box per section, one open at a
+   time. The boxes keep the styling they had as static spec panels. */
 .figma-pdp__benefits { display: grid; gap: var(--pdp-space-sm); }
 .figma-pdp__benefits article { background: #f8f8f8; border: 1px solid #d1d5db; padding: var(--pdp-space-md); }
-.figma-pdp__benefits h3 { margin: 0 0 var(--pdp-space-2xs); font-size: 16px; color: #3f3f46; }
-.figma-pdp__benefits p { margin: 0; font-size: 12px; color: #33373d; }
+.figma-pdp__benefits h3 { margin: 0; font-size: 16px; color: #3f3f46; }
+
+/* The whole header row is the hit target, so the chevron is an indicator
+   rather than the only thing that can be clicked. */
+.figma-pdp__detail-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pdp-space-sm);
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.figma-pdp__detail-toggle:focus-visible {
+  outline: 2px solid var(--primary, #131315);
+  outline-offset: 4px;
+}
+
+.figma-pdp__detail-chevron {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: #33373d;
+}
+
+/* Body copy matches the assistant's reply text, so the same sentence reads the
+   same on the page as it does in the panel. */
+.figma-pdp__detail-body {
+  margin-top: var(--pdp-space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pdp-space-xs);
+}
+
+.figma-pdp__detail-body p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--font-weight-regular, 400);
+  line-height: 20px;
+  color: rgba(64, 64, 64, 1);
+}
+
+.figma-pdp__detail-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pdp-space-2xs);
+  list-style: disc;
+}
+
+.figma-pdp__detail-list li {
+  font-size: 14px;
+  font-weight: var(--font-weight-regular, 400);
+  line-height: 20px;
+  color: rgba(64, 64, 64, 1);
+}
 
 /* ---------- "Ask Assistant" NBA module (Figma 33250:50536) ---------- */
 /* Lives in the gallery column on the PDP, below the thumbs. Pills wrap and

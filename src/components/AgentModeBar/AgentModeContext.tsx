@@ -92,7 +92,7 @@ const DEFAULT_AGENT_MODE: AgentMode = "assistant-only";
 const DEFAULT_VIEWPORT_MODE: DemoViewportMode = "desktop";
 const DEFAULT_ACCORDION_RECOMMENDATIONS = true;
 const DEFAULT_CONTEXT_ISLAND = false;
-const DEFAULT_PDP_INLINE_WIDGET = false;
+const DEFAULT_PDP_INLINE_WIDGET = true;
 const DEFAULT_PDP_INLINE_WIDGET_TYPE: PdpInlineWidgetType = "agent-redirect";
 const DEFAULT_PDP_INLINE_WIDGET_POSITION: PdpInlineWidgetPosition =
   "left-under-image";
