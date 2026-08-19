@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "./ProductCard.css";
 import { ArrowRightIcon, BuildingIcon, HeartIcon } from "../icons/StorefrontIcons";
+import { useAgentMode } from "../AgentModeBar/AgentModeContext";
 
 export type ProductCardProps = {
   imageUrl: string;
@@ -49,6 +50,7 @@ export function ProductCard({
   showStars = true,
   onSelect,
 }: ProductCardProps) {
+  const { productSelection } = useAgentMode();
   const visibleSwatches = swatches.slice(0, 4);
   const extraSwatches = Math.max(0, swatches.length - visibleSwatches.length);
 
@@ -85,7 +87,9 @@ export function ProductCard({
           <img className="figma-product-card__image" src={currentImage} alt={imageAlt} />
         </div>
         <div className="figma-product-card__badge-row" aria-hidden="true">
-          {onSelect ? <span className="figma-product-card__hover-checkbox" /> : null}
+          {onSelect && productSelection ? (
+            <span className="figma-product-card__hover-checkbox" />
+          ) : null}
           <div className="figma-product-card__badge">{badgeLabel}</div>
         </div>
         <div className="figma-product-card__actions" aria-hidden="true">

@@ -3,6 +3,7 @@ import { Settings, X } from "lucide-react";
 import "./AgentModeBar.css";
 import {
   AGENT_MODES,
+  PRODUCT_SELECTION_TYPES,
   PDP_INLINE_WIDGET_POSITIONS,
   PDP_INLINE_WIDGET_TYPES,
   useAgentMode,
@@ -31,6 +32,10 @@ export function AgentModeBar() {
     setAccordionRecommendations,
     contextIsland,
     setContextIsland,
+    productSelection,
+    setProductSelection,
+    productSelectionType,
+    setProductSelectionType,
     pdpInlineWidget,
     setPdpInlineWidget,
     pdpInlineWidgetType,
@@ -229,6 +234,48 @@ export function AgentModeBar() {
                     Context island
                   </span>
                 </label>
+                <label className="agent-mode-bar__feature">
+                  <input
+                    type="checkbox"
+                    className="agent-mode-bar__feature-checkbox"
+                    checked={productSelection}
+                    onChange={(event) =>
+                      setProductSelection(event.target.checked)
+                    }
+                  />
+                  <span className="agent-mode-bar__feature-label">
+                    Product selection
+                  </span>
+                </label>
+                {productSelection && (
+                  <div className="agent-mode-bar__sub-options">
+                    <div
+                      className="agent-mode-bar__sub-group"
+                      role="group"
+                      aria-label="Product selection type"
+                    >
+                      <span className="agent-mode-bar__sub-title">Type</span>
+                      <div className="agent-mode-bar__option-grid">
+                        {PRODUCT_SELECTION_TYPES.map(({ id, label }) => (
+                          <button
+                            key={id}
+                            type="button"
+                            className={
+                              "agent-mode-bar__option-button agent-mode-bar__option-button--sm" +
+                              (productSelectionType === id
+                                ? " agent-mode-bar__option-button--active"
+                                : "")
+                            }
+                            aria-pressed={productSelectionType === id}
+                            onClick={() => setProductSelectionType(id)}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <label className="agent-mode-bar__feature">
                   <input
                     type="checkbox"

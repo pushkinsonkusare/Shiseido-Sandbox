@@ -125,26 +125,28 @@ export function AgentProductCard({
     >
       <div className="agent-product-card__gallery">
         <img src={imageUrl} alt={imageAlt} />
-        <button
-          type="button"
-          className={
-            "agent-product-card__icon-btn agent-product-card__store-btn" +
-            (selected ? " agent-product-card__store-btn--selected" : "") +
-            (selectDisabled ? " agent-product-card__store-btn--disabled" : "")
-          }
-          aria-label={selected ? "Deselect product" : "Select product"}
-          aria-pressed={selected}
-          disabled={selectDisabled}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (selectDisabled) return;
-            onToggleSelect?.();
-          }}
-        >
-          <span className="agent-product-card__check" aria-hidden="true">
-            <CheckIcon width={13} height={13} />
-          </span>
-        </button>
+        {onToggleSelect ? (
+          <button
+            type="button"
+            className={
+              "agent-product-card__icon-btn agent-product-card__store-btn" +
+              (selected ? " agent-product-card__store-btn--selected" : "") +
+              (selectDisabled ? " agent-product-card__store-btn--disabled" : "")
+            }
+            aria-label={selected ? "Deselect product" : "Select product"}
+            aria-pressed={selected}
+            disabled={selectDisabled}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (selectDisabled) return;
+              onToggleSelect();
+            }}
+          >
+            <span className="agent-product-card__check" aria-hidden="true">
+              <CheckIcon width={13} height={13} />
+            </span>
+          </button>
+        ) : null}
       </div>
 
       <div className="agent-product-card__content">

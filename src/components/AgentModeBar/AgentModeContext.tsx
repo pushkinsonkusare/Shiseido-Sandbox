@@ -37,6 +37,17 @@ export const PDP_INLINE_WIDGET_POSITIONS: {
   { id: "right-rail", label: "Right rail" },
 ];
 
+/** Where selected-product pills and their NBA chips sit in the sidecar. */
+export type ProductSelectionType = "drawer" | "in-chat";
+
+export const PRODUCT_SELECTION_TYPES: {
+  id: ProductSelectionType;
+  label: string;
+}[] = [
+  { id: "drawer", label: "Drawer" },
+  { id: "in-chat", label: "In chat" },
+];
+
 export type UserTestingVariant = "a" | "b";
 
 /** Single welcome NBA shown under UserTesting lock (`?ut=a|b`). */
@@ -60,6 +71,13 @@ type AgentModeContextValue = {
   /** Context island feature toggle (behavior TBD). */
   contextIsland: boolean;
   setContextIsland: (enabled: boolean) => void;
+  /** When true, selected-product pills follow `productSelectionType`. */
+  productSelection: boolean;
+  setProductSelection: (enabled: boolean) => void;
+  /** Drawer = tray above the composer. In chat = pills inside the composer
+   *  box, NBAs below it. Retained while the parent checkbox is off. */
+  productSelectionType: ProductSelectionType;
+  setProductSelectionType: (type: ProductSelectionType) => void;
   /** PDP inline widget feature toggle (behavior TBD). */
   pdpInlineWidget: boolean;
   setPdpInlineWidget: (enabled: boolean) => void;
@@ -92,6 +110,8 @@ const DEFAULT_AGENT_MODE: AgentMode = "assistant-only";
 const DEFAULT_VIEWPORT_MODE: DemoViewportMode = "desktop";
 const DEFAULT_ACCORDION_RECOMMENDATIONS = true;
 const DEFAULT_CONTEXT_ISLAND = false;
+const DEFAULT_PRODUCT_SELECTION = true;
+const DEFAULT_PRODUCT_SELECTION_TYPE: ProductSelectionType = "drawer";
 const DEFAULT_PDP_INLINE_WIDGET = true;
 const DEFAULT_PDP_INLINE_WIDGET_TYPE: PdpInlineWidgetType = "agent-redirect";
 const DEFAULT_PDP_INLINE_WIDGET_POSITION: PdpInlineWidgetPosition =
@@ -150,6 +170,11 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
     UT_BOOTSTRAP.accordionRecommendations,
   );
   const [contextIsland, setContextIsland] = useState<boolean>(DEFAULT_CONTEXT_ISLAND);
+  const [productSelection, setProductSelection] = useState<boolean>(
+    DEFAULT_PRODUCT_SELECTION,
+  );
+  const [productSelectionType, setProductSelectionType] =
+    useState<ProductSelectionType>(DEFAULT_PRODUCT_SELECTION_TYPE);
   const [pdpInlineWidget, setPdpInlineWidget] = useState<boolean>(
     DEFAULT_PDP_INLINE_WIDGET,
   );
@@ -168,6 +193,10 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       setAccordionRecommendations,
       contextIsland,
       setContextIsland,
+      productSelection,
+      setProductSelection,
+      productSelectionType,
+      setProductSelectionType,
       pdpInlineWidget,
       setPdpInlineWidget,
       pdpInlineWidgetType,
@@ -182,6 +211,8 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       viewportMode,
       accordionRecommendations,
       contextIsland,
+      productSelection,
+      productSelectionType,
       pdpInlineWidget,
       pdpInlineWidgetType,
       pdpInlineWidgetPosition,

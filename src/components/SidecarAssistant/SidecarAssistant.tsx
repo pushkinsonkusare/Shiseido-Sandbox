@@ -73,6 +73,12 @@ import {
   pickRecommendations,
   pickRoutineProducts,
   withCategoryConcern,
+  withShopperProfile,
+  detectForWhom,
+  isBareWhoForUtterance,
+  applyWhoForChip,
+  ITS_A_GIFT,
+  LOOKING_AT_MENS_LINE,
   ROUTINE_STEPS,
   type HygieneTopic,
   type Intent,
@@ -80,6 +86,7 @@ import {
   type NbaStage,
   type PendingCategoryClarify,
   type RoutineIntent,
+  type ShopperProfile,
   type StageNbaItem,
 } from "./conversation/flow";
 import {
@@ -958,8 +965,10 @@ export function SidecarAssistant({
 }: SidecarAssistantProps = {}) {
   const { products, heroProduct, getProductBySlug, getRelatedProducts, orderHistory } =
     useCatalog();
-  const { accordionRecommendations, contextIsland, viewportMode, userTestingLock } =
+  const { accordionRecommendations, contextIsland, productSelection, productSelectionType, viewportMode, userTestingLock } =
     useAgentMode();
+  const inChatProductSelection =
+    productSelection && productSelectionType === "in-chat";
   const [isOpen, setIsOpen] = useState(false);
   const [simKeyboardOpen, setSimKeyboardOpen] = useState(false);
 
@@ -1146,6 +1155,7 @@ export function SidecarAssistant({
   // keeps the product family instead of collapsing into a routine card.
   const pendingCategoryClarifyRef = useRef<PendingCategoryClarify | null>(null);
   const lastRoutineIntentRef = useRef<RoutineIntent | null>(null);
+  const shopperProfileRef = useRef<ShopperProfile>({});
   const lastStageNbaClickRef = useRef<{
     stage: NbaStage | "welcome";
     lane?: NbaLane;
@@ -1161,9 +1171,30 @@ export function SidecarAssistant({
     answered: string[];
   } | null>(null);
 
+  const takeWhoForLabels = (labels: string[], genericSkincare?: boolean) => {
+    const next = applyWhoForChip(labels, shopperProfileRef.current, {
+      genericSkincare,
+    });
+    if (
+      next.includes(ITS_A_GIFT) ||
+      next.includes(LOOKING_AT_MENS_LINE)
+    ) {
+      shopperProfileRef.current = {
+        ...shopperProfileRef.current,
+        whoForOffered: true,
+      };
+    }
+    return next;
+  };
+
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+
+  useEffect(() => {
+    if (productSelection) return;
+    setSelectedSlugs([]);
+  }, [productSelection]);
 
   // Selecting a product moves focus to the composer (cursor blinking) so the
   // shopper can immediately ask about it; the placeholder names the product.
@@ -1785,6 +1816,10 @@ export function SidecarAssistant({
             kind: "direct",
             rawQuery: routine.rawQuery,
             categories: [step.categoryKey],
+            series:
+              shopperProfileRef.current.forWhom === "men"
+                ? ["shiseido-men"]
+                : undefined,
           },
           products,
         );
@@ -1818,10 +1853,22 @@ export function SidecarAssistant({
         acknowledgementOverride?.trim() ||
           buildRoutineAcknowledgement(routine),
         sections,
-        () =>
-          appendMessage(
-            buildNbasMessage(buildRoutineFollowupNbas(routine), false),
-          ),
+        () => {
+          const labels = buildRoutineFollowupNbas(
+            routine,
+            shopperProfileRef.current,
+          );
+          if (
+            labels.includes(ITS_A_GIFT) ||
+            labels.includes(LOOKING_AT_MENS_LINE)
+          ) {
+            shopperProfileRef.current = {
+              ...shopperProfileRef.current,
+              whoForOffered: true,
+            };
+          }
+          appendMessage(buildNbasMessage(labels, false));
+        },
       );
     },
     [
@@ -1864,15 +1911,19 @@ export function SidecarAssistant({
     [getProductBySlug, handleProductSelect, updateMessage],
   );
 
-  const handleToggleSelect = useCallback((slug: string) => {
-    setSelectedSlugs((current) =>
-      current.includes(slug)
-        ? current.filter((existing) => existing !== slug)
-        : current.length >= MAX_SELECTED_PRODUCTS
-          ? current
-          : [...current, slug],
-    );
-  }, []);
+  const handleToggleSelect = useCallback(
+    (slug: string) => {
+      if (!productSelection) return;
+      setSelectedSlugs((current) =>
+        current.includes(slug)
+          ? current.filter((existing) => existing !== slug)
+          : current.length >= MAX_SELECTED_PRODUCTS
+            ? current
+            : [...current, slug],
+      );
+    },
+    [productSelection],
+  );
 
   const handleRemoveSelected = useCallback((slug: string) => {
     setSelectedSlugs((current) => current.filter((existing) => existing !== slug));
@@ -2317,10 +2368,14 @@ export function SidecarAssistant({
             const routine = mergedRoutine();
             const sections: RoutineSection[] = [];
             for (const spec of action.specs) {
-              const pool = buildRowProductsFromSpec(
-                specToBroadRow(spec),
-                products,
-              );
+              const row = specToBroadRow(spec);
+              if (
+                shopperProfileRef.current.forWhom === "men" &&
+                (!row.series || row.series.length === 0)
+              ) {
+                row.series = ["shiseido-men"];
+              }
+              const pool = buildRowProductsFromSpec(row, products);
               const section = sectionFromToken(
                 spec.categoryToken,
                 spec.title,
@@ -2349,6 +2404,10 @@ export function SidecarAssistant({
                     accessoryRole:
                       row.accessoryRole as BroadSubTopicSpec["accessoryRole"],
                     leadCount: RECIPE_LEAD_COUNT,
+                    series:
+                      shopperProfileRef.current.forWhom === "men"
+                        ? ["shiseido-men"]
+                        : undefined,
                   },
                   products,
                 );
@@ -2392,7 +2451,19 @@ export function SidecarAssistant({
             break;
           }
           case "suggest_nbas":
-            emitFollowUp(() => appendMessage(buildNbasMessage(action.labels)));
+            emitFollowUp(() =>
+              appendMessage(
+                buildNbasMessage(
+                  takeWhoForLabels(
+                    action.labels,
+                    lastRoutineForNbas
+                      ? !lastRoutineForNbas.skinType &&
+                          !lastRoutineForNbas.concernKey
+                      : false,
+                  ),
+                ),
+              ),
+            );
             break;
         }
       }
@@ -2439,11 +2510,22 @@ export function SidecarAssistant({
 
       if (lastRoutineForNbas) {
         const routine = lastRoutineForNbas;
-        emitFollowUp(() =>
-          appendMessage(
-            buildNbasMessage(buildRoutineFollowupNbas(routine), false),
-          ),
-        );
+        emitFollowUp(() => {
+          const labels = buildRoutineFollowupNbas(
+            routine,
+            shopperProfileRef.current,
+          );
+          if (
+            labels.includes(ITS_A_GIFT) ||
+            labels.includes(LOOKING_AT_MENS_LINE)
+          ) {
+            shopperProfileRef.current = {
+              ...shopperProfileRef.current,
+              whoForOffered: true,
+            };
+          }
+          appendMessage(buildNbasMessage(labels, false));
+        });
         return true;
       }
 
@@ -2457,7 +2539,20 @@ export function SidecarAssistant({
             intent,
             matchCount: plpSlugs.length,
             bundleProducts: findBundlesForIntent(intent, products),
+            whoFor: shopperProfileRef.current,
           });
+          if (
+            items.some(
+              (item) =>
+                item.label === ITS_A_GIFT ||
+                item.label === LOOKING_AT_MENS_LINE,
+            )
+          ) {
+            shopperProfileRef.current = {
+              ...shopperProfileRef.current,
+              whoForOffered: true,
+            };
+          }
           appendMessage(buildStageNbasMessage("plp", items));
           emitAssistantTelemetry("nba_impression", {
             stage: "plp",
@@ -2491,7 +2586,10 @@ export function SidecarAssistant({
   // refinement pills can narrow it while preserving category + filters.
   const renderRankedPlp = useCallback(
     (query: string, intent: Intent) => {
-      const resolved = withCategoryConcern(intent);
+      const resolved = withShopperProfile(
+        withCategoryConcern(intent),
+        shopperProfileRef.current,
+      );
       activePlpIntentRef.current = resolved;
       const matches = filterProducts(resolved, products);
       const ranked = pickRecommendations(matches, matches.length, resolved);
@@ -2527,7 +2625,20 @@ export function SidecarAssistant({
               intent: resolved,
               matchCount: matches.length,
               bundleProducts: findBundlesForIntent(resolved, products),
+              whoFor: shopperProfileRef.current,
             });
+            if (
+              plpItems.some(
+                (item) =>
+                  item.label === ITS_A_GIFT ||
+                  item.label === LOOKING_AT_MENS_LINE,
+              )
+            ) {
+              shopperProfileRef.current = {
+                ...shopperProfileRef.current,
+                whoForOffered: true,
+              };
+            }
             appendMessage(buildStageNbasMessage("plp", plpItems));
             emitAssistantTelemetry("nba_impression", {
               stage: "plp",
@@ -2577,6 +2688,34 @@ export function SidecarAssistant({
       }
       if (pending) {
         pendingCategoryClarifyRef.current = null;
+      }
+
+      const who = detectForWhom(trimmed);
+      if (
+        (who === "gift" || who === "self") &&
+        isBareWhoForUtterance(trimmed)
+      ) {
+        appendMessage({
+          id: nextId("agent"),
+          kind: "agent_simple",
+          body:
+            who === "gift"
+              ? "Got it, I'll keep that in mind as a gift."
+              : "Got it, I'll keep these picks for you.",
+        });
+        return;
+      }
+      if (who === "men") {
+        const lastRoutine = lastRoutineIntentRef.current;
+        if (lastRoutine && renderRoutineCard(lastRoutine)) return;
+        const plpIntent = activePlpIntentRef.current;
+        if (plpIntent) {
+          renderRankedPlp(
+            trimmed,
+            withShopperProfile(plpIntent, shopperProfileRef.current),
+          );
+          return;
+        }
       }
 
       const lastRoutine = lastRoutineIntentRef.current;
@@ -2713,6 +2852,14 @@ export function SidecarAssistant({
       if (!trimmed) return;
 
       appendMessage({ id: nextId("shopper"), kind: "shopper_text", text: trimmed });
+
+      const who = detectForWhom(trimmed);
+      if (who) {
+        shopperProfileRef.current = {
+          ...shopperProfileRef.current,
+          forWhom: who,
+        };
+      }
 
       /* Unsafe, off-catalog and unreadable input never reaches intent
        * classification: `classifyIntent` has no way to say "I can't help with
@@ -3457,7 +3604,11 @@ export function SidecarAssistant({
         return;
       }
 
-      if (isPlpRefinement && activePlpIntentRef.current?.categories?.length) {
+      if (
+        isPlpRefinement &&
+        !detectForWhom(label) &&
+        activePlpIntentRef.current?.categories?.length
+      ) {
         dispatchPlpRefinement(label);
         return;
       }
@@ -4203,8 +4354,8 @@ export function SidecarAssistant({
                 products={message.products}
                 showMoreCard={message.showMoreCard}
                 onShowMore={() => handleShowMore(message.id)}
-                selectedIds={selectedSet}
-                onToggleSelect={handleToggleSelect}
+                selectedIds={productSelection ? selectedSet : undefined}
+                onToggleSelect={productSelection ? handleToggleSelect : undefined}
                 onAddToCart={(slug) => handleAddToCart(slug, 1)}
                 selectionLimitReached={selectedSet.size >= MAX_SELECTED_PRODUCTS}
                 streaming={message.streaming}
@@ -4219,8 +4370,8 @@ export function SidecarAssistant({
                 onShowMore={(sectionIndex) =>
                   handleRoutineShowMore(message.id, sectionIndex)
                 }
-                selectedIds={selectedSet}
-                onToggleSelect={handleToggleSelect}
+                selectedIds={productSelection ? selectedSet : undefined}
+                onToggleSelect={productSelection ? handleToggleSelect : undefined}
                 onAddToCart={(slug) => handleAddToCart(slug, 1)}
                 selectionLimitReached={selectedSet.size >= MAX_SELECTED_PRODUCTS}
                 accordion={accordionRecommendations}
@@ -4393,6 +4544,7 @@ export function SidecarAssistant({
       selectedSet,
       messages,
       accordionRecommendations,
+      productSelection,
       updatingCart,
     ],
   );
@@ -4434,6 +4586,7 @@ export function SidecarAssistant({
     welcomeNbasMessageIdRef.current = null;
     lastSeparatorSlugRef.current = null;
     lastRoutineIntentRef.current = null;
+    shopperProfileRef.current = {};
     lastCompareRef.current = null;
     answeredFaqsBySlugRef.current.clear();
     agentRef.current?.reset();
@@ -4460,6 +4613,59 @@ export function SidecarAssistant({
     document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
   };
+
+  const selectionPills =
+    selectedSlugs.length > 0 ? (
+      <div
+        className="sidecar-assistant__selection-pills"
+        role="list"
+        aria-label="Selected products"
+      >
+        {selectedSlugs.map((slug) => {
+          const product = getProductBySlug(slug);
+          if (!product) return null;
+          return (
+            <span
+              key={slug}
+              className="sidecar-assistant__selection-pill"
+              role="listitem"
+            >
+              <img
+                className="sidecar-assistant__selection-pill-thumb"
+                src={product.imageUrl}
+                alt={product.imageAlt}
+              />
+              <span className="sidecar-assistant__selection-pill-label">
+                {product.title}
+              </span>
+              <button
+                type="button"
+                className="sidecar-assistant__selection-pill-remove"
+                aria-label={`Remove ${product.title}`}
+                onClick={() => handleRemoveSelected(slug)}
+              >
+                <CloseIcon width={14} height={14} />
+              </button>
+            </span>
+          );
+        })}
+      </div>
+    ) : null;
+
+  const selectionNbas = contextualThreadActive ? null : (
+    <AgentNBAs
+      className="agent-nba__set--scroll"
+      nbas={contextualNbas}
+      regenerateButton={false}
+      onSelect={(nba) => {
+        handleContextualPill(nba.label);
+        setSelectedSlugs([]);
+        if (simulateMobileKeyboard) {
+          dismissSimulatedKeyboard();
+        }
+      }}
+    />
+  );
 
   const panelBody = (
     <>
@@ -4641,68 +4847,33 @@ export function SidecarAssistant({
       </div>
 
       <form className="sidecar-assistant__input-bar" onSubmit={handleSubmit}>
-        {selectedSlugs.length > 0 ? (
+        {selectedSlugs.length > 0 && !inChatProductSelection ? (
           <div className="sidecar-assistant__selection-tray">
-            <div
-              className="sidecar-assistant__selection-pills"
-              role="list"
-              aria-label="Selected products"
-            >
-              {selectedSlugs.map((slug) => {
-                const product = getProductBySlug(slug);
-                if (!product) return null;
-                return (
-                  <span
-                    key={slug}
-                    className="sidecar-assistant__selection-pill"
-                    role="listitem"
-                  >
-                    <img
-                      className="sidecar-assistant__selection-pill-thumb"
-                      src={product.imageUrl}
-                      alt={product.imageAlt}
-                    />
-                    <span className="sidecar-assistant__selection-pill-label">
-                      {product.title}
-                    </span>
-                    <button
-                      type="button"
-                      className="sidecar-assistant__selection-pill-remove"
-                      aria-label={`Remove ${product.title}`}
-                      onClick={() => handleRemoveSelected(slug)}
-                    >
-                      <CloseIcon width={14} height={14} />
-                    </button>
-                  </span>
-                );
-              })}
-            </div>
-            {contextualThreadActive ? null : (
-              <AgentNBAs
-                className="agent-nba__set--scroll"
-                nbas={contextualNbas}
-                regenerateButton={false}
-                onSelect={(nba) => {
-                  handleContextualPill(nba.label);
-                  setSelectedSlugs([]);
-                  if (simulateMobileKeyboard) {
-                    dismissSimulatedKeyboard();
-                  }
-                }}
-              />
-            )}
+            {selectionPills}
+            {selectionNbas}
           </div>
         ) : null}
         <div
           className={`sidecar-assistant__input-shell${
             composerDisabled ? " sidecar-assistant__input-shell--disabled" : ""
+          }${
+            selectedSlugs.length > 0 && inChatProductSelection
+              ? " sidecar-assistant__input-shell--with-selection"
+              : ""
           }`}
         >
+          {selectedSlugs.length > 0 && inChatProductSelection ? selectionPills : null}
+          <div className="sidecar-assistant__input-shell-row">
+          <div className="sidecar-assistant__input-field">
+          {!composerDisabled && inputValue.length === 0 ? (
+            <span className="sidecar-assistant__input-placeholder" aria-hidden="true">
+              {inputPlaceholder}
+            </span>
+          ) : null}
           <textarea
             ref={inputRef}
             rows={1}
             className="sidecar-assistant__input"
-            placeholder={inputPlaceholder}
             value={composerDisabled ? sentDraft : inputValue}
             disabled={composerDisabled}
             onChange={(event) => setInputValue(event.target.value)}
@@ -4746,6 +4917,7 @@ export function SidecarAssistant({
             inputMode={simulateMobileKeyboard ? "none" : undefined}
             aria-label="Ask the personal assistant"
           />
+          </div>
           {agentReplying ? (
             <button
               type="button"
@@ -4776,7 +4948,11 @@ export function SidecarAssistant({
               <SendHorizontalIcon width={16} height={16} />
             </button>
           )}
+          </div>
         </div>
+        {selectedSlugs.length > 0 && inChatProductSelection && selectionNbas ? (
+          <div className="sidecar-assistant__composer-nbas">{selectionNbas}</div>
+        ) : null}
         <p className="sidecar-assistant__disclaimer">
           AI generated content may be wrong. Refer to{" "}
           <a

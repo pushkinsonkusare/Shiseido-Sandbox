@@ -343,6 +343,11 @@ export type Intent = {
    * Soft-ranks the PLP and drives the acknowledgement intro.
    */
   categoryConcern?: CategoryConcernKey;
+  /**
+   * Collection slugs (e.g. `shiseido-men`) that must match `product.series`.
+   * Soft: if nothing matches, the broader pool is kept.
+   */
+  series?: string[];
 };
 
 const BUNDLE_QUERY_PATTERN =
@@ -1609,6 +1614,15 @@ export function filterProducts(
     }
   }
 
+  if (intent.series && intent.series.length > 0) {
+    const matched = pool.filter(
+      (product) => product.series != null && intent.series!.includes(product.series),
+    );
+    if (matched.length > 0) {
+      pool = matched;
+    }
+  }
+
   if (typeof intent.priceMax === "number") {
     pool = pool.filter(
       (product) => product.price != null && product.price <= intent.priceMax!,
@@ -1865,13 +1879,109 @@ const TZONE_GETS_SHINY = "T-zone gets shiny";
 const CHEEKS_FEEL_DRY = "Cheeks feel dry";
 const SKIN_IS_OILY_TOO = "My skin is oily too";
 
+export const ITS_A_GIFT = "It's a gift";
+export const LOOKING_AT_MENS_LINE = "Looking at the Men's line";
+
+export type ShopperForWhom = "self" | "gift" | "men";
+
+export type ShopperProfile = {
+  forWhom?: ShopperForWhom;
+  /** True after we already offered a who-for chip this session. */
+  whoForOffered?: boolean;
+};
+
+export function detectForWhom(text: string): ShopperForWhom | undefined {
+  const t = text.trim();
+  if (!t) return undefined;
+  if (
+    /\blooking at the men'?s line\b/i.test(t) ||
+    /\bshiseido men\b/i.test(t) ||
+    /\bmen'?s\s+(line|range|skincare|products?|routine)\b/i.test(t) ||
+    /\b(husband|boyfriend|for him|for my (dad|father|son|brother))\b/i.test(t)
+  ) {
+    return "men";
+  }
+  if (
+    /\bit'?s a gift\b/i.test(t) ||
+    /\ba gift\b/i.test(t) ||
+    /\bfor (my )?(mom|mum|mother|partner|wife|girlfriend|friend)\b/i.test(t)
+  ) {
+    return "gift";
+  }
+  if (
+    /\bit'?s for me\b/i.test(t) ||
+    /\bfor myself\b/i.test(t) ||
+    /\bshopping for myself\b/i.test(t)
+  ) {
+    return "self";
+  }
+  return undefined;
+}
+
+/** True when the turn is only a who-for chip, not a product ask. */
+export function isBareWhoForUtterance(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  if (t === ITS_A_GIFT || t === LOOKING_AT_MENS_LINE) return true;
+  return /^(it'?s a gift|a gift|it'?s for me|for myself|shopping for myself|looking at the men'?s line)$/i.test(
+    t,
+  );
+}
+
+export function whoForFollowupChip(options: {
+  forWhom?: ShopperForWhom;
+  offered?: boolean;
+  alreadyMens?: boolean;
+  genericSkincare?: boolean;
+}): string | undefined {
+  if (options.forWhom || options.offered || options.alreadyMens) return undefined;
+  if (options.genericSkincare) return LOOKING_AT_MENS_LINE;
+  return ITS_A_GIFT;
+}
+
+export function withShopperProfile(
+  intent: Intent,
+  profile: ShopperProfile,
+): Intent {
+  if (profile.forWhom !== "men") return intent;
+  const series = Array.from(
+    new Set([...(intent.series ?? []), "shiseido-men"]),
+  );
+  return { ...intent, series };
+}
+
+function insertWhoForChip(items: string[], chip: string | undefined): string[] {
+  if (!chip) return items.slice(0, 4);
+  const next = items.filter((label) => label !== chip);
+  if (next.length >= 4) next[next.length - 1] = chip;
+  else next.push(chip);
+  return next.slice(0, 4);
+}
+
+export function applyWhoForChip(
+  labels: string[],
+  profile: ShopperProfile,
+  options?: { genericSkincare?: boolean; alreadyMens?: boolean },
+): string[] {
+  const chip = whoForFollowupChip({
+    forWhom: profile.forWhom,
+    offered: profile.whoForOffered,
+    alreadyMens: options?.alreadyMens || profile.forWhom === "men",
+    genericSkincare: options?.genericSkincare,
+  });
+  return insertWhoForChip(labels, chip);
+}
+
 /**
  * Follow-ups after a routine card. The shopper already gave a broad ask
  * plus a skin type or concern, so chips add a third clue (another concern
  * or a single routine step) instead of restarting with budget / sensitive
  * / simpler-routine filters.
  */
-export function buildRoutineFollowupNbas(routine: RoutineIntent): string[] {
+export function buildRoutineFollowupNbas(
+  routine: RoutineIntent,
+  profile: ShopperProfile = {},
+): string[] {
   const { skinType, concernKey } = routine;
   const items: string[] = [];
 
@@ -1900,7 +2010,13 @@ export function buildRoutineFollowupNbas(routine: RoutineIntent): string[] {
     if (items.length < 4) items.push(WHAT_ABOUT_SUNSCREEN);
   }
 
-  return items.slice(0, 4);
+  const chip = whoForFollowupChip({
+    forWhom: profile.forWhom,
+    offered: profile.whoForOffered,
+    alreadyMens: profile.forWhom === "men",
+    genericSkincare: !skinType && !concernKey,
+  });
+  return insertWhoForChip(items, chip);
 }
 
 export const ROUTINE_FOLLOWUP_NBAS = buildRoutineFollowupNbas({
@@ -2017,6 +2133,7 @@ export type StageNbaContext =
       matchCount: number;
       /** Optional bundle SKUs available for the displayed category. */
       bundleProducts?: CatalogProduct[];
+      whoFor?: ShopperProfile;
     }
   | {
       stage: "pdp";
@@ -2176,6 +2293,7 @@ function buildPlpNbas(
   intent: Intent,
   matchCount: number,
   bundleProducts: CatalogProduct[] = [],
+  whoFor?: ShopperProfile,
 ): StageNbaItem[] {
   const category = intent.categoryLabel ?? "products";
   const ladder = nextPriceLadder(intent.priceMax);
@@ -2222,6 +2340,24 @@ function buildPlpNbas(
 
   if (matchCount === 0) {
     items.unshift({ label: "Tell me what's possible", lane: "capture" });
+  }
+
+  const alreadyMens = Boolean(
+    intent.series?.includes("shiseido-men") || whoFor?.forWhom === "men",
+  );
+  const chip = whoForFollowupChip({
+    forWhom: whoFor?.forWhom,
+    offered: whoFor?.whoForOffered,
+    alreadyMens,
+  });
+  if (chip) {
+    const without = items.filter((item) => item.label !== chip);
+    if (without.length >= 4) {
+      without[without.length - 1] = { label: chip, lane: "capture" };
+      return dedupeLabels(without).slice(0, 4);
+    }
+    without.push({ label: chip, lane: "capture" });
+    return dedupeLabels(without).slice(0, 4);
   }
 
   return dedupeLabels(items).slice(0, 4);
@@ -2442,6 +2578,7 @@ export function buildStageNbas(context: StageNbaContext): StageNbaItem[] {
         context.intent,
         context.matchCount,
         context.bundleProducts,
+        context.whoFor,
       );
     case "pdp":
       return buildPdpNbas(

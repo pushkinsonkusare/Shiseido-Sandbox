@@ -128,7 +128,9 @@ export function AgentProductCarousel({
             onAddToCart={onAddToCart ? () => onAddToCart(product.id) : undefined}
             onWishlist={product.onWishlist}
             selected={selectedIds?.has(product.id)}
-            onToggleSelect={() => onToggleSelect?.(product.id)}
+            onToggleSelect={
+              onToggleSelect ? () => onToggleSelect(product.id) : undefined
+            }
             selectDisabled={
               selectionLimitReached && !selectedIds?.has(product.id)
             }

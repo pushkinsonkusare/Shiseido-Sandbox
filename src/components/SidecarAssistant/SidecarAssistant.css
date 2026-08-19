@@ -1290,6 +1290,46 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   transition: border-color 120ms ease;
 }
 
+.sidecar-assistant__input-shell-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.sidecar-assistant__input-field {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+}
+
+/* Native textarea placeholders ignore ellipsis; this overlay is the helper. */
+.sidecar-assistant__input-placeholder {
+  position: absolute;
+  top: 6px;
+  right: 0;
+  left: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+  font-size: 14px;
+  line-height: 20px;
+  color: rgba(23, 23, 27, 0.45);
+}
+
+.sidecar-assistant__input-shell--with-selection {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.sidecar-assistant__composer-nbas {
+  padding-top: 12px;
+}
+
 .sidecar-assistant__input-shell:focus-within:not(.sidecar-assistant__input-shell--disabled) {
   border-color: #17171b;
 }
@@ -1336,19 +1376,25 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   scrollbar-width: thin;
 }
 
-.sidecar-assistant__input::placeholder {
-  color: rgba(23, 23, 27, 0.45);
-}
-
 @media (max-width: 767px) {
   .sidecar-assistant__input {
     font-size: 14px;
+    line-height: 24px;
+  }
+
+  .sidecar-assistant__input-placeholder {
+    top: 4px;
     line-height: 24px;
   }
 }
 
 html[data-demo-viewport="mobile"] .sidecar-assistant__input {
   font-size: 14px;
+  line-height: 24px;
+}
+
+html[data-demo-viewport="mobile"] .sidecar-assistant__input-placeholder {
+  top: 4px;
   line-height: 24px;
 }
 
