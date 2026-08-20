@@ -686,7 +686,7 @@ html[data-demo-theme="consumer-electronics"] .figma-storefront__featured-banner 
 
 html[data-demo-theme="consumer-electronics"] .figma-storefront__newsletter {
   border-color: transparent;
-  border-radius: var(--nto-radius-card);
+  border-radius: 0;
   box-shadow: var(--nto-shadow-card);
 }
 

@@ -7,6 +7,9 @@ type Props = {
   children: ReactNode;
 };
 
+/** Hidden for user testing. Set to true to restore the password splash. */
+const SITE_GATE_ENABLED = false;
+
 export function SiteGate({ children }: Props) {
   const [unlocked, setUnlocked] = useState(isSiteUnlocked);
   const [password, setPassword] = useState("");
@@ -35,7 +38,7 @@ export function SiteGate({ children }: Props) {
     setUnlocked(true);
   };
 
-  if (unlocked) return <>{children}</>;
+  if (!SITE_GATE_ENABLED || unlocked) return <>{children}</>;
 
   return (
     <main className="site-gate" aria-labelledby="site-gate-title">
