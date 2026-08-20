@@ -151,10 +151,11 @@ function readUserTestingBootstrap(): UserTestingBootstrap {
 
   const params = new URLSearchParams(window.location.search);
   const utRaw = (params.get("ut") || "").trim().toLowerCase();
-  if (!utRaw) return unlockedBootstrap();
-
   const isLegacyA = utRaw === "a";
   const isLegacyB = utRaw === "b";
+  /* Feature params apply even without a lock, so a link like
+   * `?accordion=0` can be opened and confirmed in the switcher.
+   * `?ut=` still hides the switcher for participant sessions. */
 
   const viewportRaw = (params.get("viewport") || "").trim().toLowerCase();
   const viewportOverride: DemoViewportMode | null =
@@ -179,7 +180,7 @@ function readUserTestingBootstrap(): UserTestingBootstrap {
       : DEFAULT_PDP_INLINE_WIDGET_POSITION;
 
   return {
-    userTestingLock: true,
+    userTestingLock: Boolean(utRaw),
     accordionRecommendations: parseFlag(
       params.get("accordion"),
       isLegacyB ? false : isLegacyA ? true : DEFAULT_ACCORDION_RECOMMENDATIONS,
