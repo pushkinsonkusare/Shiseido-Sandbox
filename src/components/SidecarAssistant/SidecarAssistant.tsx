@@ -1065,6 +1065,10 @@ export function SidecarAssistant({
   // True while there are messages below the fold, which the jump-to-latest
   // button both announces and offers to close the distance on.
   const [awayFromLatest, setAwayFromLatest] = useState(false);
+  // True when new content landed below the fold before the shopper caught up.
+  // Cleared once they scroll to the end; scrolling back up does not restore it.
+  const [unreadBelow, setUnreadBelow] = useState(false);
+  const caughtUpScrollHeightRef = useRef(0);
   // The product the transcript implies on its own, ignoring where the shopper
   // has scrolled: walk back through the conversation and let the most recent
   // context-defining message decide. A product-focused message (PDP card,
@@ -1132,9 +1136,10 @@ export function SidecarAssistant({
   // True once the shopper has asked a contextual FAQ for the current selection:
   // the follow-up pills then live in-chat, so the tray hides its own pill row.
   const [contextualThreadActive, setContextualThreadActive] = useState(false);
-  // Contextual pills adapt to how many products are selected: a single product
-  // offers Show similar plus its two most relevant FAQs, while two or more
-  // products collapse to a single Compare action.
+  // Contextual pills adapt to how many products are selected. Drawer: a
+  // single product offers Show similar plus two FAQs; two or more collapse
+  // to Compare. In chat: single selection has no composer chips; two or more
+  // show Compare inside the input shell.
   const contextualNbas = useMemo(() => {
     if (selectedSlugs.length >= 2) {
       return buildNbaItems(["Compare"], "nba-contextual");
@@ -4258,7 +4263,15 @@ export function SidecarAssistant({
         window.clearTimeout(showTimeout);
         showTimeout = 0;
         setAwayFromLatest(false);
+        setUnreadBelow(false);
+        caughtUpScrollHeightRef.current = node.scrollHeight;
         return;
+      }
+      if (
+        node.scrollHeight >
+        caughtUpScrollHeightRef.current + JUMP_TO_LATEST_SLACK_PX
+      ) {
+        setUnreadBelow(true);
       }
       // Arriving at the end hides the button at once, but leaving it has to hold
       // for a moment, so a passing auto-scroll cannot blink the button.
@@ -4322,6 +4335,16 @@ export function SidecarAssistant({
     [messages],
   );
   const composerDisabled = agentReplying && !simulateMobileKeyboard;
+  // Chip taps never type into the field, so the in-flight prompt is the
+  // shopper bubble that just went in — not `inputValue`, which was cleared.
+  const processingPrompt = useMemo(() => {
+    if (!agentReplying) return sentDraft;
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      const message = messages[i];
+      if (message.kind === "shopper_text") return message.text;
+    }
+    return sentDraft;
+  }, [agentReplying, messages, sentDraft]);
   const composerDisabledRef = useRef(false);
   composerDisabledRef.current = composerDisabled;
   // Disabling the input blurs it, so remember that the shopper was mid-thought
@@ -4344,7 +4367,7 @@ export function SidecarAssistant({
     if (!field) return;
     field.style.height = "auto";
     field.style.height = `${field.scrollHeight}px`;
-  }, [inputValue, sentDraft, composerDisabled]);
+  }, [inputValue, sentDraft, processingPrompt, composerDisabled]);
 
   const dismissSimulatedKeyboard = () => {
     setSimKeyboardOpen(false);
@@ -4989,10 +5012,20 @@ export function SidecarAssistant({
           <button
             type="button"
             className="sidecar-assistant__jump-to-latest"
-            aria-label="Jump to the latest message"
+            aria-label={
+              unreadBelow
+                ? "Jump to the latest message (unread)"
+                : "Jump to the latest message"
+            }
             onClick={jumpToLatest}
           >
             <ArrowDownIcon width={18} height={18} />
+            {unreadBelow ? (
+              <span
+                className="sidecar-assistant__jump-unread"
+                aria-hidden="true"
+              />
+            ) : null}
           </button>
         ) : null}
       </div>
@@ -5014,6 +5047,11 @@ export function SidecarAssistant({
           }`}
         >
           {selectedSlugs.length > 0 && inChatProductSelection ? selectionPills : null}
+          {selectedSlugs.length >= 2 &&
+          inChatProductSelection &&
+          selectionNbas ? (
+            <div className="sidecar-assistant__shell-nbas">{selectionNbas}</div>
+          ) : null}
           <div className="sidecar-assistant__input-shell-row">
           <div className="sidecar-assistant__input-field">
           {!composerDisabled && inputValue.length === 0 ? (
@@ -5025,7 +5063,7 @@ export function SidecarAssistant({
             ref={inputRef}
             rows={1}
             className="sidecar-assistant__input"
-            value={composerDisabled ? sentDraft : inputValue}
+            value={composerDisabled ? processingPrompt : inputValue}
             disabled={composerDisabled}
             onChange={(event) => setInputValue(event.target.value)}
             onKeyDown={(event) => {
@@ -5101,9 +5139,6 @@ export function SidecarAssistant({
           )}
           </div>
         </div>
-        {selectedSlugs.length > 0 && inChatProductSelection && selectionNbas ? (
-          <div className="sidecar-assistant__composer-nbas">{selectionNbas}</div>
-        ) : null}
         <p className="sidecar-assistant__disclaimer">
           AI generated content may be wrong. Refer to{" "}
           <a

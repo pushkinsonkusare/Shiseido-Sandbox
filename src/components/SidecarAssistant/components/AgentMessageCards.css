@@ -2307,8 +2307,10 @@
  * swipe row. In-chat `.agent-nba__set` keeps the default stacked wrap. */
 .sxs-layout__panel--mobile .sidecar-assistant__selection-tray .agent-nba__set--scroll,
 .sxs-layout__panel--mobile .sidecar-assistant__composer-nbas .agent-nba__set--scroll,
+.sxs-layout__panel--mobile .sidecar-assistant__shell-nbas .agent-nba__set--scroll,
 html[data-demo-viewport="mobile"] .sidecar-assistant__selection-tray .agent-nba__set--scroll,
-html[data-demo-viewport="mobile"] .sidecar-assistant__composer-nbas .agent-nba__set--scroll {
+html[data-demo-viewport="mobile"] .sidecar-assistant__composer-nbas .agent-nba__set--scroll,
+html[data-demo-viewport="mobile"] .sidecar-assistant__shell-nbas .agent-nba__set--scroll {
   display: flex;
   flex-wrap: nowrap !important;
   align-items: center;
@@ -2329,11 +2331,17 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__composer-nbas .agent-nba__
 .sxs-layout__panel--mobile
   .sidecar-assistant__composer-nbas
   .agent-nba__set--scroll::-webkit-scrollbar,
+.sxs-layout__panel--mobile
+  .sidecar-assistant__shell-nbas
+  .agent-nba__set--scroll::-webkit-scrollbar,
 html[data-demo-viewport="mobile"]
   .sidecar-assistant__selection-tray
   .agent-nba__set--scroll::-webkit-scrollbar,
 html[data-demo-viewport="mobile"]
   .sidecar-assistant__composer-nbas
+  .agent-nba__set--scroll::-webkit-scrollbar,
+html[data-demo-viewport="mobile"]
+  .sidecar-assistant__shell-nbas
   .agent-nba__set--scroll::-webkit-scrollbar {
   display: none;
 }
@@ -2346,12 +2354,20 @@ html[data-demo-viewport="mobile"]
   .sidecar-assistant__composer-nbas
   .agent-nba__set--scroll
   .agent-nba__pill,
+.sxs-layout__panel--mobile
+  .sidecar-assistant__shell-nbas
+  .agent-nba__set--scroll
+  .agent-nba__pill,
 html[data-demo-viewport="mobile"]
   .sidecar-assistant__selection-tray
   .agent-nba__set--scroll
   .agent-nba__pill,
 html[data-demo-viewport="mobile"]
   .sidecar-assistant__composer-nbas
+  .agent-nba__set--scroll
+  .agent-nba__pill,
+html[data-demo-viewport="mobile"]
+  .sidecar-assistant__shell-nbas
   .agent-nba__set--scroll
   .agent-nba__pill {
   flex: 0 0 auto !important;
@@ -2366,6 +2382,10 @@ html[data-demo-viewport="mobile"]
   .sidecar-assistant__composer-nbas
   .agent-nba__set--scroll
   .agent-nba__pill-label,
+.sxs-layout__panel--mobile
+  .sidecar-assistant__shell-nbas
+  .agent-nba__set--scroll
+  .agent-nba__pill-label,
 html[data-demo-viewport="mobile"]
   .sidecar-assistant__selection-tray
   .agent-nba__set--scroll
@@ -2373,13 +2393,18 @@ html[data-demo-viewport="mobile"]
 html[data-demo-viewport="mobile"]
   .sidecar-assistant__composer-nbas
   .agent-nba__set--scroll
+  .agent-nba__pill-label,
+html[data-demo-viewport="mobile"]
+  .sidecar-assistant__shell-nbas
+  .agent-nba__set--scroll
   .agent-nba__pill-label {
   max-width: 220px;
 }
 
 @media (max-width: 720px) {
   .sidecar-assistant__selection-tray .agent-nba__set--scroll,
-  .sidecar-assistant__composer-nbas .agent-nba__set--scroll {
+  .sidecar-assistant__composer-nbas .agent-nba__set--scroll,
+  .sidecar-assistant__shell-nbas .agent-nba__set--scroll {
     display: flex;
     flex-wrap: nowrap !important;
     align-items: center;
@@ -2395,12 +2420,14 @@ html[data-demo-viewport="mobile"]
   }
 
   .sidecar-assistant__selection-tray .agent-nba__set--scroll::-webkit-scrollbar,
-  .sidecar-assistant__composer-nbas .agent-nba__set--scroll::-webkit-scrollbar {
+  .sidecar-assistant__composer-nbas .agent-nba__set--scroll::-webkit-scrollbar,
+  .sidecar-assistant__shell-nbas .agent-nba__set--scroll::-webkit-scrollbar {
     display: none;
   }
 
   .sidecar-assistant__selection-tray .agent-nba__set--scroll .agent-nba__pill,
-  .sidecar-assistant__composer-nbas .agent-nba__set--scroll .agent-nba__pill {
+  .sidecar-assistant__composer-nbas .agent-nba__set--scroll .agent-nba__pill,
+  .sidecar-assistant__shell-nbas .agent-nba__set--scroll .agent-nba__pill {
     flex: 0 0 auto !important;
     max-width: none !important;
   }
@@ -2409,6 +2436,9 @@ html[data-demo-viewport="mobile"]
     .agent-nba__set--scroll
     .agent-nba__pill-label,
   .sidecar-assistant__composer-nbas
+    .agent-nba__set--scroll
+    .agent-nba__pill-label,
+  .sidecar-assistant__shell-nbas
     .agent-nba__set--scroll
     .agent-nba__pill-label {
     max-width: 220px;
