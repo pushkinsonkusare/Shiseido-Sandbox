@@ -45,11 +45,7 @@ export function AgentModeBar() {
     userTestingLock,
   } = useAgentMode();
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
-  const [theme, setTheme] = useState<DemoTheme>(() => {
-    if (typeof window === "undefined") return "sf-next";
-    const saved = window.localStorage.getItem("agent-demo-theme");
-    return saved === "consumer-electronics" ? saved : "sf-next";
-  });
+  const [theme, setTheme] = useState<DemoTheme>("sf-next");
 
   const handleModeClick = (nextMode: AgentMode) => {
     if (nextMode === mode) return;
@@ -89,6 +85,8 @@ export function AgentModeBar() {
     const root = document.documentElement;
     root.setAttribute("data-demo-theme", theme);
     try {
+      /* User testing defaults to Market Street. Drop any saved "rounded"
+       * value so a prior session cannot override the default. */
       window.localStorage.setItem("agent-demo-theme", theme);
     } catch {
       /* localStorage can fail in private mode; ignore gracefully. */
