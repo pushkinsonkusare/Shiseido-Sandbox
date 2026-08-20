@@ -425,10 +425,6 @@
   width: 100%;
 }
 
-.figma-overview__recommendation .figma-product-card__image-wrap {
-  height: 320px;
-}
-
 .figma-overview__recommendation .figma-product-card__content {
   padding: 24px;
 }

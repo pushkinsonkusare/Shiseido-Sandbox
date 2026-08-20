@@ -13,7 +13,7 @@ export type ProductCardProps = {
   category: string;
   title: string;
   price: string;
-  description: string;
+  description?: string;
   badgeLabel?: string;
   rating?: number | null;
   reviewCount?: number | null;
@@ -41,7 +41,6 @@ export function ProductCard({
   category,
   title,
   price,
-  description,
   badgeLabel = "Featured",
   rating = null,
   reviewCount = null,
@@ -164,7 +163,6 @@ export function ProductCard({
           </div>
         ) : null}
         <p className="figma-product-card__price">{price}</p>
-        <p className="figma-product-card__description">{description}</p>
       </header>
     </article>
   );
