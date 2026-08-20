@@ -48,16 +48,19 @@ export const PRODUCT_SELECTION_TYPES: {
   { id: "in-chat", label: "In chat" },
 ];
 
-export type UserTestingVariant = "a" | "b";
-
-/** Single welcome NBA shown under UserTesting lock (`?ut=a|b`). */
+/** Single welcome NBA shown under UserTesting lock (`?ut=`). */
 export const UT_WELCOME_NBA_LABEL = "Skincare for oily skin";
 
 type UserTestingBootstrap = {
-  variant: UserTestingVariant | null;
   userTestingLock: boolean;
   accordionRecommendations: boolean;
   viewportMode: DemoViewportMode;
+  contextIsland: boolean;
+  productSelection: boolean;
+  productSelectionType: ProductSelectionType;
+  pdpInlineWidget: boolean;
+  pdpInlineWidgetType: PdpInlineWidgetType;
+  pdpInlineWidgetPosition: PdpInlineWidgetPosition;
 };
 
 type AgentModeContextValue = {
@@ -94,8 +97,8 @@ type AgentModeContextValue = {
    */
   sidecarAvailable: boolean;
   /**
-   * True when the page was opened with `?ut=a` or `?ut=b`. Locks the
-   * experience for UserTesting (hides AgentModeBar, single welcome NBA).
+   * True when the page was opened with `?ut=`. Locks the experience
+   * for UserTesting (hides AgentModeBar, single welcome NBA).
    */
   userTestingLock: boolean;
 };
@@ -117,41 +120,77 @@ const DEFAULT_PDP_INLINE_WIDGET_TYPE: PdpInlineWidgetType = "agent-redirect";
 const DEFAULT_PDP_INLINE_WIDGET_POSITION: PdpInlineWidgetPosition =
   "left-under-image";
 
-function readUserTestingBootstrap(): UserTestingBootstrap {
-  if (typeof window === "undefined") {
-    return {
-      variant: null,
-      userTestingLock: false,
-      accordionRecommendations: DEFAULT_ACCORDION_RECOMMENDATIONS,
-      viewportMode: DEFAULT_VIEWPORT_MODE,
-    };
+function parseFlag(raw: string | null, fallback: boolean): boolean {
+  if (raw == null || raw.trim() === "") return fallback;
+  const value = raw.trim().toLowerCase();
+  if (value === "0" || value === "false" || value === "off" || value === "no") {
+    return false;
   }
+  if (value === "1" || value === "true" || value === "on" || value === "yes") {
+    return true;
+  }
+  return fallback;
+}
+
+function unlockedBootstrap(): UserTestingBootstrap {
+  return {
+    userTestingLock: false,
+    accordionRecommendations: DEFAULT_ACCORDION_RECOMMENDATIONS,
+    viewportMode: DEFAULT_VIEWPORT_MODE,
+    contextIsland: DEFAULT_CONTEXT_ISLAND,
+    productSelection: DEFAULT_PRODUCT_SELECTION,
+    productSelectionType: DEFAULT_PRODUCT_SELECTION_TYPE,
+    pdpInlineWidget: DEFAULT_PDP_INLINE_WIDGET,
+    pdpInlineWidgetType: DEFAULT_PDP_INLINE_WIDGET_TYPE,
+    pdpInlineWidgetPosition: DEFAULT_PDP_INLINE_WIDGET_POSITION,
+  };
+}
+
+function readUserTestingBootstrap(): UserTestingBootstrap {
+  if (typeof window === "undefined") return unlockedBootstrap();
 
   const params = new URLSearchParams(window.location.search);
   const utRaw = (params.get("ut") || "").trim().toLowerCase();
-  const variant: UserTestingVariant | null =
-    utRaw === "a" || utRaw === "b" ? utRaw : null;
-  const userTestingLock = variant !== null;
+  if (!utRaw) return unlockedBootstrap();
+
+  const isLegacyA = utRaw === "a";
+  const isLegacyB = utRaw === "b";
 
   const viewportRaw = (params.get("viewport") || "").trim().toLowerCase();
   const viewportOverride: DemoViewportMode | null =
     viewportRaw === "mobile" || viewportRaw === "desktop" ? viewportRaw : null;
 
-  if (!userTestingLock) {
-    return {
-      variant: null,
-      userTestingLock: false,
-      accordionRecommendations: DEFAULT_ACCORDION_RECOMMENDATIONS,
-      viewportMode: DEFAULT_VIEWPORT_MODE,
-    };
-  }
+  const selectionTypeRaw = (params.get("selectionType") || "").trim().toLowerCase();
+  const selectionType: ProductSelectionType =
+    selectionTypeRaw === "in-chat" || selectionTypeRaw === "drawer"
+      ? selectionTypeRaw
+      : DEFAULT_PRODUCT_SELECTION_TYPE;
+
+  const pdpTypeRaw = (params.get("pdpType") || "").trim().toLowerCase();
+  const pdpType: PdpInlineWidgetType =
+    pdpTypeRaw === "inline-answer" || pdpTypeRaw === "agent-redirect"
+      ? pdpTypeRaw
+      : DEFAULT_PDP_INLINE_WIDGET_TYPE;
+
+  const pdpPosRaw = (params.get("pdpPos") || "").trim().toLowerCase();
+  const pdpPos: PdpInlineWidgetPosition =
+    pdpPosRaw === "right-rail" || pdpPosRaw === "left-under-image"
+      ? pdpPosRaw
+      : DEFAULT_PDP_INLINE_WIDGET_POSITION;
 
   return {
-    variant,
     userTestingLock: true,
-    // A = accordion on (one fold open); B = all sections open
-    accordionRecommendations: variant === "a",
-    viewportMode: viewportOverride ?? "mobile",
+    accordionRecommendations: parseFlag(
+      params.get("accordion"),
+      isLegacyB ? false : isLegacyA ? true : DEFAULT_ACCORDION_RECOMMENDATIONS,
+    ),
+    viewportMode: viewportOverride ?? (isLegacyA || isLegacyB ? "mobile" : DEFAULT_VIEWPORT_MODE),
+    contextIsland: parseFlag(params.get("island"), DEFAULT_CONTEXT_ISLAND),
+    productSelection: parseFlag(params.get("selection"), DEFAULT_PRODUCT_SELECTION),
+    productSelectionType: selectionType,
+    pdpInlineWidget: parseFlag(params.get("pdp"), DEFAULT_PDP_INLINE_WIDGET),
+    pdpInlineWidgetType: pdpType,
+    pdpInlineWidgetPosition: pdpPos,
   };
 }
 
@@ -169,19 +208,21 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
   const [accordionRecommendations, setAccordionRecommendations] = useState<boolean>(
     UT_BOOTSTRAP.accordionRecommendations,
   );
-  const [contextIsland, setContextIsland] = useState<boolean>(DEFAULT_CONTEXT_ISLAND);
+  const [contextIsland, setContextIsland] = useState<boolean>(
+    UT_BOOTSTRAP.contextIsland,
+  );
   const [productSelection, setProductSelection] = useState<boolean>(
-    DEFAULT_PRODUCT_SELECTION,
+    UT_BOOTSTRAP.productSelection,
   );
   const [productSelectionType, setProductSelectionType] =
-    useState<ProductSelectionType>(DEFAULT_PRODUCT_SELECTION_TYPE);
+    useState<ProductSelectionType>(UT_BOOTSTRAP.productSelectionType);
   const [pdpInlineWidget, setPdpInlineWidget] = useState<boolean>(
-    DEFAULT_PDP_INLINE_WIDGET,
+    UT_BOOTSTRAP.pdpInlineWidget,
   );
   const [pdpInlineWidgetType, setPdpInlineWidgetType] =
-    useState<PdpInlineWidgetType>(DEFAULT_PDP_INLINE_WIDGET_TYPE);
+    useState<PdpInlineWidgetType>(UT_BOOTSTRAP.pdpInlineWidgetType);
   const [pdpInlineWidgetPosition, setPdpInlineWidgetPosition] =
-    useState<PdpInlineWidgetPosition>(DEFAULT_PDP_INLINE_WIDGET_POSITION);
+    useState<PdpInlineWidgetPosition>(UT_BOOTSTRAP.pdpInlineWidgetPosition);
 
   const value = useMemo(
     () => ({

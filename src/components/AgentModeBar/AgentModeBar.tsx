@@ -45,7 +45,20 @@ export function AgentModeBar() {
     userTestingLock,
   } = useAgentMode();
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
-  const [theme, setTheme] = useState<DemoTheme>("sf-next");
+  const [theme, setTheme] = useState<DemoTheme>(() => {
+    if (typeof window === "undefined") return "sf-next";
+    const raw = (new URLSearchParams(window.location.search).get("theme") || "")
+      .trim()
+      .toLowerCase();
+    if (
+      raw === "rounded" ||
+      raw === "consumer-electronics" ||
+      raw === "nto"
+    ) {
+      return "consumer-electronics";
+    }
+    return "sf-next";
+  });
 
   const handleModeClick = (nextMode: AgentMode) => {
     if (nextMode === mode) return;
