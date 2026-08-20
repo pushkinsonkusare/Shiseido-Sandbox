@@ -168,6 +168,48 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   color: #ffffff;
 }
 
+.sidecar-assistant__header-icon svg {
+  display: block;
+  transform-origin: center;
+  animation: sidecar-header-sparkle-rotate 16s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@keyframes sidecar-header-sparkle-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  5% {
+    transform: rotate(90deg);
+  }
+  25% {
+    transform: rotate(90deg);
+  }
+  30% {
+    transform: rotate(180deg);
+  }
+  50% {
+    transform: rotate(180deg);
+  }
+  55% {
+    transform: rotate(270deg);
+  }
+  75% {
+    transform: rotate(270deg);
+  }
+  80% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidecar-assistant__header-icon svg {
+    animation: none;
+  }
+}
+
 .sidecar-assistant__header-label {
   font-size: 16px;
   font-weight: 500;

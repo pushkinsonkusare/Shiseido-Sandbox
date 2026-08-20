@@ -511,6 +511,7 @@
 
 .figma-order-confirmation__recommendations-track {
   display: flex;
+  align-items: stretch;
   gap: 16px;
   width: 100%;
   height: fit-content;
@@ -539,7 +540,7 @@
 .figma-order-confirmation__recommendation-card img {
   display: block;
   width: 100%;
-  height: fit-content;
+  height: 144px;
   padding: 8px;
   box-sizing: border-box;
   object-fit: contain;

@@ -416,6 +416,7 @@ a.prototype-brand-link.figma-plp__brand-mark {
   flex-wrap: wrap;
   gap: var(--plp-grid-gap-y) var(--plp-grid-gap-x);
   align-content: flex-start;
+  align-items: stretch;
   margin-top: 32px;
 }
 
@@ -450,6 +451,8 @@ a.prototype-brand-link.figma-plp__brand-mark {
 .figma-plp__card-wrap {
   width: 260px;
   flex: 0 0 260px;
+  display: flex;
+  flex-direction: column;
 }
 
 .figma-plp__footer {

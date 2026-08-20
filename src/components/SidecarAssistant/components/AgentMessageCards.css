@@ -140,12 +140,13 @@
   color: #ffffff;
   height: 40px;
   width: 100%;
-  border: none;
+  border: 1px solid rgba(26, 26, 26, 1);
   border-radius: 0px;
 }
 
 .agent-msg__btn--apple:hover:not(:disabled) {
   background: #222222;
+  border-color: #222222;
 }
 
 /* The asset is a tight crop of the lockup, so its height is very nearly all
@@ -440,6 +441,7 @@
 
 .agent-plp__track {
   display: flex;
+  align-items: stretch;
   gap: 12px;
   overflow-x: auto;
   scroll-behavior: smooth;
@@ -916,6 +918,7 @@
 .agent-product-card__content {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   gap: 8px;
   padding: 20px 20px 24px;
 }
@@ -927,9 +930,11 @@
   line-height: 1.2;
   letter-spacing: -0.025em;
   color: var(--agentic-card-foreground);
+  min-height: calc(1.2em * 2);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  line-clamp: 2;
   overflow: hidden;
 }
 
@@ -1123,7 +1128,8 @@
 .agent-pdp__gallery {
   position: relative;
   width: 100%;
-  height: 386px;
+  aspect-ratio: 1 / 1;
+  height: auto;
   background: var(--agentic-card-bg);
   display: flex;
   align-items: center;
@@ -1138,6 +1144,10 @@
   height: 100%;
   object-fit: contain;
   display: block;
+}
+
+.agent-pdp__gallery--flush {
+  padding: 0;
 }
 
 .agent-pdp__nav {
@@ -1197,6 +1207,7 @@
   flex: 1 1 50%;
   width: auto;
   height: auto;
+  aspect-ratio: auto;
   min-width: 0;
   min-height: 360px;
 }
@@ -1429,7 +1440,7 @@
   transition: background-color 120ms ease, border-color 120ms ease;
 }
 
-.agent-pdp__option:hover:not(:disabled) {
+.agent-pdp__option:hover:not(:disabled):not(.agent-pdp__option--selected) {
   background: #ffffff;
 }
 
@@ -1437,6 +1448,12 @@
   background: var(--agentic-primary-bg);
   color: var(--agentic-primary-foreground);
   border-color: var(--agentic-primary-bg);
+}
+
+.agent-pdp__option--selected:hover:not(:disabled),
+.agent-pdp__option--selected:active:not(:disabled) {
+  background: color-mix(in srgb, var(--agentic-primary-bg) 78%, #000);
+  border-color: color-mix(in srgb, var(--agentic-primary-bg) 78%, #000);
 }
 
 .agent-pdp__option--swatch {
@@ -1509,11 +1526,18 @@
 .agent-pdp__ctas {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   padding-top: 16px;
   padding-left: 20px;
   padding-right: 20px;
   width: 100%;
+}
+
+.agent-pdp__ctas > .agent-msg__btn {
+  height: 40px;
+  min-height: 40px;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 /* ---------- Cart / Order summary ---------- */
@@ -2116,6 +2140,13 @@
   flex-direction: column;
   gap: 8px;
   padding: 0 20px;
+}
+
+.agent-summary__ctas > .agent-msg__btn {
+  height: 40px;
+  min-height: 40px;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 /* Stacked, the two full-width buttons run the whole width of the immersive

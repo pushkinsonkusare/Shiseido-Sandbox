@@ -175,7 +175,11 @@ export function AgentPDPCard({
 
   return (
     <article className={rootClass} data-component="agent-pdp-card">
-      <div className="agent-pdp__gallery">
+      <div
+        className={
+          "agent-pdp__gallery" + (imageIndex > 0 ? " agent-pdp__gallery--flush" : "")
+        }
+      >
         {images.length > 0 ? (
           <img src={images[imageIndex].url} alt={images[imageIndex].alt} />
         ) : null}
@@ -343,7 +347,7 @@ export function AgentPDPCard({
           {onApplePay ? (
             <button
               type="button"
-              className="agent-msg__btn agent-msg__btn--apple"
+              className="agent-msg__btn agent-msg__btn--apple agent-msg__btn--full agent-msg__btn--lg"
               aria-label="Pay with Apple Pay"
               onClick={onApplePay}
             >

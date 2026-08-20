@@ -433,9 +433,14 @@ a.prototype-brand-link.figma-storefront__brand-mark {
   display: flex;
   grid-template-columns: repeat(6, var(--pc-card-width));
   justify-content: start;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 24px;
   padding: 8px 0 2px;
+}
+
+.figma-storefront__featured-grid > * {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 @container (max-width: 1679px) {

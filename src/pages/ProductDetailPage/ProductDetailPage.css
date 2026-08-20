@@ -215,7 +215,7 @@ html[data-demo-viewport="mobile"] .figma-pdp__page-inner {
   width: min(100%, 576px);
   max-width: 576px;
   min-width: 0;
-  padding: var(--pdp-space-lg);
+  padding: var(--pdp-space-lg) 0 var(--pdp-space-lg) var(--pdp-space-lg);
   display: flex;
   flex-direction: column;
   gap: 0px;
@@ -280,7 +280,13 @@ html[data-demo-viewport="mobile"] .figma-pdp__page-inner {
 
 /* Overview / Key Benefits / How to Use, one box per section, one open at a
    time. The boxes keep the styling they had as static spec panels. */
-.figma-pdp__benefits { display: grid; gap: var(--pdp-space-sm); }
+.figma-pdp__benefits {
+  display: grid;
+  gap: var(--pdp-space-sm);
+  /* Closing a tall panel (Overview) shrinks content above the next header.
+     Without this, scroll anchoring walks the page down into the product rails. */
+  overflow-anchor: none;
+}
 .figma-pdp__benefits article { background: #f8f8f8; border: 1px solid #d1d5db; padding: var(--pdp-space-md); }
 .figma-pdp__benefits h3 { margin: 0; font-size: 16px; color: #3f3f46; }
 
@@ -662,9 +668,14 @@ html[data-demo-viewport="mobile"] .figma-pdp__page-inner {
    *   < 544     →  1 card (full bleed) */
   display: flex;
   justify-content: start;
-  align-items: flex-start;
+  align-items: stretch;
   gap: var(--pdp-space-lg);
   padding: var(--pdp-space-xs) 0 var(--pdp-space-2xs);
+}
+
+.figma-pdp__cards > * {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 @container (max-width: 1395px) {

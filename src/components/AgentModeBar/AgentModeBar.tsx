@@ -14,7 +14,7 @@ type DemoTheme = "sf-next" | "consumer-electronics";
 
 const DEMO_THEMES: { id: DemoTheme; label: string }[] = [
   { id: "sf-next", label: "market street" },
-  { id: "consumer-electronics", label: "NTO" },
+  { id: "consumer-electronics", label: "rounded" },
 ];
 
 /** Hidden for now — app stays on Sidecar (`assistant-only`). Flip to true

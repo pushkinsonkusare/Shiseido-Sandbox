@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 import { useAgentMode } from "../../components/AgentModeBar/AgentModeContext";
 import { useCatalog } from "../../catalog/CatalogContext";
 import { toProductCardProps } from "../../catalog/catalog";
@@ -211,11 +212,19 @@ export default function ProductDetailPage() {
                       className="figma-pdp__detail-toggle"
                       aria-expanded={isOpen}
                       aria-controls={`pdp-detail-${section.id}`}
-                      onClick={() =>
-                        setOpenDetailIndex((current) =>
-                          current === index ? null : index,
-                        )
-                      }
+                      onClick={(event) => {
+                        const header = event.currentTarget;
+                        const topBefore = header.getBoundingClientRect().top;
+                        flushSync(() => {
+                          setOpenDetailIndex((current) =>
+                            current === index ? null : index,
+                          );
+                        });
+                        const delta = header.getBoundingClientRect().top - topBefore;
+                        if (Math.abs(delta) >= 1) {
+                          window.scrollBy({ top: delta, left: 0, behavior: "auto" });
+                        }
+                      }}
                     >
                       <h3>{section.title}</h3>
                       <span className="figma-pdp__detail-chevron" aria-hidden="true">
