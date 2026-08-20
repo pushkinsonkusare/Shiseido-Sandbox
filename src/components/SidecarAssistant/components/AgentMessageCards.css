@@ -1583,6 +1583,18 @@
   font: inherit;
 }
 
+.agent-summary__box-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #ececec;
+  color: #17171b;
+  pointer-events: none;
+}
+
 .agent-summary__box-header:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--agentic-focus);

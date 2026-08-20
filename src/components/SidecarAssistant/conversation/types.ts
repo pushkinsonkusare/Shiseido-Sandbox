@@ -97,7 +97,7 @@ export type AgentPlpMessage = {
 /** One step of a broad-intent routine: a category header, a short
  * description, and a paged product carousel (5 + optional "Show more"). */
 export type RoutineSection = {
-  /** Ordinal step label, e.g. "1. Cleanse". */
+  /** Step name shown in the header, e.g. "Cleanse". */
   stepLabel: string;
   /** Human category title, e.g. "Cleansers". */
   categoryTitle: string;

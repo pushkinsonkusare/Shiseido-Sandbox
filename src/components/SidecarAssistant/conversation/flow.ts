@@ -1100,19 +1100,19 @@ export const ROUTINE_STEPS: Array<{
   categoryTitle: string;
   categoryKey: string;
 }> = [
-  { stepLabel: "1. Cleanse", categoryTitle: "Cleansers", categoryKey: "Cleansers" },
-  { stepLabel: "2. Soften", categoryTitle: "Softeners", categoryKey: "Softeners" },
+  { stepLabel: "Cleanse", categoryTitle: "Cleansers", categoryKey: "Cleansers" },
+  { stepLabel: "Soften", categoryTitle: "Softeners", categoryKey: "Softeners" },
   {
-    stepLabel: "3. Treat",
+    stepLabel: "Treat",
     categoryTitle: "Serums & Treatments",
     categoryKey: "Serums & Treatments",
   },
   {
-    stepLabel: "4. Moisturize",
+    stepLabel: "Moisturize",
     categoryTitle: "Moisturizers",
     categoryKey: "Moisturizers",
   },
-  { stepLabel: "5. Protect", categoryTitle: "Sunscreen", categoryKey: "Sunscreen" },
+  { stepLabel: "Protect", categoryTitle: "Sunscreen", categoryKey: "Sunscreen" },
 ];
 
 function routineConcernLabel(key: string): string {

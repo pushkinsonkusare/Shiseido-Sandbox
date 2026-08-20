@@ -7,6 +7,7 @@ import {
   ExternalLinkIcon,
   MinusIcon,
   PlusIcon,
+  ShoppingCartIcon,
   TagIcon,
 } from "../../icons/StorefrontIcons";
 import applePayMark from "../../../assets/apple-pay.jpg";
@@ -149,7 +150,12 @@ export function AgentCart({
                 }
                 onClick={() => setExpanded((current) => !current)}
               >
-                <p className="agent-summary__box-summary">{summary}</p>
+                <span className="agent-summary__box-icon" aria-hidden="true">
+                  <ShoppingCartIcon width={16} height={16} />
+                </span>
+                <p className="agent-summary__box-summary">
+                  {summary} Tap to view details.
+                </p>
                 <span className="agent-summary__toggle">
                   {expanded ? (
                     <ChevronUpIcon width={18} height={18} />

@@ -7,7 +7,7 @@ import { ChevronDownIcon, ChevronUpIcon } from "../../icons/StorefrontIcons";
 import "./AgentMessageCards.css";
 
 export type AgentRoutineSection = {
-  /** Ordinal step label, e.g. "1. Cleanse". */
+  /** Step name shown in the header, e.g. "Cleanse". */
   stepLabel: string;
   /** Human category title, e.g. "Cleansers". */
   categoryTitle: string;
