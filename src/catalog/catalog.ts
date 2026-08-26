@@ -491,7 +491,7 @@ const BUNDLE_PART_ALIASES: Record<string, string> = {
   "urban mineral sunscreen": "urban-environment-mineral-clear-sunscreen-spf-50",
 };
 
-function normalizeMatchText(value: string): string {
+export function normalizeMatchText(value: string): string {
   return value
     .toLowerCase()
     .replace(/['’]/g, "")

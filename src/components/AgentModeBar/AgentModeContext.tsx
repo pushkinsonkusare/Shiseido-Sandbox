@@ -56,6 +56,7 @@ type UserTestingBootstrap = {
   accordionRecommendations: boolean;
   viewportMode: DemoViewportMode;
   contextIsland: boolean;
+  contextPill: boolean;
   productSelection: boolean;
   productSelectionType: ProductSelectionType;
   pdpInlineWidget: boolean;
@@ -74,6 +75,9 @@ type AgentModeContextValue = {
   /** Context island feature toggle (behavior TBD). */
   contextIsland: boolean;
   setContextIsland: (enabled: boolean) => void;
+  /** When true, the composer shows the "Asking about" product context pill. */
+  contextPill: boolean;
+  setContextPill: (enabled: boolean) => void;
   /** When true, selected-product pills follow `productSelectionType`. */
   productSelection: boolean;
   setProductSelection: (enabled: boolean) => void;
@@ -113,6 +117,7 @@ const DEFAULT_AGENT_MODE: AgentMode = "assistant-only";
 const DEFAULT_VIEWPORT_MODE: DemoViewportMode = "desktop";
 const DEFAULT_ACCORDION_RECOMMENDATIONS = true;
 const DEFAULT_CONTEXT_ISLAND = false;
+const DEFAULT_CONTEXT_PILL = false;
 const DEFAULT_PRODUCT_SELECTION = true;
 const DEFAULT_PRODUCT_SELECTION_TYPE: ProductSelectionType = "drawer";
 const DEFAULT_PDP_INLINE_WIDGET = true;
@@ -138,6 +143,7 @@ function unlockedBootstrap(): UserTestingBootstrap {
     accordionRecommendations: DEFAULT_ACCORDION_RECOMMENDATIONS,
     viewportMode: DEFAULT_VIEWPORT_MODE,
     contextIsland: DEFAULT_CONTEXT_ISLAND,
+    contextPill: DEFAULT_CONTEXT_PILL,
     productSelection: DEFAULT_PRODUCT_SELECTION,
     productSelectionType: DEFAULT_PRODUCT_SELECTION_TYPE,
     pdpInlineWidget: DEFAULT_PDP_INLINE_WIDGET,
@@ -187,6 +193,7 @@ function readUserTestingBootstrap(): UserTestingBootstrap {
     ),
     viewportMode: viewportOverride ?? (isLegacyA || isLegacyB ? "mobile" : DEFAULT_VIEWPORT_MODE),
     contextIsland: parseFlag(params.get("island"), DEFAULT_CONTEXT_ISLAND),
+    contextPill: parseFlag(params.get("pill"), DEFAULT_CONTEXT_PILL),
     productSelection: parseFlag(params.get("selection"), DEFAULT_PRODUCT_SELECTION),
     productSelectionType: selectionType,
     pdpInlineWidget: parseFlag(params.get("pdp"), DEFAULT_PDP_INLINE_WIDGET),
@@ -212,6 +219,9 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
   const [contextIsland, setContextIsland] = useState<boolean>(
     UT_BOOTSTRAP.contextIsland,
   );
+  const [contextPill, setContextPill] = useState<boolean>(
+    UT_BOOTSTRAP.contextPill,
+  );
   const [productSelection, setProductSelection] = useState<boolean>(
     UT_BOOTSTRAP.productSelection,
   );
@@ -235,6 +245,8 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       setAccordionRecommendations,
       contextIsland,
       setContextIsland,
+      contextPill,
+      setContextPill,
       productSelection,
       setProductSelection,
       productSelectionType,
@@ -253,6 +265,7 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       viewportMode,
       accordionRecommendations,
       contextIsland,
+      contextPill,
       productSelection,
       productSelectionType,
       pdpInlineWidget,

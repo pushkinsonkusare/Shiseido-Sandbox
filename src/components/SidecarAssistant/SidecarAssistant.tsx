@@ -96,9 +96,16 @@ import {
   classifyGuardrail,
   type GuardrailKind,
 } from "./conversation/guardrails";
+import {
+  buildProductClarification,
+  isProductListingQuery,
+  isProductQuestion,
+  resolveActiveProductContext,
+} from "./conversation/productContext";
 import type { ChatMessage, RoutineSection } from "./conversation/types";
 import type { CatalogProduct } from "../../catalog/catalog";
 import type { AskAssistantEventDetail } from "../../pages/ProductDetailPage/PdpNbaPanel";
+import { ROUTES, usePrototypeNavigation } from "../../prototypeRoutes";
 import { resolveProductFaq } from "../SideBySideAssistant/conversation/productFaq";
 import {
   buildRowProductsFromSpec,
@@ -999,7 +1006,8 @@ export function SidecarAssistant({
 }: SidecarAssistantProps = {}) {
   const { products, heroProduct, getProductBySlug, getRelatedProducts, orderHistory } =
     useCatalog();
-  const { accordionRecommendations, contextIsland, productSelection, productSelectionType, viewportMode, userTestingLock } =
+  const { currentRoute, currentProductSlug } = usePrototypeNavigation();
+  const { accordionRecommendations, contextIsland, contextPill, productSelection, productSelectionType, viewportMode, userTestingLock } =
     useAgentMode();
   const inChatProductSelection =
     productSelection && productSelectionType === "in-chat";
@@ -1034,6 +1042,11 @@ export function SidecarAssistant({
   } | null>(null);
   const [selectedSlugs, setSelectedSlugs] = useState<string[]>([]);
   const selectedSet = useMemo(() => new Set(selectedSlugs), [selectedSlugs]);
+  /* Shopper-established conversational product(s). Separate from the open
+   * PDP (`pageProductSlug`). Agent recs / PDP cards must not write this. */
+  const [conversationSlugs, setConversationSlugs] = useState<string[]>([]);
+  const pageProductSlug =
+    currentRoute === ROUTES.productDetail ? currentProductSlug : null;
 
   // Context island: item count and total from the latest cart card, and the
   // product the conversation is currently scoped to (the primary selection).
@@ -1119,6 +1132,69 @@ export function SidecarAssistant({
     scrolledContextSlug,
     threadContextProduct,
   ]);
+  const [composerContextCleared, setComposerContextCleared] = useState(false);
+  const establishConversationProduct = useCallback((slugs: string[]) => {
+    const next: string[] = [];
+    const seen = new Set<string>();
+    for (const slug of slugs) {
+      if (!slug || seen.has(slug)) continue;
+      seen.add(slug);
+      next.push(slug);
+      if (next.length === 2) break;
+    }
+    if (next.length === 0) return;
+    setConversationSlugs(next);
+    setComposerContextCleared(false);
+  }, []);
+  /* Composer "Asking about" pill follows conversational context, then the
+   * open PDP. Agent transcript cards do not retarget it. Two conversation
+   * slugs hide the single pill so we do not imply one product. */
+  const askingAboutProduct = useMemo(() => {
+    if (composerContextCleared) return undefined;
+    if (selectedSlugs.length > 1 || conversationSlugs.length > 1) {
+      return undefined;
+    }
+    if (selectedSlugs.length === 1) {
+      /* Drawer already lists the pick in the tray above the composer. */
+      if (!inChatProductSelection) return undefined;
+      return getProductBySlug(selectedSlugs[0]);
+    }
+    if (conversationSlugs.length === 1) {
+      return getProductBySlug(conversationSlugs[0]);
+    }
+    if (pageProductSlug) {
+      return getProductBySlug(pageProductSlug);
+    }
+    return undefined;
+  }, [
+    composerContextCleared,
+    selectedSlugs,
+    conversationSlugs,
+    inChatProductSelection,
+    getProductBySlug,
+    pageProductSlug,
+  ]);
+  /* Read on navigation only, so opening a product does not have to re-run this
+   * effect every time the selection changes. */
+  const selectedSlugsRef = useRef<string[]>([]);
+  useEffect(() => {
+    selectedSlugsRef.current = selectedSlugs;
+  }, [selectedSlugs]);
+  /* Whatever the shopper touched last owns the context, and opening a product is
+   * itself an interaction, so it takes the context back from the conversation.
+   * An open selection is the exception: it is a forced context and survives
+   * browsing until the shopper asks their question or removes it. */
+  useEffect(() => {
+    setComposerContextCleared(false);
+    if (selectedSlugsRef.current.length === 0) {
+      setConversationSlugs([]);
+    }
+  }, [currentProductSlug]);
+  useEffect(() => {
+    if (selectedSlugs.length > 0) {
+      establishConversationProduct(selectedSlugs);
+    }
+  }, [selectedSlugs, establishConversationProduct]);
   // Deliberately blind to scroll position. The island reserves space at the top
   // of the transcript and that space sits inside the scroll container, so
   // mounting it on a scroll-derived value would move the dividers the scroll
@@ -1152,7 +1228,10 @@ export function SidecarAssistant({
   }, [selectedSlugs, getProductBySlug]);
 
   // When products are selected, the input invites a product-scoped question.
+  // The "Asking about" pill already names the SKU, so keep the field helper
+  // generic in that case.
   const inputPlaceholder = useMemo(() => {
+    if (askingAboutProduct) return PLACEHOLDER_INPUT;
     if (selectedSlugs.length === 1) {
       const product = getProductBySlug(selectedSlugs[0]);
       if (product) return `Ask me anything about ${product.title}`;
@@ -1161,7 +1240,7 @@ export function SidecarAssistant({
       return `Ask me anything about your ${selectedSlugs.length} selected products`;
     }
     return PLACEHOLDER_INPUT;
-  }, [selectedSlugs, getProductBySlug]);
+  }, [askingAboutProduct, selectedSlugs, getProductBySlug]);
 
   const chatRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -1689,6 +1768,7 @@ export function SidecarAssistant({
       const product = getProductBySlug(slug);
       if (!product) return;
 
+      establishConversationProduct([slug]);
       appendMessage(
         {
           id: nextId("shopper"),
@@ -1724,6 +1804,7 @@ export function SidecarAssistant({
       removeMessage,
       renderPdpCard,
       scheduleResponse,
+      establishConversationProduct,
     ],
   );
 
@@ -1966,7 +2047,24 @@ export function SidecarAssistant({
 
   const handleRemoveSelected = useCallback((slug: string) => {
     setSelectedSlugs((current) => current.filter((existing) => existing !== slug));
+    setConversationSlugs((current) =>
+      current.filter((existing) => existing !== slug),
+    );
   }, []);
+
+  /* Clearing drops the shopper's conversational pick, which lets the open PDP
+   * take the pill back. When the pick already was the open PDP there is nothing
+   * to fall back to, so the context is suppressed until the shopper moves or
+   * names a product again. */
+  const handleClearComposerContext = useCallback(() => {
+    const clearedSlug = askingAboutProduct?.slug;
+    setConversationSlugs([]);
+    setSelectedSlugs([]);
+    setContextualThreadActive(false);
+    if (!pageProductSlug || pageProductSlug === clearedSlug) {
+      setComposerContextCleared(true);
+    }
+  }, [askingAboutProduct, pageProductSlug]);
 
   const handleShowMore = useCallback(
     (plpMessageId: string) => {
@@ -2989,6 +3087,7 @@ export function SidecarAssistant({
       // the row was shown. Tray pills omit `contextSlug` and use the current
       // selection.
       const contextSlugs = contextSlug ? [contextSlug] : selectedSlugs;
+      establishConversationProduct(contextSlugs);
       const selectedProducts = contextSlugs
         .map((slug) => getProductBySlug(slug))
         .filter((p): p is CatalogProduct => Boolean(p));
@@ -3265,6 +3364,7 @@ export function SidecarAssistant({
       dispatchShopperMessage,
       handleAddToCart,
       updateMessage,
+      establishConversationProduct,
     ],
   );
 
@@ -3275,6 +3375,7 @@ export function SidecarAssistant({
    * typed follow-ups scoped to this product. */
   const startOpenQuestionThread = useCallback(
     (product: CatalogProduct, prompt: string) => {
+      establishConversationProduct([product.slug]);
       if (lastSeparatorSlugRef.current !== product.slug) {
         appendMessage({
           id: nextId("sep"),
@@ -3310,7 +3411,7 @@ export function SidecarAssistant({
         setContextualThreadActive(true);
       });
     },
-    [appendMessage, removeMessage, scheduleResponse],
+    [appendMessage, removeMessage, scheduleResponse, establishConversationProduct],
   );
 
   /** A PDP hygiene pill ("What's the return policy?"). The answer is
@@ -3320,6 +3421,7 @@ export function SidecarAssistant({
    * dropping them into generic discovery. */
   const startPolicyThread = useCallback(
     (product: CatalogProduct, prompt: string) => {
+      establishConversationProduct([product.slug]);
       if (lastSeparatorSlugRef.current !== product.slug) {
         appendMessage({
           id: nextId("sep"),
@@ -3360,7 +3462,7 @@ export function SidecarAssistant({
         setContextualThreadActive(true);
       });
     },
-    [appendMessage, removeMessage, scheduleResponse],
+    [appendMessage, removeMessage, scheduleResponse, establishConversationProduct],
   );
 
   /** Follow-ups under a comparison table. They speak about every column, so
@@ -4407,23 +4509,82 @@ export function SidecarAssistant({
       return true;
     }
 
-    /* Product-scoped free text (single selection, or an active FAQ thread
-     * with context island product) goes through resolveProductFaq — so
-     * "what sizes does it come in?" answers like the tray pills, instead
-     * of falling through to the generic probing fallback. */
-    const focusSlug =
-      selectedSlugs.length === 1
-        ? selectedSlugs[0]
-        : contextualThreadActive && contextProduct
-          ? contextProduct.slug
-          : null;
-    if (focusSlug) {
-      handleContextualPill(value, focusSlug);
+    /* Explicit mention > conversational context > page PDP. Agent cards
+     * never retarget this; only shopper text, selection, and FAQ taps do. */
+    const pageSlug = composerContextCleared ? null : pageProductSlug;
+    const resolved = resolveActiveProductContext({
+      text: value,
+      conversationSlugs,
+      pageSlug,
+      products,
+    });
+    if (resolved.kind === "explicit") {
+      establishConversationProduct(resolved.slugs);
+    }
+
+    const intent = classifyIntent(value);
+
+    if (resolved.kind === "ambiguous") {
+      const named = resolved.slugs
+        .map((slug) => getProductBySlug(slug))
+        .filter((product): product is CatalogProduct => Boolean(product));
+      appendMessage({
+        id: nextId("shopper"),
+        kind: "shopper_text",
+        text: value,
+      });
+      const loaderId = nextId("loader");
+      appendMessage({
+        id: loaderId,
+        kind: "agent_loader",
+        variant: "answering",
+      });
+      scheduleResponse(() => {
+        removeMessage(loaderId);
+        appendMessage({
+          id: nextId("agent"),
+          kind: "agent_simple",
+          body: buildProductClarification(named),
+        });
+      });
       setSelectedSlugs([]);
       if (simulateMobileKeyboard) {
         dismissSimulatedKeyboard();
       }
       return true;
+    }
+
+    if (resolved.slugs.length >= 2) {
+      dispatchShopperMessage(value);
+      setSelectedSlugs([]);
+      if (simulateMobileKeyboard) {
+        dismissSimulatedKeyboard();
+      }
+      return true;
+    }
+
+    const singleSlug =
+      resolved.slugs[0] ??
+      (selectedSlugs.length === 1 ? selectedSlugs[0] : null);
+    if (singleSlug) {
+      const faqFromSelection =
+        selectedSlugs.length === 1 && resolved.kind !== "explicit";
+      /* Category words inside a product name ("eye cream", "serum") make
+       * classifyIntent look like a listing. An explicit single SKU is a product
+       * question only when the shopper phrased one - a bare category phrase
+       * like "sunscreen for oily skin" is a request for candidates. */
+      const faqFromExplicit =
+        resolved.kind === "explicit" &&
+        isProductQuestion(value) &&
+        !isProductListingQuery(value);
+      if (faqFromSelection || faqFromExplicit || intent.kind === "empty") {
+        handleContextualPill(value, singleSlug);
+        setSelectedSlugs([]);
+        if (simulateMobileKeyboard) {
+          dismissSimulatedKeyboard();
+        }
+        return true;
+      }
     }
 
     dispatchShopperMessage(value);
@@ -4766,6 +4927,9 @@ export function SidecarAssistant({
     agentRef.current?.reset();
     setWelcomeRefreshCount(0);
     setSelectedSlugs([]);
+    setConversationSlugs([]);
+    setContextualThreadActive(false);
+    setComposerContextCleared(false);
     setUpdatingCart(null);
     setSentDraft("");
     // Emptying the list lets the welcome-seed effect re-run and restore the
@@ -4825,6 +4989,35 @@ export function SidecarAssistant({
         })}
       </div>
     ) : null;
+
+  const askingAboutRow = contextPill && askingAboutProduct ? (
+    <div
+      className="sidecar-assistant__asking-about"
+      aria-label={`Asking about ${askingAboutProduct.title}`}
+    >
+      <span className="sidecar-assistant__asking-about-pretext">
+        Asking about
+      </span>
+      <span className="sidecar-assistant__selection-pill">
+        <img
+          className="sidecar-assistant__selection-pill-thumb"
+          src={askingAboutProduct.imageUrl}
+          alt=""
+        />
+        <span className="sidecar-assistant__selection-pill-label">
+          {compactProductTitle(askingAboutProduct.title)}
+        </span>
+        <button
+          type="button"
+          className="sidecar-assistant__selection-pill-remove"
+          aria-label={`Stop asking about ${askingAboutProduct.title}`}
+          onClick={handleClearComposerContext}
+        >
+          <CloseIcon width={14} height={14} />
+        </button>
+      </span>
+    </div>
+  ) : null;
 
   const selectionNbas = contextualThreadActive ? null : (
     <AgentNBAs
@@ -5031,22 +5224,28 @@ export function SidecarAssistant({
       </div>
 
       <form className="sidecar-assistant__input-bar" onSubmit={handleSubmit}>
-        {selectedSlugs.length > 0 && !inChatProductSelection ? (
+        {!inChatProductSelection &&
+        (selectedSlugs.length > 0 || askingAboutRow) ? (
           <div className="sidecar-assistant__selection-tray">
             {selectionPills}
-            {selectionNbas}
+            {askingAboutRow}
+            {selectedSlugs.length > 0 ? selectionNbas : null}
           </div>
         ) : null}
         <div
           className={`sidecar-assistant__input-shell${
             composerDisabled ? " sidecar-assistant__input-shell--disabled" : ""
           }${
-            selectedSlugs.length > 0 && inChatProductSelection
+            inChatProductSelection &&
+            (askingAboutRow || selectedSlugs.length > 0)
               ? " sidecar-assistant__input-shell--with-selection"
               : ""
           }`}
         >
-          {selectedSlugs.length > 0 && inChatProductSelection ? selectionPills : null}
+          {inChatProductSelection ? askingAboutRow : null}
+          {selectedSlugs.length > 1 && inChatProductSelection
+            ? selectionPills
+            : null}
           {selectedSlugs.length >= 2 &&
           inChatProductSelection &&
           selectionNbas ? (

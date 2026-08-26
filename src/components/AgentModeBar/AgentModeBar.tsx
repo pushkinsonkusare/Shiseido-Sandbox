@@ -32,6 +32,8 @@ export function AgentModeBar() {
     setAccordionRecommendations,
     contextIsland,
     setContextIsland,
+    contextPill,
+    setContextPill,
     productSelection,
     setProductSelection,
     productSelectionType,
@@ -243,6 +245,17 @@ export function AgentModeBar() {
                   />
                   <span className="agent-mode-bar__feature-label">
                     Context island
+                  </span>
+                </label>
+                <label className="agent-mode-bar__feature">
+                  <input
+                    type="checkbox"
+                    className="agent-mode-bar__feature-checkbox"
+                    checked={contextPill}
+                    onChange={(event) => setContextPill(event.target.checked)}
+                  />
+                  <span className="agent-mode-bar__feature-label">
+                    Context pill
                   </span>
                 </label>
                 <label className="agent-mode-bar__feature">
