@@ -227,15 +227,14 @@
   background: transparent;
   border: none;
   padding: 0 4px;
-  margin: 0;
+  margin: 0 0 0 -4px;
   font: inherit;
   font-size: 13px;
   line-height: 20px;
   color: var(--color-text-muted);
   cursor: pointer;
   flex: 0 0 auto;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration: none;
 }
 
 .search-overlay__clear:hover {
@@ -246,6 +245,92 @@
   outline: 2px solid rgba(0, 0, 0, 0.4);
   outline-offset: 2px;
   border-radius: 2px;
+}
+
+/* Nestled CTAs on the right of the field. Circular arrow runs keyword
+ * PLP search (only once the field has text). Ask AI seeds the sidecar. */
+.search-overlay__field-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.search-overlay__submit {
+  appearance: none;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: #17171b;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.search-overlay__submit:hover {
+  background: #000000;
+}
+
+.search-overlay__submit:focus-visible {
+  outline: 2px solid #17171b;
+  outline-offset: 2px;
+}
+
+.search-overlay__ask-ai {
+  appearance: none;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 999px;
+  background: #f5f5f5;
+  color: #17171b;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: none;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.search-overlay__ask-ai:hover:not(:disabled) {
+  background: #ececec;
+  border-color: #d4d4d4;
+}
+
+.search-overlay__ask-ai:disabled {
+  background: #f5f5f5;
+  border-color: #ececec;
+  color: rgba(23, 23, 27, 0.3);
+  cursor: not-allowed;
+}
+
+.search-overlay__ask-ai:focus-visible {
+  outline: 2px solid #17171b;
+  outline-offset: 2px;
+}
+
+.search-overlay__ask-ai-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .search-overlay__close {
@@ -367,13 +452,13 @@
   }
 }
 
-/* Bestsellers column: must NOT shrink in the flex row, otherwise the
- * inner 5/4/3-up grid (with 260px-wide ProductCards) would lose its
- * track widths and the cards would overlap. `fit-content` lets the
- * column hug the grid's intrinsic width at each breakpoint. */
+/* Bestsellers column: fills remaining body width so five equal cards can
+ * sit in one row without forcing a second. */
 .search-overlay__col--bestsellers {
-  flex: 0 0 auto;
-  width: fit-content;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+  max-width: 100%;
 }
 
 .search-overlay__heading {
@@ -619,27 +704,25 @@
 
 /* ---------- Bestsellers grid ---------- */
 
-/* ProductCard has a fixed `width: 260px` (see ProductCard.css
- * `--pc-card-width`). We size the grid tracks to that exact value so
- * each tier is a stable, definite-width rectangle. Using `1fr` here
- * would collapse to 0 inside the `fit-content` parent column and the
- * cards would overlap.
- *
- * The grid always renders 10 cards into the DOM; each breakpoint
- * trims the trailing rows via `:nth-child(n+N) { display: none }` so
- * the perceived layout is a perfect rectangle (5x2, 4x2, 3x2, 2x2,
- * 1x4) without needing any JS resize listener. */
+/* Single row of up to five compact ProductCards. Tracks flex with the
+ * bestsellers column so five fit without wrapping; narrower breakpoints
+ * drop to 4 / 3 / 2 across and still keep one row via nth-child hide. */
 .search-overlay__grid {
-  /* ProductCard now exposes `--pc-card-width: 100%` globally for list pages.
-   * Search overlay needs fixed-size tiles, so pin a local width token here. */
-  --pc-card-width: 260px;
+  --pc-card-width: 100%;
+  --pc-image-height: auto;
   display: grid;
-  grid-template-columns: repeat(5, var(--pc-card-width, 260px));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
+  width: 100%;
+}
+
+.search-overlay__grid > :nth-child(n + 6) {
+  display: none;
 }
 
 .search-overlay__grid .figma-product-card__image-wrap {
   width: 100%;
+  aspect-ratio: 1 / 1;
 }
 
 .search-overlay__grid .figma-product-card__title {
@@ -648,42 +731,49 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 14px;
+  min-height: calc(1.2em * 2);
+}
+
+.search-overlay__grid .figma-product-card__price {
+  font-size: 14px;
+}
+
+.search-overlay__grid .figma-product-card__content {
+  padding: 10px 10px 12px;
+  gap: 6px;
 }
 
 @media (max-width: 1919.98px) {
   .search-overlay__grid {
-    grid-template-columns: repeat(4, var(--pc-card-width, 260px));
-  }
-  .search-overlay__grid > :nth-child(n + 9) {
-    display: none;
-  }
-}
-
-@media (max-width: 1599.98px) {
-  .search-overlay__grid {
-    grid-template-columns: repeat(3, var(--pc-card-width, 260px));
-  }
-  .search-overlay__grid > :nth-child(n + 7) {
-    display: none;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 1279.98px) {
   .search-overlay__grid {
-    grid-template-columns: repeat(2, var(--pc-card-width, 260px));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .search-overlay__grid > :nth-child(n + 5) {
+    display: none;
+  }
+}
+
+@media (max-width: 959.98px) {
+  .search-overlay__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .search-overlay__grid > :nth-child(n + 4) {
     display: none;
   }
 }
 
 @media (max-width: 767.98px) {
   .search-overlay__grid {
-    --pc-card-width: 100%;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
   }
-  .search-overlay__grid > :nth-child(n + 5) {
+  .search-overlay__grid > :nth-child(n + 3) {
     display: none;
   }
 
@@ -862,7 +952,7 @@
 }
 
 .search-overlay__promo-text {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -883,13 +973,17 @@
 
 .search-overlay__promo-close {
   flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
+  width: auto;
+  min-width: 56px;
+  height: 36px;
+  padding: 0 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  color: #33373d;
+  margin-left: 32px;
+  border-radius: 999px;
+  background: #131315;
+  color: #ffffff;
 }
 
 /* Demo mobile viewport parity: force the compact overlay layout even when
@@ -956,7 +1050,7 @@ html[data-demo-viewport="mobile"] .search-overlay__grid {
   gap: 12px;
 }
 
-html[data-demo-viewport="mobile"] .search-overlay__grid > :nth-child(n + 5) {
+html[data-demo-viewport="mobile"] .search-overlay__grid > :nth-child(n + 3) {
   display: none;
 }
 

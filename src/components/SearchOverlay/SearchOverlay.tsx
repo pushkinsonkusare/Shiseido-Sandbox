@@ -56,12 +56,13 @@ const SEARCH_DEBOUNCE_MS = 150;
 
 /**
  * Cap how many ranked products we render in the dropdown grid. The grid
- * lays out as 5x2 / 4x2 / 3x2 / 2x2 / 1x4 across breakpoints. We
- * always render 10 cards into the DOM and let CSS hide the trailing
- * ones via `:nth-child(n+N)` so the React tree stays resize-stable.
+ * shows a single row of up to five cards; narrower viewports drop to
+ * 4 / 3 / 2 across. We always render 5 into the DOM and let CSS hide
+ * the trailing ones via `:nth-child(n+N)` so the React tree stays
+ * resize-stable.
  */
-const MAX_GRID_RESULTS = 10;
-const MAX_BESTSELLERS = 10;
+const MAX_GRID_RESULTS = 5;
+const MAX_BESTSELLERS = 5;
 
 function dispatchOpenAssistant() {
   if (typeof document === "undefined") return;
@@ -103,15 +104,13 @@ function highlightMatches(text: string, query: string): ReactNode {
 
 const PROMO_TITLE = "Shop with your personal Assistant";
 const PROMO_SUB =
-  "I can help you find the right gear, compare specs, and bundle accessories. Shop with me.";
+  "I can help you find the right skincare, compare formulas, and build a routine. Shop with me.";
 
 /**
  * Pick the "Bestsellers" pool rendered into the search overlay grid.
  * Filters out accessories and bundles so we surface flagship single-SKU
- * products (drones, action cameras, gimbals, mics), then orders by
- * rating descending with reviewCount as a tiebreaker. Returns up to
- * `MAX_BESTSELLERS` cards. The responsive grid (5x2 / 4x2 / 3x2 /
- * 2x2 / 1x4) hides the trailing ones via CSS at narrower viewports.
+ * products, then orders by rating descending with reviewCount as a
+ * tiebreaker. Returns up to `MAX_BESTSELLERS` cards for a single row.
  */
 function pickBestsellers(
   products: ReturnType<typeof useCatalog>["products"],
@@ -372,6 +371,17 @@ export function SearchOverlay() {
     [closeSearchOverlay],
   );
 
+  /** Seeds the sidecar with the typed query when present; otherwise just opens it. */
+  const handleAskAi = useCallback(() => {
+    const trimmed = query.trim();
+    if (trimmed) {
+      handleAssistantSuggestion(trimmed);
+      return;
+    }
+    dispatchOpenAssistant();
+    closeSearchOverlay();
+  }, [query, handleAssistantSuggestion, closeSearchOverlay]);
+
   const handleProductSelect = useCallback(
     (slug: string) => {
       navigateToProduct(slug);
@@ -440,6 +450,33 @@ export function SearchOverlay() {
               >
                 Clear
               </button>
+            )}
+            {(query.trim().length > 0 || showAssistantPromo) && (
+              <div className="search-overlay__field-actions">
+                {query.trim().length > 0 && (
+                  <button
+                    type="button"
+                    className="search-overlay__submit"
+                    onClick={() => submitSearch(query)}
+                    aria-label="Search"
+                  >
+                    <LucideArrowRight size={16} strokeWidth={2} aria-hidden="true" />
+                  </button>
+                )}
+                {showAssistantPromo && (
+                  <button
+                    type="button"
+                    className="search-overlay__ask-ai"
+                    onClick={handleAskAi}
+                    aria-label="Ask AI"
+                  >
+                    <span className="search-overlay__ask-ai-label">
+                      <LucideSparkle size={14} strokeWidth={2} aria-hidden="true" />
+                      Ask AI
+                    </span>
+                  </button>
+                )}
+              </div>
             )}
           </label>
           <button

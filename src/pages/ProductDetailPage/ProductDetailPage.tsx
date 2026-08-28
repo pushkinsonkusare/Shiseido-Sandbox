@@ -188,8 +188,10 @@ export default function ProductDetailPage() {
 
             <button className="figma-pdp__cta" type="button" onClick={() => navigate(ROUTES.cart)}>Add to Cart</button>
             <p className="figma-pdp__or">or buy with</p>
-            <button className="figma-pdp__apple-pay">Apple Pay</button>
-            <button className="figma-pdp__paypal">PayPal</button>
+            <div className="figma-pdp__pay-methods">
+              <button className="figma-pdp__apple-pay">Apple Pay</button>
+              <button className="figma-pdp__paypal">PayPal</button>
+            </div>
             <p className="figma-pdp__pay-note">Pay in 4 interest-free payments of $12.25 with PayPal. Learn more</p>
 
             {showNbaPanel && nbaPlacement === "right-rail" ? (

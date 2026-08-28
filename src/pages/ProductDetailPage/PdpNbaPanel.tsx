@@ -5,8 +5,10 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import {
+  ArrowRightIcon,
   ArrowUpRightIcon,
   RefreshCcwIcon,
   SendHorizontalIcon,
@@ -21,7 +23,12 @@ import {
   type PdpNbaPill,
   type PdpNbaPillKind,
 } from "./pdpNbaPills";
-import { resolveInlineAnswer, type InlineAnswer } from "./inlineAnswer";
+import {
+  buildInlineThinkingPlan,
+  INLINE_THINKING_MS,
+  resolveInlineAnswer,
+  type InlineAnswer,
+} from "./inlineAnswer";
 
 export type AskAssistantEventDetail = {
   /** The text the assistant should treat as a shopper utterance. */
@@ -55,11 +62,6 @@ function emitTelemetry(event: string, payload: Record<string, unknown>) {
     }),
   );
 }
-
-/** Long enough to read as work, short enough not to stall the page. */
-const INLINE_THINKING_MS = 1600;
-const INLINE_THINKING_LABEL = "Understanding your query…";
-const INLINE_PLACEHOLDER = "Type your question";
 
 /** Which of the widget's two answer surfaces is live. */
 type InlineStatus = "idle" | "thinking" | "answered";
@@ -98,12 +100,34 @@ export function PdpNbaPanel({
   const [query, setQuery] = useState<string | null>(null);
   const [status, setStatus] = useState<InlineStatus>("idle");
   const [answer, setAnswer] = useState<InlineAnswer | null>(null);
+  const [thinkingSteps, setThinkingSteps] = useState<string[]>([]);
+  const [thinkingStepIntervalMs, setThinkingStepIntervalMs] = useState(1000);
   const [draft, setDraft] = useState("");
+  const [composerMultiline, setComposerMultiline] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const thinkingTimerRef = useRef<number | null>(null);
   /** Bumped on every ask, so an answer that resolves late is dropped rather
    *  than landing under a question the shopper has already moved on from. */
   const generationRef = useRef(0);
+
+  const demoTheme = useSyncExternalStore(
+    (onStoreChange) => {
+      if (typeof document === "undefined") return () => undefined;
+      const root = document.documentElement;
+      const observer = new MutationObserver(onStoreChange);
+      observer.observe(root, {
+        attributes: true,
+        attributeFilter: ["data-demo-theme"],
+      });
+      return () => observer.disconnect();
+    },
+    () =>
+      typeof document !== "undefined"
+        ? document.documentElement.getAttribute("data-demo-theme")
+        : null,
+    () => null,
+  );
+  const isRoundedTheme = demoTheme === "consumer-electronics";
 
   const pills = useMemo(
     () => buildPdpNbaPills(product, catalog, setIndex, { questionsOnly: inline }),
@@ -125,6 +149,7 @@ export function PdpNbaPanel({
     setQuery(null);
     setStatus("idle");
     setAnswer(null);
+    setThinkingSteps([]);
     setDraft("");
   }, []);
 
@@ -165,8 +190,11 @@ export function PdpNbaPanel({
       }
 
       // Replace rather than append: one question is on screen at a time.
+      const plan = buildInlineThinkingPlan(product, trimmed);
       setQuery(trimmed);
       setAnswer(null);
+      setThinkingSteps(plan.steps);
+      setThinkingStepIntervalMs(plan.stepIntervalMs);
       setStatus("thinking");
       emitTelemetry("pdp_inline_ask", {
         productSlug: product.slug,
@@ -226,37 +254,95 @@ export function PdpNbaPanel({
   }, []);
 
   const handleSubmit = useCallback(() => {
+    if (status === "thinking") return;
     const value = draft.trim();
     if (!value) return;
     setDraft("");
     askInline(value, "composer");
-  }, [draft, askInline]);
+  }, [draft, askInline, status]);
 
   // The composer wraps a long question instead of scrolling it out of sight,
   // so its height follows its content. Reset first: `scrollHeight` only grows
-  // against the height already set.
+  // against the height already set. Also flag multiline so the rounded theme
+  // can switch from a pill to a rounded rectangle.
   useLayoutEffect(() => {
     const field = inputRef.current;
-    if (!field) return;
+    if (!field) {
+      setComposerMultiline(false);
+      return;
+    }
     field.style.height = "auto";
-    field.style.height = `${field.scrollHeight}px`;
+    const nextHeight = field.scrollHeight;
+    field.style.height = `${nextHeight}px`;
+    const lineHeight = Number.parseFloat(getComputedStyle(field).lineHeight) || 20;
+    setComposerMultiline(Boolean(draft) && nextHeight > lineHeight * 1.5);
   }, [draft, inline]);
+
+  const busy = inline && status === "thinking";
 
   return (
     <section
       className="pdp-nba"
       aria-label="Ask the personal assistant"
       data-answer-mode={inline ? "inline" : "redirect"}
+      aria-busy={busy || undefined}
     >
       <header className="pdp-nba__header">
-        <span className="pdp-nba__header-icon" aria-hidden="true">
-          <SparkleIcon width={16} height={16} />
-        </span>
-        <h2 className="pdp-nba__header-title">Ask Assistant</h2>
+        <div className="pdp-nba__header-brand">
+          <span className="pdp-nba__header-icon" aria-hidden="true">
+            <SparkleIcon width={16} height={16} />
+          </span>
+          <h2 className="pdp-nba__header-title">Ask Assistant</h2>
+        </div>
         <span className="pdp-nba__badge" aria-label="New feature">
           New
         </span>
       </header>
+
+      {inline ? (
+        <form
+          className={
+            "pdp-nba__composer" +
+            (composerMultiline ? " pdp-nba__composer--multiline" : "")
+          }
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleSubmit();
+          }}
+        >
+          <textarea
+            ref={inputRef}
+            className="pdp-nba__composer-input"
+            rows={1}
+            placeholder={`Ask me anything about ${product.title}`}
+            value={draft}
+            aria-label={`Ask a question about the ${product.title}`}
+            disabled={busy}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (busy) return;
+              if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+              // Shift+Enter is the only way to a second line by hand; the
+              // field wraps a long question on its own.
+              if (event.shiftKey) return;
+              event.preventDefault();
+              handleSubmit();
+            }}
+          />
+          <button
+            type="submit"
+            className="pdp-nba__composer-send"
+            aria-label="Send question"
+            disabled={busy || !draft.trim()}
+          >
+            {isRoundedTheme ? (
+              <ArrowRightIcon width={16} height={16} />
+            ) : (
+              <SendHorizontalIcon width={20} height={20} />
+            )}
+          </button>
+        </form>
+      ) : null}
 
       {inline && query ? (
         <div className="pdp-nba__slot" data-component="pdp-inline-slot">
@@ -264,7 +350,8 @@ export function PdpNbaPanel({
           {status === "thinking" ? (
             <LatencyLoader
               className="pdp-nba__thinking"
-              label={INLINE_THINKING_LABEL}
+              steps={thinkingSteps}
+              stepIntervalMs={thinkingStepIntervalMs}
             />
           ) : null}
           {status === "answered" && answer ? (
@@ -292,43 +379,12 @@ export function PdpNbaPanel({
         </div>
       ) : null}
 
-      {inline ? (
-        <form
-          className="pdp-nba__composer"
-          onSubmit={(event) => {
-            event.preventDefault();
-            handleSubmit();
-          }}
-        >
-          <textarea
-            ref={inputRef}
-            className="pdp-nba__composer-input"
-            rows={1}
-            placeholder={INLINE_PLACEHOLDER}
-            value={draft}
-            aria-label={`Ask a question about the ${product.title}`}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
-              // Shift+Enter is the only way to a second line by hand; the
-              // field wraps a long question on its own.
-              if (event.shiftKey) return;
-              event.preventDefault();
-              handleSubmit();
-            }}
-          />
-          <button
-            type="submit"
-            className="pdp-nba__composer-send"
-            aria-label="Send question"
-            disabled={!draft.trim()}
-          >
-            <SendHorizontalIcon width={20} height={20} />
-          </button>
-        </form>
-      ) : null}
-
-      <div className="pdp-nba__pill-set" role="toolbar" aria-label="Suggested questions">
+      <div
+        className="pdp-nba__pill-set"
+        role="toolbar"
+        aria-label="Suggested questions"
+        aria-disabled={busy || undefined}
+      >
         {pills.map((pill) => {
           const showArrow = pill.kind !== "open";
           return (
@@ -337,6 +393,7 @@ export function PdpNbaPanel({
               type="button"
               className="pdp-nba__pill"
               data-kind={pill.kind}
+              disabled={busy}
               onClick={() => handlePillClick(pill)}
             >
               <span className="pdp-nba__pill-label">{pill.label}</span>
@@ -354,6 +411,7 @@ export function PdpNbaPanel({
           type="button"
           className="pdp-nba__regen"
           aria-label="Show different questions"
+          disabled={busy}
           onClick={handleRegenerate}
         >
           <RefreshCcwIcon width={16} height={16} />

@@ -1210,6 +1210,13 @@
   aspect-ratio: auto;
   min-width: 0;
   min-height: 360px;
+  align-items: flex-start;
+}
+
+.sxs-layout__panel--detached .agent-pdp__gallery img {
+  /* When the gallery stretches with a tall content column, keep the product
+   * photo pinned to the top instead of floating in the vertical middle. */
+  object-position: top center;
 }
 
 .sxs-layout__panel--detached .agent-pdp__content {

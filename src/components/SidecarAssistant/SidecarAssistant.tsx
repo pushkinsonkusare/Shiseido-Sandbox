@@ -5,11 +5,13 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { useCatalog } from "../../catalog/CatalogContext";
 import { useAgentMode, UT_WELCOME_NBA_LABEL } from "../AgentModeBar/AgentModeContext";
 import {
   ArrowDownIcon,
+  ArrowRightIcon,
   CloseIcon,
   EllipsisVerticalIcon,
   ExpandIcon,
@@ -466,6 +468,35 @@ function cardTopScrollTarget(node: HTMLElement, card: HTMLElement) {
       dockedSeparatorHeight(node, card),
   );
 }
+
+/** Walk back from a tall card past loaders / context separators to the shopper
+ *  utterance that triggered this turn. Stops at any other non-transient node so
+ *  an older bubble is never claimed. */
+function precedingUserRow(from: HTMLElement): HTMLElement | null {
+  let sibling = from.previousElementSibling as HTMLElement | null;
+  while (sibling) {
+    if (sibling.classList.contains("sidecar-assistant__user-row")) return sibling;
+    const isLoader =
+      sibling.classList.contains("agent-loader") ||
+      sibling.getAttribute("data-component") === "latency-loader";
+    const isSeparator = sibling.classList.contains(
+      "sidecar-assistant__context-separator",
+    );
+    if (isLoader || isSeparator) {
+      sibling = sibling.previousElementSibling as HTMLElement | null;
+      continue;
+    }
+    break;
+  }
+  return null;
+}
+
+/** Prefer the accompanying shopper bubble when docking a tall card so both stay
+ *  in view; fall back to the card itself when there is no preceding utterance. */
+function tallDockAnchor(card: HTMLElement): HTMLElement {
+  return precedingUserRow(card) ?? card;
+}
+
 /** How far into the chat viewport a context divider must scroll before the
  * island adopts its product. Clears the floating island (12px inset + its own
  * height) so a divider hands over as it slides behind the island. */
@@ -635,22 +666,42 @@ function toPlpProduct(
   };
 }
 
-/** The sizes a product is sold in, read off the catalog's `Sizes` spec. A
- * product with a single size offers nothing to choose between, so it comes back
- * empty and reads as having no variants at all. */
+/** The sizes a product is sold in, read off catalog variants. A product with a
+ * single size offers nothing to choose between, so it comes back empty and
+ * reads as having no variants at all. */
 function productSizeOptions(product: CatalogProduct): AgentPDPSizeOption[] {
-  const spec = product.specs.find((entry) => entry.label === "Sizes");
-  if (!spec || !spec.value) return [];
-  const labels = [
-    ...new Set(
-      spec.value
-        .split(",")
-        .map((token) => token.trim())
-        .filter(Boolean),
-    ),
-  ];
-  if (labels.length < 2) return [];
-  return labels.map((label, index) => ({ id: `size-${index}`, label }));
+  const variants = product.variants.filter((variant) => Boolean(variant.label));
+  if (variants.length < 2) return [];
+
+  const basePrice = product.price;
+  const compareAt = product.compareAtPrice;
+
+  return variants.map((variant, index) => {
+    let comparePrice: string | undefined;
+    if (
+      compareAt != null &&
+      basePrice != null &&
+      basePrice > 0 &&
+      variant.price != null
+    ) {
+      const scaled = Math.round(compareAt * (variant.price / basePrice));
+      if (scaled > variant.price) {
+        comparePrice = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(scaled);
+      }
+    } else if (compareAt != null && variant.price === basePrice) {
+      comparePrice = product.comparePriceFormatted ?? undefined;
+    }
+
+    return {
+      id: `size-${index}`,
+      label: variant.label,
+      price: variant.priceFormatted,
+      comparePrice,
+    };
+  });
 }
 
 function toCompareColumn(product: CatalogProduct): AgentCompareColumn {
@@ -1009,6 +1060,24 @@ export function SidecarAssistant({
   const { currentRoute, currentProductSlug } = usePrototypeNavigation();
   const { accordionRecommendations, contextIsland, contextPill, productSelection, productSelectionType, viewportMode, userTestingLock } =
     useAgentMode();
+  const demoTheme = useSyncExternalStore(
+    (onStoreChange) => {
+      if (typeof document === "undefined") return () => undefined;
+      const root = document.documentElement;
+      const observer = new MutationObserver(onStoreChange);
+      observer.observe(root, {
+        attributes: true,
+        attributeFilter: ["data-demo-theme"],
+      });
+      return () => observer.disconnect();
+    },
+    () =>
+      typeof document !== "undefined"
+        ? document.documentElement.getAttribute("data-demo-theme")
+        : null,
+    () => null,
+  );
+  const isRoundedTheme = demoTheme === "consumer-electronics";
   const inChatProductSelection =
     productSelection && productSelectionType === "in-chat";
   const [isOpen, setIsOpen] = useState(false);
@@ -1029,9 +1098,15 @@ export function SidecarAssistant({
   const [hasUserOpenedFab, setHasUserOpenedFab] = useState(false);
   const [isNudging, setIsNudging] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  // True once the composer wraps past a single line — rounded theme swaps the
+  // pill shell for matching fixed corner radii.
+  const [composerMultiline, setComposerMultiline] = useState(false);
   // The utterance the shopper just typed, kept only for the beat the composer
   // is disabled so the field shows what is in flight instead of going blank.
   const [sentDraft, setSentDraft] = useState("");
+  /** When true, the disabled-composer ghost stays on one truncated line (pill /
+   * NBA submits). Manual typed sends keep multiline wrapping. */
+  const [truncateComposerGhost, setTruncateComposerGhost] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [welcomeRefreshCount, setWelcomeRefreshCount] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -1427,11 +1502,12 @@ export function SidecarAssistant({
     const cards = node.querySelectorAll<HTMLElement>('[data-streaming="true"]');
     const card = cards[cards.length - 1];
     if (!card) return;
+    const dockAnchor = tallDockAnchor(card);
     requestAnimationFrame(() => {
       node.scrollTo({
         top: Math.min(
           node.scrollHeight - node.clientHeight,
-          cardTopScrollTarget(node, card),
+          cardTopScrollTarget(node, dockAnchor),
         ),
         behavior: "smooth",
       });
@@ -3082,6 +3158,7 @@ export function SidecarAssistant({
    *    collapses the tray. */
   const handleContextualPill = useCallback(
     (label: string, contextSlug?: string) => {
+      setTruncateComposerGhost(true);
       // Contextual follow-up rows carry the product they're about, so they keep
       // resolving correctly even if the live selection changed or cleared since
       // the row was shown. Tray pills omit `contextSlug` and use the current
@@ -3783,6 +3860,7 @@ export function SidecarAssistant({
 
   const handleNbaSelect = useCallback(
     (messageId: string, label: string) => {
+      setTruncateComposerGhost(true);
       if (label === RETRY_NBA_LABEL && cancelledTurnRef.current) {
         removeMessage(messageId);
         retryCancelledTurn();
@@ -3990,6 +4068,7 @@ export function SidecarAssistant({
         : undefined;
       const pillKind = detail?.pillKind;
       setIsOpen(true);
+      setTruncateComposerGhost(true);
       // Defer one frame so the open-driven welcome seeding effect commits
       // first; otherwise the seeding clobbers the shopper turn we're about
       // to enqueue.
@@ -4188,12 +4267,15 @@ export function SidecarAssistant({
       // Regression guard:
       // Tall cards must start from chatTop + 16px so card headers are not hidden
       // under the assistant header (especially on mobile Safari after image reflow).
-      const anchorNode =
+      // Prefer the accompanying shopper utterance so the bubble stays in view above
+      // the card when both dock together.
+      const tallCard =
         appendedNodes.find((child) => child.offsetHeight > viewportHeight * TALL_CARD_ANCHOR_RATIO) ??
         appendedNodes[0];
+      const dockAnchor = tallDockAnchor(tallCard);
       const alignTallAnchor = () => {
         node.scrollTo({
-          top: cardTopScrollTarget(node, anchorNode),
+          top: cardTopScrollTarget(node, dockAnchor),
           behavior: "auto",
         });
       };
@@ -4208,7 +4290,7 @@ export function SidecarAssistant({
       cleanupFns.push(() => window.cancelAnimationFrame(rafB));
       cleanupFns.push(() => window.clearTimeout(timeoutId));
 
-      const mediaNodes = Array.from(anchorNode.querySelectorAll("img"));
+      const mediaNodes = Array.from(tallCard.querySelectorAll("img"));
       for (const media of mediaNodes) {
         if (media.complete) continue;
         const onMediaSettled = () => alignTallAnchor();
@@ -4456,6 +4538,7 @@ export function SidecarAssistant({
     if (composerDisabled) return;
     // The turn is over, so the sent utterance hands the field back empty.
     setSentDraft("");
+    setTruncateComposerGhost(false);
     if (!composerHadFocusRef.current) return;
     composerHadFocusRef.current = false;
     inputRef.current?.focus({ preventScroll: true });
@@ -4464,12 +4547,27 @@ export function SidecarAssistant({
   // The composer is a textarea so a long question wraps instead of scrolling
   // away to the right, which means its height has to follow its content. Reset
   // first: `scrollHeight` only ever grows against the height already set.
+  // Pill/NBA ghosts stay single-line truncated so long canned prompts don't
+  // inflate the shell while the loader runs.
   useLayoutEffect(() => {
     const field = inputRef.current;
     if (!field) return;
+    if (composerDisabled && truncateComposerGhost) {
+      field.style.height = "auto";
+      setComposerMultiline(false);
+      return;
+    }
     field.style.height = "auto";
-    field.style.height = `${field.scrollHeight}px`;
-  }, [inputValue, sentDraft, processingPrompt, composerDisabled]);
+    const nextHeight = field.scrollHeight;
+    field.style.height = `${nextHeight}px`;
+    const styles = window.getComputedStyle(field);
+    const lineHeight = parseFloat(styles.lineHeight) || 20;
+    const paddingY =
+      (parseFloat(styles.paddingTop) || 0) +
+      (parseFloat(styles.paddingBottom) || 0);
+    const singleLineHeight = lineHeight + paddingY;
+    setComposerMultiline(nextHeight > singleLineHeight + 1);
+  }, [inputValue, sentDraft, processingPrompt, composerDisabled, truncateComposerGhost]);
 
   const dismissSimulatedKeyboard = () => {
     setSimKeyboardOpen(false);
@@ -4480,6 +4578,7 @@ export function SidecarAssistant({
     const value = inputValue.trim();
     if (!value) return false;
     setInputValue("");
+    setTruncateComposerGhost(false);
     setSentDraft(value);
 
     /* Product-scoped routing answers anything it can't parse with the
@@ -4502,6 +4601,9 @@ export function SidecarAssistant({
     );
     if (contextualLabel) {
       handleContextualPill(contextualLabel);
+      // Typed composer text — keep multiline ghost even if the contextual
+      // path shared the pill handler.
+      setTruncateComposerGhost(false);
       setSelectedSlugs([]);
       if (simulateMobileKeyboard) {
         dismissSimulatedKeyboard();
@@ -4579,6 +4681,7 @@ export function SidecarAssistant({
         !isProductListingQuery(value);
       if (faqFromSelection || faqFromExplicit || intent.kind === "empty") {
         handleContextualPill(value, singleSlug);
+        setTruncateComposerGhost(false);
         setSelectedSlugs([]);
         if (simulateMobileKeyboard) {
           dismissSimulatedKeyboard();
@@ -5240,7 +5343,7 @@ export function SidecarAssistant({
             (askingAboutRow || selectedSlugs.length > 0)
               ? " sidecar-assistant__input-shell--with-selection"
               : ""
-          }`}
+          }${composerMultiline ? " sidecar-assistant__input-shell--multiline" : ""}`}
         >
           {inChatProductSelection ? askingAboutRow : null}
           {selectedSlugs.length > 1 && inChatProductSelection
@@ -5261,7 +5364,12 @@ export function SidecarAssistant({
           <textarea
             ref={inputRef}
             rows={1}
-            className="sidecar-assistant__input"
+            className={
+              "sidecar-assistant__input" +
+              (composerDisabled && truncateComposerGhost
+                ? " sidecar-assistant__input--ghost-truncate"
+                : "")
+            }
             value={composerDisabled ? processingPrompt : inputValue}
             disabled={composerDisabled}
             onChange={(event) => setInputValue(event.target.value)}
@@ -5333,7 +5441,11 @@ export function SidecarAssistant({
                 if (simulateMobileKeyboard) event.preventDefault();
               }}
             >
-              <SendHorizontalIcon width={16} height={16} />
+              {isRoundedTheme ? (
+                <ArrowRightIcon width={16} height={16} />
+              ) : (
+                <SendHorizontalIcon width={16} height={16} />
+              )}
             </button>
           )}
           </div>

@@ -369,6 +369,13 @@ html[data-demo-viewport="mobile"] .figma-pdp__page-inner {
   margin: 0;
 }
 
+.pdp-nba__header-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pdp-space-xs);
+  min-width: 0;
+}
+
 .pdp-nba__header-icon {
   display: inline-flex;
   align-items: center;
@@ -433,6 +440,18 @@ html[data-demo-viewport="mobile"] .figma-pdp__page-inner {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
+.pdp-nba__pill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.pdp-nba__pill:disabled:hover {
+  background: #fff;
+  border-color: var(--input, #d1d5db);
+  box-shadow: none;
+}
+
 .pdp-nba__pill:focus-visible {
   outline: 2px solid var(--primary, #131315);
   outline-offset: 2px;
@@ -474,6 +493,15 @@ html[data-demo-viewport="mobile"] .figma-pdp__page-inner {
 
 .pdp-nba__regen:hover {
   background: #f8f8f8;
+}
+
+.pdp-nba__regen:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pdp-nba__regen:disabled:hover {
+  background: #fff;
 }
 
 .pdp-nba__regen:focus-visible {
@@ -599,8 +627,17 @@ html[data-demo-viewport="mobile"] .figma-pdp__page-inner {
   scrollbar-width: thin;
 }
 
-.pdp-nba__composer-input::placeholder {
-  color: rgba(23, 23, 27, 0.45);
+.pdp-nba__composer-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Keep the long product-name placeholder on a single clipped line. Once the
+ * shopper types, :placeholder-shown no longer matches and wrapping resumes. */
+.pdp-nba__composer-input:placeholder-shown {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pdp-nba__composer-send {

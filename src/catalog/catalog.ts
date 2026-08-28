@@ -32,6 +32,12 @@ export type CatalogSpec = {
   value: string;
 };
 
+export type CatalogVariant = {
+  label: string;
+  price: number | null;
+  priceFormatted: string;
+};
+
 export type ProductTier = "beginner" | "intermediate" | "pro";
 
 export type CatalogProduct = {
@@ -44,6 +50,8 @@ export type CatalogProduct = {
   sku: string | null;
   price: number | null;
   priceFormatted: string;
+  /** Size / pack options with per-variant pricing when available. */
+  variants: CatalogVariant[];
   /**
    * Deterministic "was" price used to render a strikethrough sale price.
    * Null when the product is not on promotion (a portion are skipped so the
@@ -447,6 +455,80 @@ function formatCatalogPrice(price: number | null): string {
   return priceFormatter.format(price);
 }
 
+/** Parse a size label like "150mL", "60g (Jumbo)", "10 fl oz" into a
+ * comparable volume number. Returns null when the label isn't a quantity. */
+function parseVolume(label: string): number | null {
+  const match = label.match(/(\d+(?:\.\d+)?)\s*(mL|ml|g|oz|fl\.?\s*oz)/i);
+  if (!match) return null;
+  const amount = Number(match[1]);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+  const unit = match[2].toLowerCase().replace(/\s+/g, "");
+  if (unit.startsWith("oz")) return amount * 29.5735; // fl oz → mL-ish
+  return amount;
+}
+
+/**
+ * Map crawl variants onto catalog variants. When every size shares the same
+ * scraped price (common crawl artifact for jumbo SKUs) but labels encode
+ * different volumes, scale prices from the smallest size so size pickers
+ * show a meaningful change. Uses a half-linear uplift so 2× volume ≈ 1.5× price.
+ */
+function normalizeVariants(variants: ShiseidoVariant[]): CatalogVariant[] {
+  if (variants.length === 0) return [];
+
+  const mapped = variants.map((variant) => ({
+    label: variant.label,
+    price: variant.price,
+  }));
+
+  const priced = mapped
+    .map((variant) => variant.price)
+    .filter((price): price is number => price != null && price > 0);
+  const uniquePrices = new Set(priced);
+  const withVolume = mapped.map((variant) => ({
+    ...variant,
+    volume: parseVolume(variant.label),
+  }));
+  const volumes = withVolume
+    .map((variant) => variant.volume)
+    .filter((volume): volume is number => volume != null);
+  const uniqueVolumes = new Set(volumes);
+
+  const shouldScale =
+    uniquePrices.size <= 1 &&
+    uniqueVolumes.size >= 2 &&
+    priced.length > 0;
+
+  if (shouldScale) {
+    const basePrice = priced[0];
+    const baseVolume = Math.min(...volumes);
+    return withVolume.map((variant) => {
+      if (variant.volume == null || variant.volume === baseVolume) {
+        return {
+          label: variant.label,
+          price: basePrice,
+          priceFormatted: formatCatalogPrice(basePrice),
+        };
+      }
+      const scaled = Math.round(
+        basePrice * (1 + 0.5 * (variant.volume / baseVolume - 1)),
+      );
+      const price = Math.max(basePrice + 1, scaled);
+      return {
+        label: variant.label,
+        price,
+        priceFormatted: formatCatalogPrice(price),
+      };
+    });
+  }
+
+  return mapped.map((variant) => ({
+    label: variant.label,
+    price: variant.price,
+    priceFormatted: formatCatalogPrice(variant.price),
+  }));
+}
+
 /** True when crawl/export left a placeholder instead of real PDP copy. */
 function isPlaceholderCopy(value: string | null | undefined): boolean {
   const trimmed = (value || "").trim();
@@ -618,6 +700,7 @@ function normalizeProduct(record: ShiseidoRecord): CatalogProduct {
         ? record.overview.split(/\n+/).map((s) => s.trim()).filter(Boolean)
         : [];
   const isBundle = detectIsBundle(record);
+  const variants = normalizeVariants(record.variants);
 
   return {
     id: record.id,
@@ -629,6 +712,7 @@ function normalizeProduct(record: ShiseidoRecord): CatalogProduct {
     sku: record.id || null,
     price: record.price,
     priceFormatted: formatCatalogPrice(record.price),
+    variants,
     compareAtPrice,
     comparePriceFormatted:
       compareAtPrice != null ? priceFormatter.format(compareAtPrice) : null,

@@ -1495,6 +1495,16 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   scrollbar-width: thin;
 }
 
+/* Pill / NBA ghost: keep the disabled composer on one clipped line so a long
+ * canned prompt does not stretch the shell while the loader runs. Manual typed
+ * sends omit this class and may wrap. */
+.sidecar-assistant__input--ghost-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: none;
+}
+
 @media (max-width: 767px) {
   .sidecar-assistant__input {
     font-size: 14px;

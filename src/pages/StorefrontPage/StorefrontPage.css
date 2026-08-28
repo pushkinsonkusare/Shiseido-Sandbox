@@ -600,7 +600,7 @@ a.prototype-brand-link.figma-storefront__brand-mark {
 }
 
 .figma-storefront__promo-card-image-shell {
-  height: 500px;
+  height: 400px;
   overflow: visible;
   background: #ffffff;
   display: flex;

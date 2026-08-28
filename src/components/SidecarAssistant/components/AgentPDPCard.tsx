@@ -24,6 +24,10 @@ export type AgentPDPSizeOption = {
   id: string;
   /** Display label, e.g. "XS". */
   label: string;
+  /** Formatted price for this size, e.g. "$55.00". */
+  price?: string;
+  /** Optional formatted strike-through price for this size. */
+  comparePrice?: string;
   /** When true, renders the option in a disabled state. */
   disabled?: boolean;
 };
@@ -169,7 +173,10 @@ export function AgentPDPCard({
   const increment = () => setQuantity((q) => Math.min(maxQuantity, q + 1));
 
   const colorLabel = colors?.find((c) => c.id === colorId)?.label;
-  const sizeLabel = sizes?.find((s) => s.id === sizeId)?.label;
+  const selectedSize = sizes?.find((s) => s.id === sizeId);
+  const sizeLabel = selectedSize?.label;
+  const displayPrice = selectedSize?.price ?? price;
+  const displayComparePrice = selectedSize?.comparePrice ?? comparePrice;
 
   const rootClass = "agent-pdp__card" + (className ? " " + className : "");
 
@@ -213,9 +220,9 @@ export function AgentPDPCard({
         ) : null}
 
         <div className="agent-pdp__price-row">
-          <p className="agent-pdp__price">{price.replace(/^From\s+/i, "")}</p>
-          {comparePrice ? (
-            <p className="agent-pdp__price--strike">{comparePrice}</p>
+          <p className="agent-pdp__price">{displayPrice.replace(/^From\s+/i, "")}</p>
+          {displayComparePrice ? (
+            <p className="agent-pdp__price--strike">{displayComparePrice}</p>
           ) : null}
         </div>
 

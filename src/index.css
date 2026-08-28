@@ -140,30 +140,35 @@ html[data-demo-theme="consumer-electronics"] {
   --pc-desc-color: var(--color-text-muted);
 }
 
-/* Primary CTA: PDP "Add to Cart" (default hard-coded green #1cb167). */
+/* Primary CTA: PDP "Add to Cart" — match active chip coral. */
 html[data-demo-theme="consumer-electronics"] .figma-pdp__cta {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: var(--color-primary-foreground);
+  background: #db6c68;
+  border-color: #db6c68;
+  color: #ffffff;
 }
 
-/* Selected size / variant chip (default hard-coded #131315). */
+html[data-demo-theme="consumer-electronics"] .figma-pdp__cta:hover {
+  background: #c85f5b;
+  border-color: #c85f5b;
+}
+
+/* Selected size / variant chip — match agent PDP selected option coral. */
 html[data-demo-theme="consumer-electronics"] .figma-pdp__chips .is-active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: var(--color-primary-foreground);
+  background: #db6c68;
+  border-color: #db6c68;
+  color: #ffffff;
 }
 
-/* Rating stars: PDP + product cards (default orange/yellow). */
+/* Rating stars: PDP + product cards — match promo badge coral. */
 html[data-demo-theme="consumer-electronics"] .figma-pdp__stars,
 html[data-demo-theme="consumer-electronics"] .figma-product-card__stars {
-  color: var(--color-primary);
+  color: #db6c68;
 }
 
 /* Product-card promo badge (default hard-coded #131315). */
 html[data-demo-theme="consumer-electronics"] .figma-product-card__badge {
-  background: var(--color-primary);
-  color: var(--color-primary-foreground);
+  background: #db6c68;
+  color: #ffffff;
 }
 
 /* PDP product title, lighter weight for the NTO theme (default bold 700). */

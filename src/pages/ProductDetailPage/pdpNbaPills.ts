@@ -169,11 +169,11 @@ function resolveLane(product: CatalogProduct): Lane {
 
 function whatsInBoxPill(product: CatalogProduct): PdpNbaPill {
   return {
-    id: "faq-whats-in-box",
-    label: product.isBundle ? "What's included?" : "What size do I get?",
+    id: product.isBundle ? "faq-whats-in-box" : "faq-key-ingredients",
+    label: product.isBundle ? "What's included?" : "What are the key ingredients?",
     prompt: product.isBundle
       ? `What's included in the ${product.title}?`
-      : `What sizes does the ${product.title} come in, and how long does one last?`,
+      : `What are the key ingredients in the ${product.title}?`,
     kind: "faq",
   };
 }
@@ -806,7 +806,6 @@ function buildSetC(
 const INLINE_ANSWERABLE_KINDS: ReadonlySet<PdpNbaPillKind> = new Set([
   "faq",
   "hygiene",
-  "open",
 ]);
 
 function toQuestionsOnly(
@@ -833,6 +832,9 @@ function toQuestionsOnly(
 
   const swapped: PdpNbaPill[] = [];
   for (const pill of pills) {
+    // Free-text is invited by the composer; the open pill only focuses it and
+    // adds noise, so drop it in inline mode rather than keeping or swapping.
+    if (pill.kind === "open") continue;
     if (INLINE_ANSWERABLE_KINDS.has(pill.kind)) {
       swapped.push(pill);
       continue;
@@ -842,7 +844,14 @@ function toQuestionsOnly(
     const donor = nextDonor();
     if (donor) swapped.push(donor);
   }
-  return swapped;
+
+  // Target four questions + the regen control rendered beside the set.
+  while (swapped.length < 4) {
+    const donor = nextDonor();
+    if (!donor) break;
+    swapped.push(donor);
+  }
+  return swapped.slice(0, 4);
 }
 
 export type BuildPdpNbaPillsOptions = {
@@ -860,7 +869,8 @@ export type BuildPdpNbaPillsOptions = {
  * masks get frequency / routine FAQs; sets get value / order FAQs; and a
  * generic default lane covers anything uncategorised. `setIndex` cycles
  * through the three curated rotations; the lead + open pills stay stable
- * so shoppers can always find them.
+ * so shoppers can always find them. Inline (`questionsOnly`) drops the open
+ * pill and keeps four text-answerable questions beside the regen control.
  */
 export function buildPdpNbaPills(
   product: CatalogProduct,

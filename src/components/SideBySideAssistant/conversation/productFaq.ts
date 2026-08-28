@@ -927,6 +927,69 @@ const FUZZY_STOPWORDS = new Set([
   "not", "no", "yes", "any", "some", "all", "tell", "me", "about",
 ]);
 
+/** High-value ingredients-intent keywords used for light typo tolerance. */
+const INGREDIENTS_NEAR_KEYWORDS = [
+  "composition",
+  "ingredient",
+  "ingredients",
+  "formula",
+  "formulation",
+];
+
+/** Classic Levenshtein distance for short FAQ keyword typo checks. */
+function editDistance(a: string, b: string): number {
+  if (a === b) return 0;
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+  const prev = new Array<number>(b.length + 1);
+  const curr = new Array<number>(b.length + 1);
+  for (let j = 0; j <= b.length; j += 1) prev[j] = j;
+  for (let i = 1; i <= a.length; i += 1) {
+    curr[0] = i;
+    for (let j = 1; j <= b.length; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(
+        prev[j] + 1,
+        curr[j - 1] + 1,
+        prev[j - 1] + cost,
+      );
+    }
+    for (let j = 0; j <= b.length; j += 1) prev[j] = curr[j];
+  }
+  return prev[b.length];
+}
+
+/** True when `token` is within `maxDist` edits of any target keyword. */
+function nearKeyword(
+  token: string,
+  targets: readonly string[],
+  maxDist = 2,
+): boolean {
+  if (token.length < 4) return false;
+  return targets.some((target) => {
+    // Bail early when lengths differ by more than maxDist — can't be a match.
+    if (Math.abs(token.length - target.length) > maxDist) return false;
+    return editDistance(token, target) <= maxDist;
+  });
+}
+
+/** True when the prompt is asking about ingredients / formula / composition,
+ *  including common misspellings of those keywords. */
+function isIngredientsIntent(q: string): boolean {
+  if (
+    /\b(ingredients?|composi\w*|formula|formulation|inci|actives?|key\s+ingredients?|ingredient\s+list|full\s+(ingredients?|inci)|list\s+of\s+ingredients?|what'?s?\s+(in\s+it|inside)|what'?s?\s+it\s+made\s+(of|with|from)|what\s+(is\s+it|its)\s+made\s+(of|with|from)|made\s+(of|with|from)|contains?\s+what|what\s+does\s+it\s+contain|retinol|vitamin\s*c|hyaluronic|niacinamide|peptides?|ceramides?)\b/.test(
+      q,
+    )
+  ) {
+    return true;
+  }
+
+  const tokens = q
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length >= 4 && !FUZZY_STOPWORDS.has(t));
+  return tokens.some((token) => nearKeyword(token, INGREDIENTS_NEAR_KEYWORDS, 2));
+}
+
 /**
  * Last-resort answer source for unknown questions: scan specs for any
  * row whose label or value contains a content token from the prompt.
@@ -974,11 +1037,9 @@ export function resolveProductFaq(
     .trim();
 
   // --- Ingredients / formula / composition ---
-  if (
-    /\b(ingredients?|composition|formula|formulation|inci|actives?|key\s+ingredients?|what'?s?\s+(in\s+it|inside)|what\s+(is\s+it|its)\s+made\s+(of|with)|made\s+(of|with|from)|contains?\s+what|what\s+does\s+it\s+contain|retinol|vitamin\s*c|hyaluronic|niacinamide|peptides?|ceramides?)\b/.test(
-      q,
-    )
-  ) {
+  // Includes stems (composi*) and edit-distance typo tolerance so prompts
+  // like "composistion" still land on the ingredients answer.
+  if (isIngredientsIntent(q)) {
     return ingredientsAnswer(product);
   }
 
