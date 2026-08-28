@@ -244,6 +244,36 @@ html[data-demo-viewport="mobile"] .agent-mode-bar {
   font-size: 12px;
 }
 
+.agent-mode-bar__modal-footer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.agent-mode-bar__modal-footer-text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: var(--font-weight-regular);
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.agent-mode-bar__modal-footer-link {
+  color: rgba(143, 180, 255, 0.95);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.agent-mode-bar__modal-footer-link:hover {
+  color: #ffffff;
+}
+
+.agent-mode-bar__modal-footer-link:focus-visible {
+  outline: 2px solid #2f7df6;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 @media (max-width: 767px) {
   .agent-mode-bar {
     bottom: calc(var(--safe-area-bottom, 0px) + 12px);

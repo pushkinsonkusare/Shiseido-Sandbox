@@ -142,7 +142,7 @@ export function AgentModeBar() {
           >
             <div className="agent-mode-bar__modal-header">
               <h2 id="agent-mode-switcher-title" className="agent-mode-bar__modal-title">
-                Agentic Commerce
+                UX Control Panel
               </h2>
               <button
                 type="button"
@@ -369,6 +369,21 @@ export function AgentModeBar() {
                 )}
               </div>
             </div>
+
+            <footer className="agent-mode-bar__modal-footer">
+              <p className="agent-mode-bar__modal-footer-text">
+                These are UX designs for demo purposes. Please reach out to{" "}
+                <a
+                  className="agent-mode-bar__modal-footer-link"
+                  href="https://salesforce.enterprise.slack.com/team/U06AG7GU1J6"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Pushkin Sonkusare
+                </a>{" "}
+                for more details and final designs. Thank you.
+              </p>
+            </footer>
           </div>
         </div>
       )}

@@ -565,9 +565,12 @@ html[data-demo-theme="consumer-electronics"] .agent-loader__stop:focus-visible {
   outline-color: var(--nto-teal);
 }
 
-html[data-demo-theme="consumer-electronics"] .agent-pdp__nav,
-html[data-demo-theme="consumer-electronics"] .agent-plp__nav {
+html[data-demo-theme="consumer-electronics"] .agent-pdp__nav {
   border-radius: var(--nto-radius-btn);
+}
+
+html[data-demo-theme="consumer-electronics"] .agent-plp__nav {
+  border-radius: 50%;
 }
 
 html[data-demo-theme="consumer-electronics"] .agent-routine__chevron {

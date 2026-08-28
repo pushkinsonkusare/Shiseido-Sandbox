@@ -920,7 +920,7 @@
   flex-direction: column;
   flex: 1 1 auto;
   gap: 8px;
-  padding: 20px 20px 24px;
+  padding: 20px;
 }
 
 .agent-product-card__title {
