@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useCatalog } from "../../catalog/CatalogContext";
-import { useAgentMode, UT_WELCOME_NBA_LABEL, DEMO_SCENARIO } from "../AgentModeBar/AgentModeContext";
+import { useAgentMode, UT_WELCOME_NBA_LABEL, DEMO_SCENARIO, CLARIFYING_PDP_SCENARIO_SLUG } from "../AgentModeBar/AgentModeContext";
 import {
   ArrowDownIcon,
   ArrowRightIcon,
@@ -4320,8 +4320,8 @@ export function SidecarAssistant({
     if (!isOpen) return;
     if (messages.length > 0) return;
     // UserTesting lock: one study chip only — testers click/type to reveal A/B.
-    // Scenario seed: welcome only; the oily-routine effect appends the thread.
-    const scenarioSeed = DEMO_SCENARIO === "oily-routine";
+    // Scenario seed: welcome only; the scenario effect appends the thread.
+    const scenarioSeed = DEMO_SCENARIO != null;
     const welcomeLabels = userTestingLock
       ? [UT_WELCOME_NBA_LABEL]
       : buildWelcomeNbas(0);
@@ -4447,6 +4447,56 @@ export function SidecarAssistant({
     products,
     appendMessage,
     handleProductSelect,
+  ]);
+
+  // `?scenario=clarifying-pdp`: welcome + "Tell me more about Clarifying
+  // Cleansing Foam" + AgentPDPCard already open (with PDP follow-ups).
+  const clarifyingPdpScenarioSeededRef = useRef(false);
+  useEffect(() => {
+    if (DEMO_SCENARIO !== "clarifying-pdp") return;
+    if (!isOpen || clarifyingPdpScenarioSeededRef.current) return;
+    if (messages.length === 0) return;
+
+    const product = getProductBySlug(CLARIFYING_PDP_SCENARIO_SLUG);
+    if (!product) return;
+
+    clarifyingPdpScenarioSeededRef.current = true;
+    const prompt = `Tell me more about the ${product.title}`;
+    if (
+      messages.some(
+        (message) =>
+          message.kind === "shopper_text" && message.text === prompt,
+      )
+    ) {
+      return;
+    }
+
+    establishConversationProduct([product.slug]);
+    appendMessage({
+      id: nextId("shopper"),
+      kind: "shopper_text",
+      text: prompt,
+    });
+    renderPdpCard(product.slug);
+    const items = buildStageNbas(buildPdpStageContext(product));
+    appendMessage(
+      buildStageNbasMessage("pdp", items, true, {
+        productSlug: product.slug,
+      }),
+    );
+    emitAssistantTelemetry("nba_impression", {
+      stage: "pdp",
+      labels: items.map((item) => item.label),
+      lanes: items.map((item) => item.lane),
+    });
+  }, [
+    isOpen,
+    messages.length,
+    appendMessage,
+    buildPdpStageContext,
+    establishConversationProduct,
+    getProductBySlug,
+    renderPdpCard,
   ]);
 
   // No agent turn should dead-end. Most flows append their own follow-up row;

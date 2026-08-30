@@ -16,7 +16,7 @@ type Props = {
 // Stagger the FAB so it doesn't pop in over the closing panel. Matches the
 // keyframe / transition durations in SideBySideLayout.css.
 const FAB_REVEAL_DELAY_MS = 280;
-const SCENARIO_OPENS_PANEL = DEMO_SCENARIO === "oily-routine";
+const SCENARIO_OPENS_PANEL = DEMO_SCENARIO != null;
 
 export function SidecarDockLayout({ children }: Props) {
   const { viewportMode, userTestingLock, sidecarAvailable } = useAgentMode();

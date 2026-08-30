@@ -52,7 +52,7 @@ export const PRODUCT_SELECTION_TYPES: {
 export const UT_WELCOME_NBA_LABEL = "Skincare for oily skin";
 
 /** Optional canned demo thread from `?scenario=`. */
-export type DemoScenario = "oily-routine";
+export type DemoScenario = "oily-routine" | "clarifying-pdp";
 
 export function readDemoScenario(): DemoScenario | null {
   if (typeof window === "undefined") return null;
@@ -60,10 +60,21 @@ export function readDemoScenario(): DemoScenario | null {
     .trim()
     .toLowerCase();
   if (raw === "oily-routine" || raw === "oily") return "oily-routine";
+  if (
+    raw === "clarifying-pdp" ||
+    raw === "cleanser-pdp" ||
+    raw === "clarifying-foam"
+  ) {
+    return "clarifying-pdp";
+  }
   return null;
 }
 
 export const DEMO_SCENARIO = readDemoScenario();
+
+/** Product opened in-chat for the clarifying-pdp scenario. */
+export const CLARIFYING_PDP_SCENARIO_SLUG =
+  "essentials-clarifying-cleansing-foam";
 
 type UserTestingBootstrap = {
   userTestingLock: boolean;
@@ -272,7 +283,7 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       pdpInlineWidgetPosition,
       setPdpInlineWidgetPosition,
       sidecarAvailable:
-        DEMO_SCENARIO === "oily-routine" ||
+        DEMO_SCENARIO != null ||
         !(pdpInlineWidget && pdpInlineWidgetType === "inline-answer"),
       userTestingLock: UT_BOOTSTRAP.userTestingLock,
     }),
