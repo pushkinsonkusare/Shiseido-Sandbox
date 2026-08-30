@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig(({ command }) => ({
-  base: command === "build" ? "/nto-shiseido-sandbox/" : "/",
+  base: command === "build" ? "/Shiseido-Sandbox/" : "/",
   plugins: [react()],
   build: {
     /* Output to /docs so legacy GitHub Pages can serve it directly
