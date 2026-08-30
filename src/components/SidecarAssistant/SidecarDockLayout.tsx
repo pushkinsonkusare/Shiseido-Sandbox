@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { SparkleIcon } from "../icons/StorefrontIcons";
-import { useAgentMode } from "../AgentModeBar/AgentModeContext";
+import { useAgentMode, DEMO_SCENARIO } from "../AgentModeBar/AgentModeContext";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { useFabInvite } from "../../hooks/useFabInvite";
 import { SidecarAssistant, type PendingAsk } from "./SidecarAssistant";
@@ -16,12 +16,15 @@ type Props = {
 // Stagger the FAB so it doesn't pop in over the closing panel. Matches the
 // keyframe / transition durations in SideBySideLayout.css.
 const FAB_REVEAL_DELAY_MS = 280;
+const SCENARIO_OPENS_PANEL = DEMO_SCENARIO === "oily-routine";
 
 export function SidecarDockLayout({ children }: Props) {
   const { viewportMode, userTestingLock, sidecarAvailable } = useAgentMode();
   const isMobileViewport = viewportMode === "mobile";
 
-  const [panelOpen, setPanelOpen] = useState(() => userTestingLock);
+  const [panelOpen, setPanelOpen] = useState(
+    () => userTestingLock || SCENARIO_OPENS_PANEL,
+  );
   // When detached the assistant floats as a centered modal and the storefront
   // reflows to full width. Desktop-only; mobile keeps the overlay sheet.
   const [detached, setDetached] = useState(false);
@@ -29,8 +32,12 @@ export function SidecarDockLayout({ children }: Props) {
   // session so the chat history survives a close -> reopen. The close
   // transition is driven entirely by CSS (grid collapses to 0px and the panel
   // slides out via `--closing`).
-  const [panelMounted, setPanelMounted] = useState(() => userTestingLock);
-  const [fabVisible, setFabVisible] = useState(() => !userTestingLock);
+  const [panelMounted, setPanelMounted] = useState(
+    () => userTestingLock || SCENARIO_OPENS_PANEL,
+  );
+  const [fabVisible, setFabVisible] = useState(
+    () => !(userTestingLock || SCENARIO_OPENS_PANEL),
+  );
   const fabInvite = useFabInvite(fabVisible && sidecarAvailable && !isMobileViewport);
   // An ask request that landed before the assistant mounted; see the listener.
   const [pendingAsk, setPendingAsk] = useState<PendingAsk | null>(null);

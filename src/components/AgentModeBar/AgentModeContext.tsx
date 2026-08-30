@@ -51,6 +51,20 @@ export const PRODUCT_SELECTION_TYPES: {
 /** Single welcome NBA shown under UserTesting lock (`?ut=`). */
 export const UT_WELCOME_NBA_LABEL = "Skincare for oily skin";
 
+/** Optional canned demo thread from `?scenario=`. */
+export type DemoScenario = "oily-routine";
+
+export function readDemoScenario(): DemoScenario | null {
+  if (typeof window === "undefined") return null;
+  const raw = (new URLSearchParams(window.location.search).get("scenario") || "")
+    .trim()
+    .toLowerCase();
+  if (raw === "oily-routine" || raw === "oily") return "oily-routine";
+  return null;
+}
+
+export const DEMO_SCENARIO = readDemoScenario();
+
 type UserTestingBootstrap = {
   userTestingLock: boolean;
   accordionRecommendations: boolean;
@@ -257,7 +271,9 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       setPdpInlineWidgetType,
       pdpInlineWidgetPosition,
       setPdpInlineWidgetPosition,
-      sidecarAvailable: !(pdpInlineWidget && pdpInlineWidgetType === "inline-answer"),
+      sidecarAvailable:
+        DEMO_SCENARIO === "oily-routine" ||
+        !(pdpInlineWidget && pdpInlineWidgetType === "inline-answer"),
       userTestingLock: UT_BOOTSTRAP.userTestingLock,
     }),
     [

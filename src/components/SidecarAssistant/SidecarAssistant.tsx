@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useCatalog } from "../../catalog/CatalogContext";
-import { useAgentMode, UT_WELCOME_NBA_LABEL } from "../AgentModeBar/AgentModeContext";
+import { useAgentMode, UT_WELCOME_NBA_LABEL, DEMO_SCENARIO } from "../AgentModeBar/AgentModeContext";
 import {
   ArrowDownIcon,
   ArrowRightIcon,
@@ -4320,11 +4320,13 @@ export function SidecarAssistant({
     if (!isOpen) return;
     if (messages.length > 0) return;
     // UserTesting lock: one study chip only — testers click/type to reveal A/B.
+    // Scenario seed: welcome only; the oily-routine effect appends the thread.
+    const scenarioSeed = DEMO_SCENARIO === "oily-routine";
     const welcomeLabels = userTestingLock
       ? [UT_WELCOME_NBA_LABEL]
       : buildWelcomeNbas(0);
     const welcomeNbasId = nextId("nbas");
-    welcomeNbasMessageIdRef.current = welcomeNbasId;
+    welcomeNbasMessageIdRef.current = scenarioSeed ? null : welcomeNbasId;
     setWelcomeRefreshCount(0);
     const seedMessages: ChatMessage[] = [
       {
@@ -4336,20 +4338,116 @@ export function SidecarAssistant({
         imageAlt: "Welcome to the Shiseido store",
         showBrandLogo: true,
       },
-      {
+    ];
+    if (!scenarioSeed) {
+      seedMessages.push({
         id: welcomeNbasId,
         kind: "agent_nbas",
         regenerateButton: !userTestingLock,
         nbas: buildNbaItems(welcomeLabels, "nba-welcome"),
-      },
-    ];
+      });
+    }
     setMessages(seedMessages.map(sanitizeAgentMessage));
-    emitAssistantTelemetry("landing_nba_impression", {
-      labels: welcomeLabels,
-      refreshCount: 0,
-      thresholds: LANDING_NBA_SUCCESS_THRESHOLDS,
-    });
+    if (!scenarioSeed) {
+      emitAssistantTelemetry("landing_nba_impression", {
+        labels: welcomeLabels,
+        refreshCount: 0,
+        thresholds: LANDING_NBA_SUCCESS_THRESHOLDS,
+      });
+    }
   }, [isOpen, messages.length, userTestingLock]);
+
+  // `?scenario=oily-routine`: open with the oily-skin routine thread already
+  // filled (welcome + shopper turn + full routine card + follow-ups).
+  const oilyScenarioSeededRef = useRef(false);
+  useEffect(() => {
+    if (DEMO_SCENARIO !== "oily-routine") return;
+    if (!isOpen || oilyScenarioSeededRef.current) return;
+    if (messages.length === 0) return;
+    if (products.length === 0) return;
+
+    oilyScenarioSeededRef.current = true;
+    const prompt = UT_WELCOME_NBA_LABEL;
+    if (
+      messages.some(
+        (message) =>
+          message.kind === "shopper_text" && message.text === prompt,
+      )
+    ) {
+      return;
+    }
+    const routine = detectRoutineIntent(prompt);
+    if (!routine.isRoutine) return;
+
+    appendMessage({
+      id: nextId("shopper"),
+      kind: "shopper_text",
+      text: prompt,
+    });
+
+    const sections: RoutineSection[] = [];
+    const concern = routine.concernKey ?? routine.skinType;
+    for (const step of ROUTINE_STEPS) {
+      const categoryPool = filterProducts(
+        {
+          kind: "direct",
+          rawQuery: routine.rawQuery,
+          categories: [step.categoryKey],
+        },
+        products,
+      );
+      const ranked = pickRoutineProducts(
+        categoryPool,
+        step.categoryKey,
+        concern,
+        24,
+        routine.skinType,
+      );
+      if (ranked.length === 0) continue;
+      const firstPage = ranked.slice(0, PLP_PAGE_SIZE);
+      const rest = ranked.slice(PLP_PAGE_SIZE);
+      sections.push({
+        stepLabel: step.stepLabel,
+        categoryTitle: step.categoryTitle,
+        categoryKey: step.categoryKey,
+        description: buildRoutineSectionDescription(step.categoryKey, routine),
+        cue: buildRoutineSectionCue(step.categoryKey, routine),
+        products: firstPage.map((p) => toPlpProduct(p, handleProductSelect)),
+        showMoreCard: rest.length > 0,
+        remainingSlugs: rest.map((p) => p.slug),
+      });
+    }
+    if (sections.length === 0) return;
+
+    lastRoutineIntentRef.current = routine;
+    appendMessage({
+      id: nextId("routine"),
+      kind: "agent_routine",
+      acknowledgement: buildRoutineAcknowledgement(routine),
+      sections,
+      streaming: false,
+    });
+    const labels = buildRoutineFollowupNbas(
+      routine,
+      shopperProfileRef.current,
+    );
+    if (
+      labels.includes(ITS_A_GIFT) ||
+      labels.includes(LOOKING_AT_MENS_LINE)
+    ) {
+      shopperProfileRef.current = {
+        ...shopperProfileRef.current,
+        whoForOffered: true,
+      };
+    }
+    appendMessage(buildNbasMessage(labels, false));
+  }, [
+    isOpen,
+    messages.length,
+    products,
+    appendMessage,
+    handleProductSelect,
+  ]);
 
   // No agent turn should dead-end. Most flows append their own follow-up row;
   // this covers the ones that don't - policy and promo replies, "no matches",
