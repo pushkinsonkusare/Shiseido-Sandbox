@@ -1,5 +1,16 @@
-import type { ReactNode } from "react";
-import { ShoppingCartIcon, StarIcon } from "../../icons/StorefrontIcons";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ShoppingCartIcon,
+  StarIcon,
+} from "../../icons/StorefrontIcons";
 import "./AgentMessageCards.css";
 
 export type AgentCompareColumn = {
@@ -103,6 +114,48 @@ export function AgentCompareCard({
   onSelect,
   onAddToCart,
 }: AgentCompareCardProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(true);
+  const [canScroll, setCanScroll] = useState(false);
+
+  const updateEdges = useCallback(() => {
+    const node = scrollRef.current;
+    if (!node) return;
+    const maxScroll = node.scrollWidth - node.clientWidth;
+    const overflow = maxScroll > 1;
+    setCanScroll(overflow);
+    setAtStart(node.scrollLeft <= 1);
+    setAtEnd(node.scrollLeft >= maxScroll - 1);
+  }, []);
+
+  const scrollByColumn = (direction: "left" | "right") => {
+    const node = scrollRef.current;
+    if (!node) return;
+    node.scrollBy({
+      left: direction === "left" ? -COMPARE_COLUMN_WIDTH : COMPARE_COLUMN_WIDTH,
+      behavior: "smooth",
+    });
+  };
+
+  useEffect(() => {
+    updateEdges();
+    const node = scrollRef.current;
+    if (!node) return;
+    node.addEventListener("scroll", updateEdges, { passive: true });
+    window.addEventListener("resize", updateEdges);
+    const observer =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => updateEdges())
+        : null;
+    observer?.observe(node);
+    return () => {
+      node.removeEventListener("scroll", updateEdges);
+      window.removeEventListener("resize", updateEdges);
+      observer?.disconnect();
+    };
+  }, [updateEdges, columns]);
+
   if (columns.length === 0) return null;
 
   const recommendedTitle = recommendedSlug
@@ -116,85 +169,110 @@ export function AgentCompareCard({
     <article className="agent-compare" data-component="agent-compare-card">
       <p className="agent-compare__intro">{intro}</p>
 
-      <div className="agent-compare__scroll">
-        <table className="agent-compare__table" style={{ width: tableWidth }}>
-          <thead>
-            <tr>
-              <th
-                className="agent-compare__corner"
-                scope="col"
-                aria-label="Attribute"
-              />
-              {columns.map((column) => (
-                <th key={column.id} className="agent-compare__col-head" scope="col">
-                  <button
-                    type="button"
-                    className="agent-compare__product"
-                    onClick={() => onSelect?.(column.slug)}
-                  >
-                    <img
-                      className="agent-compare__thumb"
-                      src={column.imageUrl}
-                      alt={column.imageAlt}
-                    />
-                    <span className="agent-compare__product-title">
-                      {column.title}
-                    </span>
-                    <span className="agent-compare__price-row">
-                      <span className="agent-compare__price">
-                        {column.price.replace(/^From\s+/i, "")}
-                      </span>
-                      {column.comparePrice ? (
-                        <span className="agent-compare__price--strike">
-                          {column.comparePrice}
-                        </span>
-                      ) : null}
-                    </span>
-                    {typeof column.rating === "number" ? (
-                      <StarRow
-                        rating={column.rating}
-                        reviewCount={column.reviewCount}
-                      />
-                    ) : null}
-                  </button>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.label}>
-                <th className="agent-compare__row-head" scope="row">
-                  {row.label}
-                </th>
-                {columns.map((column, index) => (
-                  <td key={column.id} className="agent-compare__cell">
-                    <span className="agent-compare__cell-text">
-                      {row.values[index] ?? "N/A"}
-                    </span>
-                  </td>
-                ))}
-              </tr>
-            ))}
-            {onAddToCart ? (
+      <div className="agent-compare__viewport">
+        {canScroll ? (
+          <>
+            <button
+              type="button"
+              className="agent-compare__nav agent-compare__nav--prev"
+              aria-label="Previous comparison columns"
+              onClick={() => scrollByColumn("left")}
+              disabled={atStart}
+            >
+              <ArrowLeftIcon width={16} height={16} />
+            </button>
+            <button
+              type="button"
+              className="agent-compare__nav agent-compare__nav--next"
+              aria-label="Next comparison columns"
+              onClick={() => scrollByColumn("right")}
+              disabled={atEnd}
+            >
+              <ArrowRightIcon width={16} height={16} />
+            </button>
+          </>
+        ) : null}
+
+        <div className="agent-compare__scroll" ref={scrollRef}>
+          <table className="agent-compare__table" style={{ width: tableWidth }}>
+            <thead>
               <tr>
-                <th className="agent-compare__action-head" scope="row" aria-hidden />
+                <th
+                  className="agent-compare__corner"
+                  scope="col"
+                  aria-label="Attribute"
+                />
                 {columns.map((column) => (
-                  <td key={column.id} className="agent-compare__action-cell">
+                  <th key={column.id} className="agent-compare__col-head" scope="col">
                     <button
                       type="button"
-                      className="agent-compare__cart-btn"
-                      onClick={() => onAddToCart(column.slug)}
+                      className="agent-compare__product"
+                      onClick={() => onSelect?.(column.slug)}
                     >
-                      <ShoppingCartIcon width={15} height={15} />
-                      Add to cart
+                      <img
+                        className="agent-compare__thumb"
+                        src={column.imageUrl}
+                        alt={column.imageAlt}
+                      />
+                      <span className="agent-compare__product-title">
+                        {column.title}
+                      </span>
+                      <span className="agent-compare__price-row">
+                        <span className="agent-compare__price">
+                          {column.price.replace(/^From\s+/i, "")}
+                        </span>
+                        {column.comparePrice ? (
+                          <span className="agent-compare__price--strike">
+                            {column.comparePrice}
+                          </span>
+                        ) : null}
+                      </span>
+                      {typeof column.rating === "number" ? (
+                        <StarRow
+                          rating={column.rating}
+                          reviewCount={column.reviewCount}
+                        />
+                      ) : null}
                     </button>
-                  </td>
+                  </th>
                 ))}
               </tr>
-            ) : null}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.label}>
+                  <th className="agent-compare__row-head" scope="row">
+                    {row.label}
+                  </th>
+                  {columns.map((column, index) => (
+                    <td key={column.id} className="agent-compare__cell">
+                      <span className="agent-compare__cell-text">
+                        {row.values[index] ?? "N/A"}
+                      </span>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+              {onAddToCart ? (
+                <tr>
+                  <th className="agent-compare__action-head" scope="row" aria-hidden />
+                  {columns.map((column) => (
+                    <td key={column.id} className="agent-compare__action-cell">
+                      <button
+                        type="button"
+                        className="agent-compare__cart-btn"
+                        onClick={() => onAddToCart(column.slug)}
+                      >
+                        <ShoppingCartIcon width={15} height={15} />
+                        Add to cart
+                      </button>
+                    </td>
+                  ))}
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {recommendation ? (

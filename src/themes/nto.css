@@ -137,18 +137,129 @@ html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell {
   border: 1px solid #a3a3a3;
   border-radius: 999px;
   box-shadow: none;
-  gap: 8px;
+  gap: 0;
   padding: 6px 6px 6px 20px;
   background: #ffffff;
   align-items: center;
-  transition: border-color 120ms ease, border-radius 120ms ease;
+  transition: border-color 120ms ease;
+}
+
+/* Pin the composer row to the shell bottom so only the selection slot grows
+ * upward. Padding and radius stay fixed — no retuning when a pill appears. */
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--selection-ready {
+  position: relative;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  border-radius: 26px;
+  /* Same inset as the resting pill; bottom band reserved for the pinned row. */
+  padding: 6px 6px 6px 20px;
+  box-sizing: border-box;
+  min-height: 52px;
+  /* Only the chatbox clips overflowing selection chrome. */
+  overflow: hidden;
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--selection-ready
+  .sidecar-assistant__input-shell-row {
+  position: absolute;
+  left: 20px;
+  right: 6px;
+  bottom: 6px;
+  width: auto;
+  height: 40px;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__selection-slot {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  /* Always leave the pinned input row's vertical band clear. */
+  margin-bottom: 40px;
+  transition:
+    grid-template-rows 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 160ms ease;
+}
+
+/* Bleed out of the shell's composer padding so the pill inset is measured
+ * from the chatbox border (12px), not from the input-row padding. */
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__selection-slot--open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  margin-top: -6px;
+  margin-left: -20px;
+  margin-right: -6px;
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__selection-slot-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__selection-slot--open
+  .sidecar-assistant__selection-slot-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* 12px gap from the chatbox edge on left / top / right. */
+  padding: 12px 12px 10px;
+}
+
+/* Pills row: 12px inset from the chatbox; two per row at full size, 3rd
+ * wraps underneath instead of shrinking the first two. */
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--with-selection
+  .sidecar-assistant__selection-pills {
+  margin-left: -12px;
+  margin-right: -12px;
+  padding-left: 12px;
+  padding-right: 12px;
+  min-width: 0;
+  width: auto;
+  max-width: none;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+  overflow-x: visible;
+  overflow-y: visible;
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--with-selection
+  .sidecar-assistant__selection-pill {
+  /* Two fit the padded row; a third wraps to the next line. */
+  flex: 0 0 calc((100% - 8px) / 2);
+  width: calc((100% - 8px) / 2);
+  max-width: 176px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-demo-theme="consumer-electronics"] .sidecar-assistant__selection-slot {
+    transition: none;
+  }
 }
 
 /* Multi-line: keep the same visual corner radius as the single-line pill
- * (~half of the resting shell height) instead of a stretched stadium. */
+ * (~half of the resting shell height) instead of a stretched stadium.
+ * Unpin the row so wrapped text can grow the composer naturally. */
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--multiline {
   border-radius: 26px;
   align-items: stretch;
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--selection-ready.sidecar-assistant__input-shell--multiline
+  .sidecar-assistant__input-shell-row {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  height: auto;
+  align-items: flex-end;
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--selection-ready.sidecar-assistant__input-shell--multiline
+  .sidecar-assistant__selection-slot {
+  margin-bottom: 0;
 }
 
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--multiline
@@ -156,10 +267,11 @@ html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--mu
   align-items: flex-end;
 }
 
+/* Selection must not retune shell padding/radius — the pinned row depends on it. */
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--with-selection {
-  border-radius: 24px;
-  padding: 12px 8px 8px 18px;
-  gap: 10px;
+  border-radius: 26px;
+  padding: 6px 6px 6px 20px;
+  gap: 0;
   align-items: stretch;
 }
 
@@ -237,37 +349,48 @@ html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .sidec
 
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--with-selection,
 html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .sidecar-assistant__input-shell--with-selection {
-  padding: 12px 8px 8px 18px;
+  /* Keep shell padding fixed so selection-slot can bleed to an even 12px
+   * inset from the chatbox border (L/T/R). */
+  padding: 6px 6px 6px 20px;
 }
 
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__selection-pill {
-  background: #ffffff;
-  color: #17171b;
-  border: 1px solid #eeeeee;
+  height: 36px;
+  background: #131315;
+  color: #ffffff;
+  border: none;
   border-radius: var(--nto-radius-pill);
   padding: 2px 6px 2px 2px;
-  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
+  box-shadow: none;
 }
 
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__selection-pill:hover {
-  background: #ffffff;
-  border-color: #eeeeee;
-  box-shadow: 0 2px 6px rgba(16, 24, 40, 0.06);
+  background: #000000;
+  border: none;
+  box-shadow: none;
 }
 
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__selection-pill-thumb {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
 }
 
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__selection-pill-label {
+  font-weight: var(--font-weight-semibold);
+}
+
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__selection-pill-remove {
-  background: #f5f5f5;
-  color: #17171b;
+  width: 22px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
   border-radius: 50%;
 }
 
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__selection-pill-remove:hover {
-  background: #ececec;
-  color: #17171b;
+  background: rgba(255, 255, 255, 0.28);
+  color: #ffffff;
 }
 
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell .agent-nba__pill {
@@ -467,14 +590,39 @@ html[data-demo-theme="consumer-electronics"] .agent-product-card__badge {
   border-radius: var(--nto-radius-chip);
 }
 
-html[data-demo-theme="consumer-electronics"] .agent-product-card__check {
-  border-radius: 4px;
+html[data-demo-theme="consumer-electronics"] .agent-product-card__store-btn {
+  background: rgba(255, 255, 255, 0.96);
+  border: none;
+  border-radius: 8px;
+  box-shadow: none;
 }
 
-html[data-demo-theme="consumer-electronics"] .agent-product-card__store-btn--selected .agent-product-card__check,
+html[data-demo-theme="consumer-electronics"] .agent-product-card__store-btn:hover {
+  background: #ffffff;
+}
+
+html[data-demo-theme="consumer-electronics"] .agent-product-card__check {
+  border-radius: 4px;
+  border: 1.5px solid #737373;
+  background: #ffffff;
+  color: transparent;
+}
+
+html[data-demo-theme="consumer-electronics"] .agent-product-card__store-btn:hover .agent-product-card__check {
+  border-color: #3a3a3a;
+  color: rgba(23, 23, 27, 0.28);
+}
+
+html[data-demo-theme="consumer-electronics"] .agent-product-card__store-btn--selected .agent-product-card__check {
+  background: #131315;
+  border-color: #131315;
+  color: #ffffff;
+}
+
 html[data-demo-theme="consumer-electronics"] .agent-product-card__store-btn--selected:hover .agent-product-card__check {
-  background: var(--nto-teal);
-  border-color: var(--nto-teal);
+  background: #000000;
+  border-color: #000000;
+  color: #ffffff;
 }
 
 html[data-demo-theme="consumer-electronics"] .agent-nba__pill,
@@ -569,7 +717,8 @@ html[data-demo-theme="consumer-electronics"] .agent-pdp__nav {
   border-radius: var(--nto-radius-btn);
 }
 
-html[data-demo-theme="consumer-electronics"] .agent-plp__nav {
+html[data-demo-theme="consumer-electronics"] .agent-plp__nav,
+html[data-demo-theme="consumer-electronics"] .agent-compare__nav {
   border-radius: 50%;
 }
 

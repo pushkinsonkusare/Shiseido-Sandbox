@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type ReactNode,
 } from "react";
 import { useCatalog } from "../../catalog/CatalogContext";
 import { useAgentMode, UT_WELCOME_NBA_LABEL } from "../AgentModeBar/AgentModeContext";
@@ -5137,6 +5138,42 @@ export function SidecarAssistant({
     />
   );
 
+  const showInShellSelectionPills =
+    inChatProductSelection &&
+    selectedSlugs.length > 0 &&
+    !(selectedSlugs.length === 1 && askingAboutRow);
+  const shellHasSelectionChrome =
+    inChatProductSelection &&
+    (Boolean(askingAboutRow) || selectedSlugs.length > 0);
+  /* Keep chrome mounted briefly on clear so the slot can animate closed. */
+  const [selectionChromeVisible, setSelectionChromeVisible] = useState(false);
+  const selectionChromeContentRef = useRef<{
+    askingAbout: typeof askingAboutRow;
+    pills: typeof selectionPills;
+    nbas: ReactNode;
+  }>({ askingAbout: null, pills: null, nbas: null });
+  if (shellHasSelectionChrome) {
+    selectionChromeContentRef.current = {
+      askingAbout: askingAboutRow,
+      pills: showInShellSelectionPills ? selectionPills : null,
+      nbas:
+        selectedSlugs.length >= 2 && inChatProductSelection && selectionNbas ? (
+          <div className="sidecar-assistant__shell-nbas">{selectionNbas}</div>
+        ) : null,
+    };
+  }
+  useEffect(() => {
+    if (shellHasSelectionChrome) {
+      setSelectionChromeVisible(true);
+      return;
+    }
+    const id = window.setTimeout(() => setSelectionChromeVisible(false), 240);
+    return () => window.clearTimeout(id);
+  }, [shellHasSelectionChrome]);
+  const selectionChromeOpen =
+    shellHasSelectionChrome || selectionChromeVisible;
+  const selectionChromeContent = selectionChromeContentRef.current;
+
   const panelBody = (
     <>
       <header className="sidecar-assistant__header">
@@ -5339,20 +5376,34 @@ export function SidecarAssistant({
           className={`sidecar-assistant__input-shell${
             composerDisabled ? " sidecar-assistant__input-shell--disabled" : ""
           }${
-            inChatProductSelection &&
-            (askingAboutRow || selectedSlugs.length > 0)
+            inChatProductSelection
+              ? " sidecar-assistant__input-shell--selection-ready"
+              : ""
+          }${
+            selectionChromeOpen
               ? " sidecar-assistant__input-shell--with-selection"
               : ""
           }${composerMultiline ? " sidecar-assistant__input-shell--multiline" : ""}`}
         >
-          {inChatProductSelection ? askingAboutRow : null}
-          {selectedSlugs.length > 1 && inChatProductSelection
-            ? selectionPills
-            : null}
-          {selectedSlugs.length >= 2 &&
-          inChatProductSelection &&
-          selectionNbas ? (
-            <div className="sidecar-assistant__shell-nbas">{selectionNbas}</div>
+          {inChatProductSelection ? (
+            <div
+              className={
+                "sidecar-assistant__selection-slot" +
+                (selectionChromeOpen
+                  ? " sidecar-assistant__selection-slot--open"
+                  : "")
+              }
+            >
+              <div className="sidecar-assistant__selection-slot-inner">
+                {selectionChromeOpen ? (
+                  <>
+                    {selectionChromeContent.askingAbout}
+                    {selectionChromeContent.pills}
+                    {selectionChromeContent.nbas}
+                  </>
+                ) : null}
+              </div>
+            </div>
           ) : null}
           <div className="sidecar-assistant__input-shell-row">
           <div className="sidecar-assistant__input-field">

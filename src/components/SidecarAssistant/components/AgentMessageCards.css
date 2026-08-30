@@ -536,8 +536,68 @@
   color: var(--agentic-body, #545454);
 }
 
+.agent-compare__viewport {
+  position: relative;
+}
+
+.agent-compare__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--agentic-secondary-bg);
+  border: none;
+  color: var(--agentic-foreground);
+  cursor: pointer;
+  z-index: 2;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+
+.agent-compare__nav:hover {
+  background: #ffffff;
+}
+
+.agent-compare__nav:active {
+  transform: translateY(-50%) translateY(1px);
+}
+
+.agent-compare__nav:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--agentic-focus);
+}
+
+.agent-compare__nav:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.agent-compare__nav:disabled:hover {
+  background: var(--agentic-secondary-bg);
+}
+
+.agent-compare__nav:disabled:active {
+  transform: translateY(-50%);
+}
+
+.agent-compare__nav--prev {
+  left: 8px;
+}
+
+.agent-compare__nav--next {
+  right: 8px;
+}
+
 .agent-compare__scroll {
   overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
   scrollbar-width: none;
   /* Flush to the card edges so the row separators read full-bleed; the intro
    * and recommendation keep their own horizontal padding. */
