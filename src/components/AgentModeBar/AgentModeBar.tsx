@@ -48,10 +48,13 @@ export function AgentModeBar() {
   } = useAgentMode();
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [theme, setTheme] = useState<DemoTheme>(() => {
-    if (typeof window === "undefined") return "sf-next";
+    if (typeof window === "undefined") return "consumer-electronics";
     const raw = (new URLSearchParams(window.location.search).get("theme") || "")
       .trim()
       .toLowerCase();
+    if (raw === "sf-next" || raw === "market-street" || raw === "market") {
+      return "sf-next";
+    }
     if (
       raw === "rounded" ||
       raw === "consumer-electronics" ||
@@ -59,7 +62,8 @@ export function AgentModeBar() {
     ) {
       return "consumer-electronics";
     }
-    return "sf-next";
+    /* Default to rounded for shared / UserTesting links. */
+    return "consumer-electronics";
   });
 
   const handleModeClick = (nextMode: AgentMode) => {
@@ -100,8 +104,8 @@ export function AgentModeBar() {
     const root = document.documentElement;
     root.setAttribute("data-demo-theme", theme);
     try {
-      /* User testing defaults to Market Street. Drop any saved "rounded"
-       * value so a prior session cannot override the default. */
+      /* Persist the active theme; default on load is rounded unless
+       * `?theme=market-street` (or sf-next) is in the URL. */
       window.localStorage.setItem("agent-demo-theme", theme);
     } catch {
       /* localStorage can fail in private mode; ignore gracefully. */
