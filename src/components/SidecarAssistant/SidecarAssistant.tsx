@@ -4315,12 +4315,14 @@ export function SidecarAssistant({
     };
   }, [isOpen, hasUserOpenedFab, docked]);
 
+  const clarifyingPdpScenarioSeededRef = useRef(false);
+
   // Seed the welcome card the first time the panel opens.
   useEffect(() => {
     if (!isOpen) return;
     if (messages.length > 0) return;
     // UserTesting lock: one study chip only — testers click/type to reveal A/B.
-    // Scenario seed: welcome only; the scenario effect appends the thread.
+    // Scenario seed: welcome only (or full clarifying-pdp thread below).
     const scenarioSeed = DEMO_SCENARIO != null;
     const welcomeLabels = userTestingLock
       ? [UT_WELCOME_NBA_LABEL]
@@ -4347,6 +4349,58 @@ export function SidecarAssistant({
         nbas: buildNbaItems(welcomeLabels, "nba-welcome"),
       });
     }
+
+    // `?scenario=clarifying-pdp`: seed shopper ask + AgentPDPCard in the same
+    // commit so auto-scroll does not thrash on multi-step appends.
+    if (DEMO_SCENARIO === "clarifying-pdp") {
+      const product = getProductBySlug(CLARIFYING_PDP_SCENARIO_SLUG);
+      if (product) {
+        establishConversationProduct([product.slug]);
+        seedMessages.push({
+          id: nextId("shopper"),
+          kind: "shopper_text",
+          text: `Tell me more about the ${product.title}`,
+        });
+        seedMessages.push({
+          id: nextId("pdp"),
+          kind: "agent_pdp",
+          productSlug: product.slug,
+          images:
+            product.gallery.length > 0
+              ? product.gallery.map((url) => ({ url, alt: product.imageAlt }))
+              : [{ url: product.imageUrl, alt: product.imageAlt }],
+          title: product.title,
+          price: product.priceFormatted,
+          comparePrice: product.comparePriceFormatted ?? undefined,
+          description:
+            product.overview && !/^n\/a\b/i.test(product.overview.trim())
+              ? product.overview
+              : product.shortDescription,
+          rating: product.rating ?? undefined,
+          reviewCount: product.reviewCount ?? undefined,
+          colors: product.swatches.slice(0, 3).map((color, index) => ({
+            id: `color-${index}`,
+            label: index === 0 ? "Default" : `Variant ${index + 1}`,
+            color,
+          })),
+          sizes: productSizeOptions(product),
+        });
+        const items = buildStageNbas(buildPdpStageContext(product));
+        seedMessages.push(
+          buildStageNbasMessage("pdp", items, true, {
+            productSlug: product.slug,
+          }),
+        );
+        clarifyingPdpScenarioSeededRef.current = true;
+        skipAutoScrollRef.current = true;
+        emitAssistantTelemetry("nba_impression", {
+          stage: "pdp",
+          labels: items.map((item) => item.label),
+          lanes: items.map((item) => item.lane),
+        });
+      }
+    }
+
     setMessages(seedMessages.map(sanitizeAgentMessage));
     if (!scenarioSeed) {
       emitAssistantTelemetry("landing_nba_impression", {
@@ -4355,7 +4409,32 @@ export function SidecarAssistant({
         thresholds: LANDING_NBA_SUCCESS_THRESHOLDS,
       });
     }
-  }, [isOpen, messages.length, userTestingLock]);
+    // After a clarifying-pdp seed, park the transcript on the shopper turn so
+    // the tall PDP card does not sticky-dock and hide the conversation.
+    if (DEMO_SCENARIO === "clarifying-pdp") {
+      requestAnimationFrame(() => {
+        const node = chatRef.current;
+        if (!node) return;
+        const shopper = node.querySelector<HTMLElement>(
+          ".sidecar-assistant__user-row",
+        );
+        if (shopper) {
+          const top =
+            shopper.offsetTop - node.clientHeight * 0.08;
+          node.scrollTo({ top: Math.max(0, top), behavior: "auto" });
+        } else {
+          node.scrollTo({ top: 0, behavior: "auto" });
+        }
+      });
+    }
+  }, [
+    isOpen,
+    messages.length,
+    userTestingLock,
+    getProductBySlug,
+    establishConversationProduct,
+    buildPdpStageContext,
+  ]);
 
   // `?scenario=oily-routine`: open with the oily-skin routine thread already
   // filled (welcome + shopper turn + full routine card + follow-ups).
@@ -4447,56 +4526,6 @@ export function SidecarAssistant({
     products,
     appendMessage,
     handleProductSelect,
-  ]);
-
-  // `?scenario=clarifying-pdp`: welcome + "Tell me more about Clarifying
-  // Cleansing Foam" + AgentPDPCard already open (with PDP follow-ups).
-  const clarifyingPdpScenarioSeededRef = useRef(false);
-  useEffect(() => {
-    if (DEMO_SCENARIO !== "clarifying-pdp") return;
-    if (!isOpen || clarifyingPdpScenarioSeededRef.current) return;
-    if (messages.length === 0) return;
-
-    const product = getProductBySlug(CLARIFYING_PDP_SCENARIO_SLUG);
-    if (!product) return;
-
-    clarifyingPdpScenarioSeededRef.current = true;
-    const prompt = `Tell me more about the ${product.title}`;
-    if (
-      messages.some(
-        (message) =>
-          message.kind === "shopper_text" && message.text === prompt,
-      )
-    ) {
-      return;
-    }
-
-    establishConversationProduct([product.slug]);
-    appendMessage({
-      id: nextId("shopper"),
-      kind: "shopper_text",
-      text: prompt,
-    });
-    renderPdpCard(product.slug);
-    const items = buildStageNbas(buildPdpStageContext(product));
-    appendMessage(
-      buildStageNbasMessage("pdp", items, true, {
-        productSlug: product.slug,
-      }),
-    );
-    emitAssistantTelemetry("nba_impression", {
-      stage: "pdp",
-      labels: items.map((item) => item.label),
-      lanes: items.map((item) => item.lane),
-    });
-  }, [
-    isOpen,
-    messages.length,
-    appendMessage,
-    buildPdpStageContext,
-    establishConversationProduct,
-    getProductBySlug,
-    renderPdpCard,
   ]);
 
   // No agent turn should dead-end. Most flows append their own follow-up row;

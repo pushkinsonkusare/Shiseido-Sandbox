@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { SparkleIcon } from "../icons/StorefrontIcons";
-import { useAgentMode, DEMO_SCENARIO } from "../AgentModeBar/AgentModeContext";
+import {
+  useAgentMode,
+  DEMO_SCENARIO,
+  readDemoScenario,
+} from "../AgentModeBar/AgentModeContext";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { useFabInvite } from "../../hooks/useFabInvite";
 import { SidecarAssistant, type PendingAsk } from "./SidecarAssistant";
@@ -16,14 +20,25 @@ type Props = {
 // Stagger the FAB so it doesn't pop in over the closing panel. Matches the
 // keyframe / transition durations in SideBySideLayout.css.
 const FAB_REVEAL_DELAY_MS = 280;
-const SCENARIO_OPENS_PANEL = DEMO_SCENARIO != null;
+
+function shouldOpenPanelFromUrl(): boolean {
+  if (typeof window === "undefined") return false;
+  if (DEMO_SCENARIO != null) return true;
+  // Runtime re-read covers late URL changes / stale module constants.
+  if (readDemoScenario() != null) return true;
+  const open = (new URLSearchParams(window.location.search).get("open") || "")
+    .trim()
+    .toLowerCase();
+  return open === "1" || open === "true" || open === "yes";
+}
 
 export function SidecarDockLayout({ children }: Props) {
   const { viewportMode, userTestingLock, sidecarAvailable } = useAgentMode();
   const isMobileViewport = viewportMode === "mobile";
+  const openFromUrl = shouldOpenPanelFromUrl();
 
   const [panelOpen, setPanelOpen] = useState(
-    () => userTestingLock || SCENARIO_OPENS_PANEL,
+    () => userTestingLock || openFromUrl,
   );
   // When detached the assistant floats as a centered modal and the storefront
   // reflows to full width. Desktop-only; mobile keeps the overlay sheet.
@@ -33,10 +48,10 @@ export function SidecarDockLayout({ children }: Props) {
   // transition is driven entirely by CSS (grid collapses to 0px and the panel
   // slides out via `--closing`).
   const [panelMounted, setPanelMounted] = useState(
-    () => userTestingLock || SCENARIO_OPENS_PANEL,
+    () => userTestingLock || openFromUrl,
   );
   const [fabVisible, setFabVisible] = useState(
-    () => !(userTestingLock || SCENARIO_OPENS_PANEL),
+    () => !(userTestingLock || openFromUrl),
   );
   const fabInvite = useFabInvite(fabVisible && sidecarAvailable && !isMobileViewport);
   // An ask request that landed before the assistant mounted; see the listener.
@@ -59,6 +74,15 @@ export function SidecarDockLayout({ children }: Props) {
   // all, so a panel left open when the flag flips has to go with it.
   useEffect(() => {
     if (!sidecarAvailable) setPanelOpen(false);
+  }, [sidecarAvailable]);
+
+  // Deep-link scenarios / `?open=1` must win over a closed initial paint.
+  useEffect(() => {
+    if (!sidecarAvailable) return;
+    if (!shouldOpenPanelFromUrl()) return;
+    setPanelOpen(true);
+    setPanelMounted(true);
+    setFabVisible(false);
   }, [sidecarAvailable]);
 
   const panelRef = useRef<HTMLElement | null>(null);
