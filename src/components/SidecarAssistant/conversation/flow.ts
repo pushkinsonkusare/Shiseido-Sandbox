@@ -23,6 +23,13 @@ import {
   differentiatingSkinType,
   priceSpread,
 } from "./compareAnswers";
+import {
+  detectIngredientIntent,
+  ingredientDisplayLabel,
+  ingredientFallbackConcern,
+  isMostlyIngredientUtterance,
+  productMatchesIngredient,
+} from "./ingredients";
 
 /* =============================================================
  * Conversation flow helpers for the SidecarAssistant.
@@ -348,6 +355,20 @@ export type Intent = {
    * Soft: if nothing matches, the broader pool is kept.
    */
   series?: string[];
+  /**
+   * Canonical ingredient id the shopper wants present (e.g. `niacinamide`).
+   * Matched against `CatalogProduct.ingredients` (and title/overview).
+   */
+  ingredientInclude?: string;
+  /**
+   * Canonical ingredient id the shopper wants absent (e.g. `fragrance`).
+   */
+  ingredientExclude?: string;
+  /**
+   * True when an include-filter found zero catalog hits and the pool was
+   * relaxed to category/related picks. Drives honest intro copy.
+   */
+  ingredientFilterRelaxed?: boolean;
 };
 
 const BUNDLE_QUERY_PATTERN =
@@ -456,6 +477,7 @@ export function classifyIntent(query: string): Intent {
   const requiredTags = useCaseTags.length > 0 ? useCaseTags : undefined;
   const subtypeHintsArr = detectSubtypeHints(trimmed);
   const subtypeHints = subtypeHintsArr.length > 0 ? subtypeHintsArr : undefined;
+  const ingredientFields = ingredientFieldsFromQuery(trimmed);
 
   // Prestige/advanced language implies a price floor unless the user
   // explicitly capped the budget. Use the first resolved category to
@@ -481,6 +503,7 @@ export function classifyIntent(query: string): Intent {
       requiredTags,
       compatibleWith,
       subtypeHints,
+      ...ingredientFields,
     };
   }
 
@@ -494,6 +517,7 @@ export function classifyIntent(query: string): Intent {
       requiredTags,
       compatibleWith,
       subtypeHints,
+      ...ingredientFields,
     };
   }
 
@@ -501,11 +525,15 @@ export function classifyIntent(query: string): Intent {
     priceMax !== undefined ||
     tier !== undefined ||
     includeBundles ||
-    requiredTags
+    requiredTags ||
+    ingredientFields.ingredientInclude ||
+    ingredientFields.ingredientExclude
   ) {
     // The whole catalog is skincare, so a tier / budget / use-case
     // signal without an explicit category can safely search across
     // every category rather than anchoring to one.
+    // Ingredient + polarity without a category is also "direct" so the
+    // host can clarify category/routine rather than probing broadly.
     return {
       kind: "direct",
       rawQuery: trimmed,
@@ -517,7 +545,26 @@ export function classifyIntent(query: string): Intent {
       requiredTags,
       compatibleWith,
       subtypeHints,
+      ...ingredientFields,
     };
+  }
+
+  // Bare ingredient name (polarity unknown) — still mark as direct so
+  // the host can open the with/without + category clarify instead of
+  // the generic probing fallback.
+  if (ingredientFields.ingredientInclude === undefined &&
+      ingredientFields.ingredientExclude === undefined) {
+    const bare = detectIngredientIntent(trimmed);
+    if (bare) {
+      return {
+        kind: "direct",
+        rawQuery: trimmed,
+        activities: detectedActivities,
+        // Pending clarify will ask with/without; stash as include hint
+        // only when polarity resolves later.
+        ...ingredientFieldsFromDetection(bare),
+      };
+    }
   }
 
   // Default fallback when no positive signal matched: neither a
@@ -530,7 +577,92 @@ export function classifyIntent(query: string): Intent {
   // renderer treats `empty` and `broad` identically when synthesising
   // a curated card, so this doesn't change the broad-card output for
   // unsignalled inputs on non-PDP routes.
-  return { kind: "empty", rawQuery: trimmed, activities: detectedActivities };
+  return {
+    kind: "empty",
+    rawQuery: trimmed,
+    activities: detectedActivities,
+    ...ingredientFields,
+  };
+}
+
+function ingredientFieldsFromDetection(
+  detection: NonNullable<ReturnType<typeof detectIngredientIntent>>,
+): Pick<Intent, "ingredientInclude" | "ingredientExclude"> {
+  if (detection.polarity === "include") {
+    return { ingredientInclude: detection.ingredientId };
+  }
+  if (detection.polarity === "exclude") {
+    return { ingredientExclude: detection.ingredientId };
+  }
+  // Unknown polarity: do not stamp include/exclude yet — clarify asks first.
+  return {};
+}
+
+function ingredientFieldsFromQuery(
+  text: string,
+): Pick<Intent, "ingredientInclude" | "ingredientExclude"> {
+  const detection = detectIngredientIntent(text);
+  if (!detection) return {};
+  return ingredientFieldsFromDetection(detection);
+}
+
+/**
+ * Merge shopper-text classification with filters the LLM threaded on
+ * `show_product_listing`, so host PLP NBAs / refinements stay on the
+ * same category + SPF / skin-type / budget constraints.
+ */
+export function intentFromProductListing(
+  shopperText: string,
+  listing: {
+    category?: string;
+    useCases?: string[];
+    tier?: "beginner" | "intermediate" | "pro";
+    priceMax?: number;
+    priceMin?: number;
+    subtypes?: string[];
+  },
+): Intent {
+  const base = classifyIntent(shopperText);
+  const categoryRaw = listing.category?.trim();
+  let categories = base.categories;
+  let categoryLabel = base.categoryLabel;
+  if (categoryRaw) {
+    const hit = CATEGORY_PATTERNS.find(
+      (entry) =>
+        entry.test.test(categoryRaw) ||
+        entry.categories.some(
+          (c) => c.toLowerCase() === categoryRaw.toLowerCase(),
+        ) ||
+        entry.label.toLowerCase() === categoryRaw.toLowerCase(),
+    );
+    if (hit) {
+      categories = hit.categories;
+      categoryLabel = hit.label;
+    } else {
+      categories = [categoryRaw];
+      categoryLabel = categoryRaw.toLowerCase();
+    }
+  }
+
+  const requiredTags = Array.from(
+    new Set([
+      ...(base.requiredTags ?? []),
+      ...(listing.useCases ?? []).map((t) => t.trim().toLowerCase()).filter(Boolean),
+      ...(listing.subtypes ?? []).map((t) => t.trim().toLowerCase()).filter(Boolean),
+    ]),
+  );
+
+  return {
+    ...base,
+    kind: "direct",
+    rawQuery: shopperText || base.rawQuery,
+    categories,
+    categoryLabel,
+    tier: listing.tier ?? base.tier,
+    priceMax: listing.priceMax ?? base.priceMax,
+    priceMin: listing.priceMin ?? base.priceMin,
+    requiredTags: requiredTags.length > 0 ? requiredTags : undefined,
+  };
 }
 
 /* =============================================================
@@ -591,6 +723,9 @@ export type RoutineIntent = {
    * used to tailor the acknowledgement + section descriptions. */
   concernKey?: string;
   rawQuery?: string;
+  /** Optional ingredient include/exclude carried from ingredient clarify. */
+  ingredientInclude?: string;
+  ingredientExclude?: string;
 };
 
 /**
@@ -848,6 +983,7 @@ export function isCategoryOnlyAsk(intent: Intent): boolean {
   if (intent.includeBundles) return false;
   if (intent.compatibleWith) return false;
   if (intent.subtypeHints && intent.subtypeHints.length > 0) return false;
+  if (intent.ingredientInclude || intent.ingredientExclude) return false;
   const concern = detectCategoryConcern(intent.rawQuery ?? "");
   if (concern && concern !== "skip") return false;
   return true;
@@ -1054,6 +1190,224 @@ export function buildCategoryClarifyNbas(intent: Intent): StageNbaItem[] {
     label,
     lane: detectCategoryConcern(label) === "skip" ? "escape" : "capture",
   }));
+}
+
+/* =============================================================
+ * Ingredient clarify: bare "niacinamide" or "something with retinol"
+ * needs with/without and/or category vs routine before a carousel.
+ * ============================================================= */
+
+export type PendingIngredientClarify = {
+  ingredientId: string;
+  label: string;
+  /** Set when the shopper already said with/without. */
+  polarity?: "include" | "exclude";
+};
+
+const INGREDIENT_CATEGORY_PILLS: Array<{
+  label: string;
+  categories: string[];
+  categoryLabel: string;
+}> = [
+  {
+    label: "A moisturizer",
+    categories: ["Moisturizers"],
+    categoryLabel: "moisturizers",
+  },
+  {
+    label: "A serum",
+    categories: ["Serums & Treatments"],
+    categoryLabel: "serums & treatments",
+  },
+  {
+    label: "A cleanser",
+    categories: ["Cleansers"],
+    categoryLabel: "cleansers",
+  },
+];
+
+const ROUTINE_PILL_LABEL = "A full routine";
+
+/** Bare ingredient name — ask with/without + category/routine. */
+export function isIngredientOnlyAsk(intent: Intent): boolean {
+  if (intent.kind !== "direct" && intent.kind !== "empty") return false;
+  if (intent.categories?.length) return false;
+  if (intent.ingredientInclude || intent.ingredientExclude) return false;
+  const detection = detectIngredientIntent(intent.rawQuery ?? "");
+  if (!detection || detection.polarity !== "unknown") return false;
+  return isMostlyIngredientUtterance(intent.rawQuery ?? "");
+}
+
+/**
+ * Polarity known (with/without) but no product family — ask category
+ * vs routine without re-asking polarity.
+ */
+export function isIngredientPolarityOnlyAsk(intent: Intent): boolean {
+  if (intent.kind !== "direct") return false;
+  if (intent.categories?.length) return false;
+  if (!intent.ingredientInclude && !intent.ingredientExclude) return false;
+  if (typeof intent.priceMax === "number" || intent.tier) return false;
+  if (intent.requiredTags && intent.requiredTags.length > 0) return false;
+  return isMostlyIngredientUtterance(intent.rawQuery ?? "")
+    || !EXPLICIT_PRODUCT_CATEGORY_PATTERN.test(intent.rawQuery ?? "");
+}
+
+/**
+ * Category + ingredient polarity already present — list immediately.
+ */
+export function isIngredientDirectAsk(intent: Intent): boolean {
+  if (!intent.categories?.length) return false;
+  return Boolean(intent.ingredientInclude || intent.ingredientExclude);
+}
+
+export function buildIngredientClarifyBody(
+  pending: PendingIngredientClarify,
+): string {
+  const name = pending.label;
+  if (pending.polarity) {
+    const prep = pending.polarity === "include" ? "with" : "without";
+    return `Got it — ${prep} ${name}. Are you looking for a specific product type, or a full routine?`;
+  }
+  return `Happy to help with ${name}. Are you looking for products with or without it — and is that a specific product type or a full routine?`;
+}
+
+export function buildIngredientClarifyNbas(
+  pending: PendingIngredientClarify,
+): StageNbaItem[] {
+  const name = pending.label;
+  const items: StageNbaItem[] = [];
+  if (!pending.polarity) {
+    items.push(
+      { label: `With ${name}`, lane: "capture" },
+      { label: `Without ${name}`, lane: "capture" },
+    );
+  }
+  for (const pill of INGREDIENT_CATEGORY_PILLS) {
+    items.push({ label: pill.label, lane: "capture" });
+  }
+  items.push({ label: ROUTINE_PILL_LABEL, lane: "newJourney" });
+  return items;
+}
+
+export function isBareIngredientFollowupPick(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  const lower = trimmed.toLowerCase();
+  if (lower === ROUTINE_PILL_LABEL.toLowerCase() || lower === "a full routine") {
+    return true;
+  }
+  if (INGREDIENT_CATEGORY_PILLS.some((p) => p.label.toLowerCase() === lower)) {
+    return true;
+  }
+  // "With niacinamide" / "Without fragrance"
+  const detection = detectIngredientIntent(trimmed);
+  if (detection && detection.polarity !== "unknown") {
+    return isMostlyIngredientUtterance(trimmed);
+  }
+  // Typed category shorthand
+  if (EXPLICIT_PRODUCT_CATEGORY_PATTERN.test(trimmed) && !ROUTINE_CUE_PATTERN.test(trimmed)) {
+    const intent = classifyIntent(trimmed);
+    return Boolean(intent.categories?.length);
+  }
+  return false;
+}
+
+export type IngredientClarifyMerge =
+  | { kind: "plp"; intent: Intent }
+  | { kind: "routine"; polarity: "include" | "exclude"; ingredientId: string; label: string }
+  | { kind: "pending"; pending: PendingIngredientClarify };
+
+export function mergeIngredientClarify(
+  pending: PendingIngredientClarify,
+  pick: string,
+): IngredientClarifyMerge {
+  const trimmed = pick.trim();
+  const lower = trimmed.toLowerCase();
+
+  // Polarity-only pick: keep pending, update polarity, wait for category.
+  const detection = detectIngredientIntent(trimmed);
+  if (
+    detection &&
+    detection.polarity !== "unknown" &&
+    isMostlyIngredientUtterance(trimmed)
+  ) {
+    return {
+      kind: "pending",
+      pending: {
+        ...pending,
+        ingredientId: detection.ingredientId,
+        label: detection.label,
+        polarity: detection.polarity,
+      },
+    };
+  }
+  if (/^with\b/i.test(trimmed) && !detection) {
+    return {
+      kind: "pending",
+      pending: { ...pending, polarity: "include" },
+    };
+  }
+  if (/^without\b/i.test(trimmed) && !detection) {
+    return {
+      kind: "pending",
+      pending: { ...pending, polarity: "exclude" },
+    };
+  }
+
+  if (lower === ROUTINE_PILL_LABEL.toLowerCase() || /\bfull\s+routine\b/i.test(trimmed)) {
+    const polarity = pending.polarity ?? "include";
+    return {
+      kind: "routine",
+      polarity,
+      ingredientId: pending.ingredientId,
+      label: pending.label,
+    };
+  }
+
+  const categoryPill = INGREDIENT_CATEGORY_PILLS.find(
+    (p) => p.label.toLowerCase() === lower,
+  );
+  const classified = classifyIntent(trimmed);
+  const categories = categoryPill?.categories ?? classified.categories;
+  const categoryLabel =
+    categoryPill?.categoryLabel ?? classified.categoryLabel ?? categories?.[0];
+
+  if (!categories?.length) {
+    // Unknown pick — keep pending.
+    return { kind: "pending", pending };
+  }
+
+  const polarity = pending.polarity ?? "include";
+  const intent: Intent = {
+    kind: "direct",
+    rawQuery: trimmed,
+    categories,
+    categoryLabel,
+    ...(polarity === "include"
+      ? { ingredientInclude: pending.ingredientId }
+      : { ingredientExclude: pending.ingredientId }),
+  };
+  return { kind: "plp", intent };
+}
+
+export function pendingFromIngredientIntent(
+  intent: Intent,
+): PendingIngredientClarify | null {
+  const detection = detectIngredientIntent(intent.rawQuery ?? "");
+  if (!detection) return null;
+  const polarity =
+    intent.ingredientInclude
+      ? "include"
+      : intent.ingredientExclude
+        ? "exclude"
+        : detection.polarity === "unknown"
+          ? undefined
+          : detection.polarity;
+  return {
+    ingredientId: detection.ingredientId,
+    label: detection.label,
+    polarity,
+  };
 }
 
 function categorySingular(intent: Intent): string {
@@ -1825,6 +2179,34 @@ export function filterProducts(
     pool = enforceAndRankActivityFit(pool, intent.rawQuery, constraints);
   }
 
+  // Ingredient include/exclude: soft on include (relax to category pool
+  // when the catalog has no matching INCI), harder on exclude when any
+  // product passes; if exclude empties the pool, keep the prior pool.
+  if (intent.ingredientInclude) {
+    const matched = pool.filter((product) =>
+      productMatchesIngredient(product, intent.ingredientInclude!, "include"),
+    );
+    if (matched.length > 0) {
+      pool = matched;
+      intent.ingredientFilterRelaxed = false;
+    } else {
+      intent.ingredientFilterRelaxed = true;
+      const fallback = ingredientFallbackConcern(intent.ingredientInclude);
+      if (fallback && !intent.categoryConcern) {
+        intent.categoryConcern = fallback;
+      }
+      // Keep the broader (category) pool so we still show related picks.
+    }
+  }
+  if (intent.ingredientExclude) {
+    const matched = pool.filter((product) =>
+      productMatchesIngredient(product, intent.ingredientExclude!, "exclude"),
+    );
+    if (matched.length > 0) {
+      pool = matched;
+    }
+  }
+
   return pool;
 }
 
@@ -2449,6 +2831,7 @@ function buildPlpNbas(
 ): StageNbaItem[] {
   const category = intent.categoryLabel ?? "products";
   const ladder = nextPriceLadder(intent.priceMax);
+  const wantsSpfTag = Boolean(intent.requiredTags?.includes("spf"));
   const items: StageNbaItem[] = [];
 
   // Only offer a price refinement when it is genuinely tighter than the
@@ -2461,9 +2844,16 @@ function buildPlpNbas(
     });
   }
 
-  if (intent.categories?.includes("Sunscreen")) {
+  if (intent.categories?.includes("Sunscreen") || wantsSpfTag) {
+    // Stay in sun care: refine SPF shelf, don't pivot to moisturizer/routine.
     items.push({ label: "Top rated sunscreen", lane: "refinement" });
     items.push({ label: "Lightweight for oily skin", lane: "capture" });
+    items.push({ label: "Mineral sunscreen", lane: "capture" });
+    if (!/\b(daily|face)\b/i.test(intent.rawQuery ?? "")) {
+      items.push({ label: "Daily face SPF", lane: "capture" });
+    } else {
+      items.push({ label: "For sensitive skin", lane: "capture" });
+    }
   } else if (intent.categories?.includes("Serums & Treatments")) {
     items.push({ label: "Best sellers only", lane: "refinement" });
     items.push({ label: "Serums for brightening", lane: "capture" });
@@ -2488,7 +2878,14 @@ function buildPlpNbas(
     });
   }
 
-  items.push({ label: "Show different category", lane: "escape" });
+  const focusedSpfAsk =
+    (intent.categories?.includes("Sunscreen") || wantsSpfTag) &&
+    /\b(spf\s*\d+|50\+|60\+|spf)\b/i.test(intent.rawQuery ?? "");
+  // Specific SPF listings keep the fourth slot for sun-care refine; only
+  // offer category escape when the ask was broader.
+  if (!focusedSpfAsk) {
+    items.push({ label: "Show different category", lane: "escape" });
+  }
 
   if (matchCount === 0) {
     items.unshift({ label: "Tell me what's possible", lane: "capture" });
@@ -2502,7 +2899,7 @@ function buildPlpNbas(
     offered: whoFor?.whoForOffered,
     alreadyMens,
   });
-  if (chip) {
+  if (chip && !focusedSpfAsk) {
     const without = items.filter((item) => item.label !== chip);
     if (without.length >= 4) {
       without[without.length - 1] = { label: chip, lane: "capture" };
@@ -3190,6 +3587,19 @@ export function buildPlpIntro(query: string, intent: Intent, count: number): str
     humanCategory(intent.categories?.[0]) !== "products"
       ? humanCategory(intent.categories?.[0])
       : category || "options";
+
+  if (intent.ingredientInclude) {
+    const name = ingredientDisplayLabel(intent.ingredientInclude);
+    if (intent.ingredientFilterRelaxed) {
+      return `I don't currently list ${noun} with ${name} in the formula notes, so here are related ${noun} I'd look at for a similar goal. Tell me if you want to narrow further:`;
+    }
+    return `Here are ${noun} with ${name}. Here's what stands out:`;
+  }
+  if (intent.ingredientExclude) {
+    const name = ingredientDisplayLabel(intent.ingredientExclude);
+    return `Here are ${noun} without ${name}. Here's what stands out:`;
+  }
+
   const concernIntro = buildConcernPlpIntro(intent, noun);
   if (concernIntro) return concernIntro;
 

@@ -12,6 +12,10 @@ import {
   findAccessoriesFor,
   type HygieneTopic,
 } from "../conversation/flow";
+import {
+  ingredientDisplayLabel,
+  productMatchesIngredient,
+} from "../conversation/ingredients";
 
 /**
  * Retained accessory-role vocab. Skincare products don't carry an
@@ -342,6 +346,16 @@ const TOOLS: ChatCompletionTool[] = [
             enum: [...SERIES_ENUM],
             description:
               "Optional collection filter (e.g. 'benefiance', 'vital-perfection', 'ultimune', 'shiseido-men'). Use when the shopper names a collection ('show me Ultimune', 'the Vital Perfection line', 'Shiseido Men products'); this is much sharper than free-text because each product carries a structured `series` (Collection) slug.",
+          },
+          ingredientInclude: {
+            type: "string",
+            description:
+              "Canonical ingredient the shopper wants present (e.g. 'niacinamide', 'retinol', 'hyaluronic acid', 'vitamin c', 'salicylic acid', 'fragrance'). Matched against product ingredient copy. Use with a category when they named both (e.g. moisturizer with niacinamide).",
+          },
+          ingredientExclude: {
+            type: "string",
+            description:
+              "Canonical ingredient the shopper wants absent (e.g. 'fragrance', 'paraben', 'salicylic acid'). Use for 'without X' / 'X-free' asks.",
           },
           sortBy: {
             type: "string",
@@ -777,13 +791,17 @@ function buildSystemPrompt(products: CatalogProduct[]): string {
     "WORKFLOW:",
     "- CARD CHOICE (you orchestrate; read this BEFORE any category or tier routing): choose listing vs routine from THIS turn plus earlier clues in the conversation. PRECEDENCE: if the shopper named a product family (moisturizer, serum, cleanser, sunscreen, …), that family WINS even if they also named a skin type or concern. Skin type or concern without a family is a routine. Later concern maps are filters for ranking, not a reason to change card type.",
     "- WHO-FOR: never ask gender or age. Assume the picks are for them. After the first recommendation card you may include ONE chip ('It's a gift' or 'Looking at the Men's line') or, only if Men's vs gift would change the shelf, ONE sentence such as 'I kept this unisex. Say if you'd rather look at Men's, or if this is a gift.' Never ask who-for and age in the same turn. Never ask again once they answered or moved on. Age shows up as concerns they already name (wrinkles, firmness), not as 'how old are you'. If they choose Men's, the next card uses series: ['shiseido-men']. If they say it's a gift, keep their skin clues and do not switch lines or budget tier unless they name the recipient. 'It's a gift' is who-for, not a beginner-tier filter.",
-    "- Named product family WITH a second clue (skin type, concern, budget, tier, or 'just show me a few') → `search_catalog` then `show_product_listing` NOW. Do not ask another question. Example: 'i got oily skin suggest me moisturisers' / 'moisturizers for oily skin' → oily moisturizers listing. Follow-up chips must stay in that family (e.g. Too much shine, I also get breakouts, What's a good value), never pivot to serums or 'Show different category'.",
+    "- Named product family WITH a second clue (skin type, concern, budget, tier, ingredient with/without, or 'just show me a few') → `search_catalog` then `show_product_listing` NOW. Do not ask another question. Example: 'i got oily skin suggest me moisturisers' / 'moisturizers for oily skin' → oily moisturizers listing. Example: 'moisturizer with niacinamide' / 'serum without fragrance' → pass `ingredientInclude` or `ingredientExclude` plus `category`. Follow-up chips must stay in that family (e.g. Too much shine, I also get breakouts, What's a good value), never pivot to serums or 'Show different category'.",
+    "- Bare ingredient name only (e.g. 'niacinamide', 'salicylic acid') → do NOT list yet. Ask whether they want products WITH or WITHOUT that ingredient, and whether they want a specific product type or a full routine. Call `suggest_nbas` with: With {ingredient}, Without {ingredient}, A moisturizer, A serum, A cleanser, A full routine.",
+    "- Ingredient presence about THIS product (e.g. 'does this have niacinamide?', 'does it contain retinol?') when a product is in context → answer Yes or No from that product's ingredient copy FIRST. If No, then offer to find products WITH that ingredient and ask moisturizer / serum / cleanser / full routine (`suggest_nbas`). Do NOT jump to a browse clarify that skips the Yes/No.",
+    "- Ingredient polarity without a category (e.g. 'show me something with niacinamide') → do NOT list yet. Do NOT ask with or without again — polarity is already known. Ask product type vs full routine only; call `suggest_nbas` with A moisturizer, A serum, A cleanser, A full routine. Stamp `ingredientInclude`/`ingredientExclude` on the eventual `search_catalog`.",
     "- Goal, routine, or a skin type / concern with NO product family, or a new concern added onto a routine already in this conversation → `propose_broad_recipe`. The intro MUST name every clue you are still honoring (e.g. oily skin AND breakouts). Do not drop a prior skin type or concern unless the shopper contradicts it. Do not restart from scratch.",
     "- Named product family with no second clue (e.g. 'Help me choose a serum', 'show me serums', 'find a moisturizer') → do not list yet. Reply in 1-2 sentences asking what they most want to improve, then call `suggest_nbas` with shopper-like suggested questions (not filter nouns). Serum: Help with dark spots, Something for wrinkles, I want more firmness, Texture feels uneven, My skin feels dry, What's a good value, Just show me a few. Moisturizer: My skin feels dry, Too much shine, I want more firmness, Something for wrinkles, What's a good value, Just show me a few. Cleanser: Too much shine, My skin feels dry, I need something gentle, What's a good value, Just show me a few. Include Just show me a few. When they answer, THEN call `search_catalog` and `show_product_listing`. The `intro` MUST acknowledge the concern by name. 'Just show me a few' means browse the category without a concern filter, and the intro should still acknowledge that they skipped.",
     "- For SPECIFIC shopping intent that already has a second clue (e.g. 'a moisturizer for dry skin', 'i got oily skin suggest me moisturisers', 'sunscreen for the face', 'brightening serum', 'serum under $100'), call `search_catalog`, then `show_product_listing` with up to 5 real slugs from the result. Set `showMoreCard: true` if the search found more than you displayed. Pass `useCases: ['oily']` (or dry/combination) when they named a skin type.",
     "- TIER PROPAGATION: when the query implies a price tier ('prestige serum', 'luxury cream', 'everyday moisturizer', 'affordable cleanser'), pass `tier` to BOTH `search_catalog` AND `show_product_listing`. Map: prestige/luxury/premium/advanced/intensive → 'pro'; everyday/affordable/basic/starter → 'beginner'.",
     "- BUDGET PROPAGATION: when the query has a price cap ('serum under $150', 'sunscreen under $60', 'cheaper than $100'), pass `priceMax` to BOTH `search_catalog` AND `show_product_listing`. Same for `priceMin` when set.",
     "- ZERO-RESULT REASONING: if `search_catalog` returns 0 results for a constrained query, DO NOT widen silently. Write a short reply explaining what didn't match (e.g. 'I couldn't find a sunscreen under $40. The most affordable is the Clear Sunscreen Stick at $30.') and call `suggest_nbas` with viable alternatives. Name a real closest product when you can.",
+    "- INGREDIENT ZERO-HIT: if `search_catalog` returns `ingredientRelaxed: true`, be honest in the listing `intro` — we don't list products with that INCI in the formula notes — and show the related category picks. Do not pretend they contain the ingredient.",
     "- For BROAD/EXPLORATORY intent that spans multiple routine steps (e.g. 'a routine for dry skin', 'help me with dark spots', 'men's skincare routine', 'anti-aging regimen'), use `propose_broad_recipe`. Describe each row as a FILTER SPEC (categoryToken + capabilities + primaryActivities + series + leadCount) and the deterministic engine resolves real SKUs. You never name slugs there.",
     "- BEFORE calling `propose_broad_recipe`, call `search_catalog` 1-2 times to ground yourself: verify the category strings you'll match exist (Cleansers, Softeners, Serums & Treatments, Moisturizers, Eye & Lip Care, Masks, Sunscreen, Sets & Bundles).",
     "- VOCAB for `propose_broad_recipe` (use these tokens exactly):\n  CATEGORIES (categoryToken, substring-matched): cleanser, softener, serum, treatment, moisturizer, eye, mask, sunscreen, set.\n  CAPABILITIES / SKIN TYPES (capabilities): dry, oily, combination, normal, spf, best-seller.\n  CONCERNS (primaryActivities): brightening, anti-aging, wrinkle-smoothing, lifting-and-firming, deeply-hydrating, pore-minimizing.\n  COLLECTIONS (series, OR-filter): benefiance, future-solution-lx, shiseido-men, vital-perfection, essentials, ultimate-sun, ultimune, urban-environment, bio-performance, essential-energy, eudermine. Use `series` when a row scopes to a collection (e.g. 'Shiseido Men routine' → series:['shiseido-men']).",
@@ -795,7 +813,7 @@ function buildSystemPrompt(products: CatalogProduct[]): string {
     "- For 'checkout' / 'pay', call `checkout`.",
     "- For policy questions (returns, refunds, replacement, guarantee, shipping), call `lookup_policy` and base your answer ONLY on the returned `text`, which is grounded in Shiseido customer care. Do NOT invent return windows or refund timing. Mention the URL from the tool's `source` field.",
     "- For routine cross-sell (after `add_to_cart` or a PDP), call `find_accessories` with the product slug to surface complementary routine steps or same-collection products, and use them to power `suggest_nbas` chips like 'Add a moisturizer to finish your routine'.",
-    "- After EVERY `show_product_listing`, `show_broad_listing`, `propose_broad_recipe`, `show_product_detail`, or `add_to_cart` call, ALWAYS follow up with `suggest_nbas` (2-4 short, stage-relevant chips). Never end a turn that surfaced a card without them.",
+    "- After EVERY `show_product_listing`, `show_broad_listing`, `propose_broad_recipe`, `show_product_detail`, or `add_to_cart` call, ALWAYS follow up with `suggest_nbas` (2-4 short, stage-relevant chips). Never end a turn that surfaced a card without them. After `show_product_listing`, chips MUST stay in the same product family and constraints (e.g. sunscreen/SPF refinements after an SPF listing) — do NOT pivot to moisturizer, a full routine, or unrelated categories.",
     "- After a routine / `propose_broad_recipe` card, follow-up chips must DRILL IN, not restart. The shopper already gave a broad ask plus a skin type or concern. Add a third clue: another concern they did not name, or a single routine step. Shopper-like suggested questions, not filter nouns. For oily skin: 'I also get breakouts', 'Pores look larger', 'Help me pick a serum'. For dry: 'It feels tight by afternoon', 'Help with dark spots'. For a concern-led routine with no skin type: 'My skin is oily too', 'My skin feels dry'. If who-for is still unknown, you may include exactly one of 'It's a gift' or 'Looking at the Men's line' in that row. NEVER suggest 'Show a simpler routine', 'Best for sensitive skin', or 'Budget-friendly picks' unless the shopper asked for those. Do not contradict the skin type they already gave. Do not ask their gender or age.",
     "",
     "TIER ROUTING (match recommendations to budget / formula level):",
@@ -1069,6 +1087,8 @@ export function createOpenAIAgent({
     series?: string;
     sortBy?: "relevance" | "price_desc" | "price_asc" | "rating";
     limit?: number;
+    ingredientInclude?: string;
+    ingredientExclude?: string;
   }) {
     const {
       query,
@@ -1083,6 +1103,8 @@ export function createOpenAIAgent({
       series,
       sortBy = "relevance",
       limit = 5,
+      ingredientInclude,
+      ingredientExclude,
     } = args;
     const seriesFilter =
       typeof series === "string" && SERIES_VALUES_LOCAL.has(series)
@@ -1168,7 +1190,8 @@ export function createOpenAIAgent({
     // "skiing") empties the entire result set under our AND
     // semantics. The remaining groups still narrow real signal.
     const productHaystacks = products.map(
-      (p) => `${p.title} ${p.category} ${p.shortDescription}`.toLowerCase(),
+      (p) =>
+        `${p.title} ${p.category} ${p.shortDescription} ${p.ingredients ?? ""}`.toLowerCase(),
     );
     const usableTokenGroups = tokenGroups.filter((group) =>
       group.some((alt) => productHaystacks.some((h) => h.includes(alt))),
@@ -1206,7 +1229,8 @@ export function createOpenAIAgent({
       }
       if (usableTokenGroups.length === 0) return true;
 
-      const haystack = `${p.title} ${p.category} ${p.shortDescription}`.toLowerCase();
+      const haystack =
+        `${p.title} ${p.category} ${p.shortDescription} ${p.ingredients ?? ""}`.toLowerCase();
       // AND across the usable groups only: every shopper token (or
       // one of its synonyms) that exists somewhere in the catalog
       // must hit on this product.
@@ -1215,7 +1239,36 @@ export function createOpenAIAgent({
       );
     });
 
-    const sorted = [...matches];
+    let filtered = matches;
+    let ingredientRelaxed = false;
+    const includeId =
+      typeof ingredientInclude === "string" && ingredientInclude.trim()
+        ? ingredientInclude.trim().toLowerCase()
+        : "";
+    const excludeId =
+      typeof ingredientExclude === "string" && ingredientExclude.trim()
+        ? ingredientExclude.trim().toLowerCase()
+        : "";
+    if (includeId) {
+      const included = filtered.filter((p) =>
+        productMatchesIngredient(p, includeId, "include"),
+      );
+      if (included.length > 0) {
+        filtered = included;
+      } else {
+        ingredientRelaxed = true;
+      }
+    }
+    if (excludeId) {
+      const excluded = filtered.filter((p) =>
+        productMatchesIngredient(p, excludeId, "exclude"),
+      );
+      if (excluded.length > 0) {
+        filtered = excluded;
+      }
+    }
+
+    const sorted = [...filtered];
     switch (sortBy) {
       case "price_desc":
         sorted.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
@@ -1251,8 +1304,18 @@ export function createOpenAIAgent({
     }));
 
     return {
-      totalMatches: matches.length,
+      totalMatches: filtered.length,
       results: trimmed,
+      ...(includeId || excludeId
+        ? {
+            ingredientInclude: includeId || undefined,
+            ingredientExclude: excludeId || undefined,
+            ingredientRelaxed,
+            ingredientNote: ingredientRelaxed
+              ? `No catalog products matched ingredient "${ingredientDisplayLabel(includeId)}"; results are related category picks.`
+              : undefined,
+          }
+        : {}),
     };
   }
 

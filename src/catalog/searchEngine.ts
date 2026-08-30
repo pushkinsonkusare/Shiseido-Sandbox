@@ -347,7 +347,7 @@ function collectCompatibleText(p: CatalogProduct): string {
 }
 
 function collectDescriptionText(p: CatalogProduct): string {
-  return [p.shortDescription, ...p.featureBlocks].join(" ");
+  return [p.shortDescription, ...p.featureBlocks, p.ingredients ?? ""].join(" ");
 }
 
 export function buildSearchIndex(products: CatalogProduct[]): SearchIndex {

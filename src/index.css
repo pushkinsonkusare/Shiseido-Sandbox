@@ -182,6 +182,33 @@ html[data-demo-theme="consumer-electronics"] .figma-pdp__info h1 {
   box-sizing: border-box;
 }
 
+/* Clickable controls show the hand cursor site-wide. Disabled rules
+ * elsewhere (cursor: not-allowed) still win via higher specificity. */
+button:not(:disabled),
+[type="button"]:not(:disabled),
+[type="submit"]:not(:disabled),
+[type="reset"]:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+summary,
+label[for],
+select:not(:disabled),
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled),
+input[type="file"]:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+[type="button"]:disabled,
+[type="submit"]:disabled,
+[type="reset"]:disabled,
+[role="button"][aria-disabled="true"],
+select:disabled,
+input:disabled {
+  cursor: not-allowed;
+}
+
 html,
 body,
 #root {

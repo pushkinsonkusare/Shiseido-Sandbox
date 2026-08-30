@@ -1,5 +1,6 @@
 import type { CatalogProduct } from "../../../catalog/catalog";
 import { getBundleComponents } from "../../../catalog/catalog";
+import { buildIngredientPresenceAnswer } from "../../SidecarAssistant/conversation/ingredients";
 
 /**
  * Programmatic FAQ floor for PDP-origin shopper questions.
@@ -1035,6 +1036,12 @@ export function resolveProductFaq(
     .replace(/[.!?]+$/g, "")
     .replace(/\s+/g, " ")
     .trim();
+
+  // --- Does this have {ingredient}? (Yes/No before full ingredient dump) ---
+  const presence = buildIngredientPresenceAnswer(product, prompt);
+  if (presence) {
+    return presence.body;
+  }
 
   // --- Ingredients / formula / composition ---
   // Includes stems (composi*) and edit-distance typo tolerance so prompts

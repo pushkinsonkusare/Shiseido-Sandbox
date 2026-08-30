@@ -1271,33 +1271,43 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   gap: 8px;
 }
 
+/* Space between product chips and in-shell NBAs (e.g. Compare). */
+.sidecar-assistant__selection-slot--open .sidecar-assistant__selection-slot-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .sidecar-assistant__selection-pill {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   width: 176px;
   max-width: 100%;
-  height: 44px;
-  padding: 0 8px 0 0;
-  background: rgba(255, 255, 255, 1);
-  border: 1px solid rgba(23, 23, 27, 0.15);
+  height: 36px;
+  padding: 2px 6px 2px 2px;
+  background: #3a3a3a;
+  border: none;
   border-radius: 4px;
   font-size: 13px;
   line-height: 18px;
-  color: rgba(23, 23, 27, 1);
-  transition: border-color 160ms ease, box-shadow 160ms ease;
+  color: #ffffff;
+  box-sizing: border-box;
+  box-shadow: none;
+  transition: background-color 160ms ease, color 160ms ease;
 }
 
 .sidecar-assistant__selection-pill:hover {
-  border-color: rgba(23, 23, 27, 0.3);
-  box-shadow: var(--agentic-shadow-xs);
+  background: #2a2a2a;
+  border: none;
+  box-shadow: none;
 }
 
 .sidecar-assistant__selection-pill-thumb {
   flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  border-radius: 2px;
   object-fit: cover;
   background: rgba(245, 245, 245, 1);
 }
@@ -1308,6 +1318,7 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: var(--font-weight-semibold);
 }
 
 .sidecar-assistant__selection-pill-remove {
@@ -1317,20 +1328,20 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   padding: 0;
   border: none;
-  border-radius: 4px;
-  background: rgba(23, 23, 27, 0.06);
-  color: rgba(23, 23, 27, 0.6);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
   cursor: pointer;
   transition: background-color 160ms ease, color 160ms ease;
 }
 
 .sidecar-assistant__selection-pill-remove:hover {
-  background: rgba(23, 23, 27, 0.12);
-  color: rgba(23, 23, 27, 1);
+  background: rgba(255, 255, 255, 0.28);
+  color: #ffffff;
 }
 
 /* Three states, told entirely through the border: grey at rest, ink when the
@@ -1385,11 +1396,13 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
 }
 
 .sidecar-assistant__input-shell--with-selection .sidecar-assistant__selection-pills {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+  /* Two per row at full size; a third wraps instead of horizontal scroll. */
+  flex-wrap: wrap;
+  overflow-x: visible;
+  overflow-y: visible;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .sidecar-assistant__input-shell--with-selection
@@ -1398,7 +1411,9 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
 }
 
 .sidecar-assistant__input-shell--with-selection .sidecar-assistant__selection-pill {
-  flex: 0 0 auto;
+  flex: 0 0 calc((100% - 8px) / 2);
+  width: calc((100% - 8px) / 2);
+  max-width: 176px;
 }
 
 .sidecar-assistant__asking-about {
@@ -1563,18 +1578,19 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__input-placeholder {
 }
 
 /* Same stop control that used to sit on the latency loader, now in the
-   send slot while a turn is in flight. The bordered square is the tell
-   that this is "stop", not a disabled send. */
+   send slot while a turn is in flight. Light grey plate + near-black
+   stop square so it reads as stop, not a disabled send. */
 .sidecar-assistant__send--stop {
   border: 1px solid #e5e5e5;
   border-radius: 2px;
-  color: rgba(23, 23, 27, 0.62);
+  background: #f5f5f5;
+  color: #17171b;
 }
 
 .sidecar-assistant__send--stop:hover {
   border-color: #a3a3a3;
-  background: rgba(23, 23, 27, 0.06);
-  color: #17171b;
+  background: #ececec;
+  color: #000000;
 }
 
 /* ---------- Collapsed FAB ---------- */

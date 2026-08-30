@@ -338,7 +338,14 @@ html[data-demo-theme="consumer-electronics"] .sidecar-assistant__send:focus-visi
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__send--stop {
   border-radius: 50%;
   border: 1px solid #e5e5e5;
-  background: #ffffff;
+  background: #f5f5f5;
+  color: #17171b;
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__send--stop:hover {
+  border-color: #a3a3a3;
+  background: #ececec;
+  color: #000000;
 }
 
 /* Keep the pill composer shape on mobile — base mobile CSS pads the shell flatter. */
@@ -356,16 +363,18 @@ html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .sidec
 
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__selection-pill {
   height: 36px;
-  background: #131315;
+  min-height: 36px;
+  background: #3a3a3a;
   color: #ffffff;
   border: none;
   border-radius: var(--nto-radius-pill);
   padding: 2px 6px 2px 2px;
   box-shadow: none;
+  box-sizing: border-box;
 }
 
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__selection-pill:hover {
-  background: #000000;
+  background: #2a2a2a;
   border: none;
   box-shadow: none;
 }

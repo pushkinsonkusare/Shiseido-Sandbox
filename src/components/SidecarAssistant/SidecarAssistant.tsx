@@ -57,6 +57,8 @@ import {
   buildPlpIntro,
   buildCategoryClarifyBody,
   buildCategoryClarifyNbas,
+  buildIngredientClarifyBody,
+  buildIngredientClarifyNbas,
   buildRoutineAcknowledgement,
   buildRoutineFollowupNbas,
   buildRoutineSectionDescription,
@@ -69,10 +71,17 @@ import {
   findBundlesForIntent,
   findMatchingBundle,
   getLandingNbaLane,
+  intentFromProductListing,
   isBareCategoryConcernPick,
+  isBareIngredientFollowupPick,
   isCategoryOnlyAsk,
+  isIngredientDirectAsk,
+  isIngredientOnlyAsk,
+  isIngredientPolarityOnlyAsk,
   mergeCategoryClarify,
+  mergeIngredientClarify,
   mergeRoutineFollowup,
+  pendingFromIngredientIntent,
   pickRecommendations,
   pickRoutineProducts,
   withCategoryConcern,
@@ -89,10 +98,16 @@ import {
   type NbaLane,
   type NbaStage,
   type PendingCategoryClarify,
+  type PendingIngredientClarify,
   type RoutineIntent,
   type ShopperProfile,
   type StageNbaItem,
 } from "./conversation/flow";
+import {
+  buildIngredientPresenceAnswer,
+  ingredientDisplayLabel,
+  isIngredientPresenceQuestion,
+} from "./conversation/ingredients";
 import {
   GUARDRAIL_BODIES,
   GUARDRAIL_NBAS,
@@ -1348,6 +1363,9 @@ export function SidecarAssistant({
   // Category-only asks wait here so a short concern pill ("Dark spots")
   // keeps the product family instead of collapsing into a routine card.
   const pendingCategoryClarifyRef = useRef<PendingCategoryClarify | null>(null);
+  const pendingIngredientClarifyRef = useRef<PendingIngredientClarify | null>(
+    null,
+  );
   const lastRoutineIntentRef = useRef<RoutineIntent | null>(null);
   const shopperProfileRef = useRef<ShopperProfile>({});
   const lastStageNbaClickRef = useRef<{
@@ -2017,6 +2035,8 @@ export function SidecarAssistant({
               shopperProfileRef.current.forWhom === "men"
                 ? ["shiseido-men"]
                 : undefined,
+            ingredientInclude: routine.ingredientInclude,
+            ingredientExclude: routine.ingredientExclude,
           },
           products,
         );
@@ -2452,6 +2472,7 @@ export function SidecarAssistant({
 
       const sawSuggestNbas = actions.some((a) => a.type === "suggest_nbas");
       let lastPlpSlugs: string[] | undefined;
+      let lastPlpIntent: Intent | undefined;
       let lastPdpProduct: CatalogProduct | undefined;
       let lastCartProduct: CatalogProduct | undefined;
       let lastRoutineForNbas: RoutineIntent | undefined;
@@ -2572,6 +2593,10 @@ export function SidecarAssistant({
             );
             if (shown) {
               lastPlpSlugs = action.productSlugs;
+              lastPlpIntent = intentFromProductListing(
+                shopperText,
+                action,
+              );
               rendered = true;
             } else {
               holdFollowUp = false;
@@ -2665,7 +2690,10 @@ export function SidecarAssistant({
             break;
           }
           case "suggest_nbas":
-            emitFollowUp(() =>
+            // After a product listing, host buildPlpNbas owns follow-ups so
+            // the LLM cannot pivot to moisturizer / routine / gift chips.
+            emitFollowUp(() => {
+              if (lastPlpSlugs) return;
               appendMessage(
                 buildNbasMessage(
                   takeWhoForLabels(
@@ -2676,14 +2704,14 @@ export function SidecarAssistant({
                       : false,
                   ),
                 ),
-              ),
-            );
+              );
+            });
             break;
         }
       }
 
       if (!rendered) return false;
-      if (sawSuggestNbas) return true;
+      if (sawSuggestNbas && !lastPlpSlugs) return true;
 
       if (lastCartProduct) {
         const cartProduct = lastCartProduct;
@@ -2745,7 +2773,8 @@ export function SidecarAssistant({
 
       if (lastPlpSlugs) {
         const plpSlugs = lastPlpSlugs;
-        const intent = classifyIntent(shopperText);
+        const intent =
+          lastPlpIntent ?? classifyIntent(shopperText);
         activePlpIntentRef.current = intent;
         emitFollowUp(() => {
           const items = buildStageNbas({
@@ -2896,12 +2925,68 @@ export function SidecarAssistant({
         const concern = detectCategoryConcern(trimmed);
         if (concern) {
           pendingCategoryClarifyRef.current = null;
+          pendingIngredientClarifyRef.current = null;
           renderRankedPlp(trimmed, mergeCategoryClarify(pending, concern, trimmed));
           return;
         }
       }
       if (pending) {
         pendingCategoryClarifyRef.current = null;
+      }
+
+      const pendingIngredient = pendingIngredientClarifyRef.current;
+      if (pendingIngredient && isBareIngredientFollowupPick(trimmed)) {
+        const merged = mergeIngredientClarify(pendingIngredient, trimmed);
+        if (merged.kind === "pending") {
+          pendingIngredientClarifyRef.current = merged.pending;
+          appendMessage({
+            id: nextId("agent"),
+            kind: "agent_simple",
+            body: buildIngredientClarifyBody(merged.pending),
+          });
+          const clarifyItems = buildIngredientClarifyNbas(merged.pending);
+          appendMessage(buildStageNbasMessage("clarify", clarifyItems, false));
+          emitAssistantTelemetry("nba_impression", {
+            stage: "clarify",
+            labels: clarifyItems.map((item) => item.label),
+            lanes: clarifyItems.map((item) => item.lane),
+          });
+          return;
+        }
+        pendingIngredientClarifyRef.current = null;
+        if (merged.kind === "plp") {
+          renderRankedPlp(trimmed, merged.intent);
+          return;
+        }
+        if (merged.kind === "routine") {
+          const prep = merged.polarity === "include" ? "with" : "without";
+          const ack = `I'll put together a routine ${prep} ${merged.label} in mind. Here's a simple set of steps to start:`;
+          // Force a routine card even when skin type wasn't named — the
+          // ingredient polarity is enough signal to start.
+          const base = detectRoutineIntent("help me build a skincare routine");
+          const routine: RoutineIntent = {
+            ...base,
+            isRoutine: true,
+            rawQuery: `skincare routine ${prep} ${merged.label}`,
+            ...(merged.polarity === "include"
+              ? { ingredientInclude: merged.ingredientId }
+              : { ingredientExclude: merged.ingredientId }),
+          };
+          if (renderRoutineCard(routine, ack)) {
+            return;
+          }
+          // Last resort: acknowledge and probe rather than silently falling
+          // into unrelated serum chips with no explanation.
+          appendMessage({
+            id: nextId("agent"),
+            kind: "agent_simple",
+            body: `I couldn't build a full routine ${prep} ${merged.label} just now. Tell me your skin type or a concern and I'll try again.`,
+          });
+          return;
+        }
+      }
+      if (pendingIngredient) {
+        pendingIngredientClarifyRef.current = null;
       }
 
       const who = detectForWhom(trimmed);
@@ -2950,6 +3035,49 @@ export function SidecarAssistant({
       // The card streams its own sections and appends the follow-up row when the
       // last one lands.
       const routine = detectRoutineIntent(trimmed);
+
+      // Ingredient asks take priority over generic routine/category clarify.
+      // Presence asks ("does this have X?") with a SKU in context are routed
+      // to FAQ in submitComposer; when they reach here, treat as shopping.
+      if (isIngredientDirectAsk(intent)) {
+        pendingIngredientClarifyRef.current = null;
+        renderRankedPlp(trimmed, intent);
+        return;
+      }
+      if (isIngredientOnlyAsk(intent) || isIngredientPolarityOnlyAsk(intent)) {
+        const pendingIng =
+          pendingFromIngredientIntent(intent) ??
+          ({
+            ingredientId: intent.ingredientInclude ?? intent.ingredientExclude ?? "",
+            label: ingredientDisplayLabel(
+              intent.ingredientInclude ?? intent.ingredientExclude ?? "",
+            ),
+            polarity: intent.ingredientInclude
+              ? "include"
+              : intent.ingredientExclude
+                ? "exclude"
+                : undefined,
+          } satisfies PendingIngredientClarify);
+        if (!pendingIng.ingredientId) {
+          // Fall through if we somehow lack an id.
+        } else {
+          pendingIngredientClarifyRef.current = pendingIng;
+          appendMessage({
+            id: nextId("agent"),
+            kind: "agent_simple",
+            body: buildIngredientClarifyBody(pendingIng),
+          });
+          const clarifyItems = buildIngredientClarifyNbas(pendingIng);
+          appendMessage(buildStageNbasMessage("clarify", clarifyItems, false));
+          emitAssistantTelemetry("nba_impression", {
+            stage: "clarify",
+            labels: clarifyItems.map((item) => item.label),
+            lanes: clarifyItems.map((item) => item.lane),
+          });
+          return;
+        }
+      }
+
       if (routine.isRoutine && renderRoutineCard(routine)) {
         return;
       }
@@ -3025,6 +3153,10 @@ export function SidecarAssistant({
         activities: base?.activities,
         categoryConcern:
           detectCategoryConcern(label) ?? base?.categoryConcern,
+        ingredientInclude:
+          patch.ingredientInclude ?? base?.ingredientInclude,
+        ingredientExclude:
+          patch.ingredientExclude ?? base?.ingredientExclude,
       };
 
       appendMessage({ id: nextId("shopper"), kind: "shopper_text", text: label });
@@ -3105,8 +3237,21 @@ export function SidecarAssistant({
         stepIntervalMs: searchPlan.stepIntervalMs,
       });
 
+      // Ingredient shopping (bare / polarity-only / category+ingredient) and
+      // pending ingredient-clarify follow-ups (A moisturizer / A full routine)
+      // are deterministic: skip the LLM so it cannot re-ask or emit probing chips.
+      const ingredientIntent = classifyIntent(trimmed);
+      const pendingIngredientFollowup =
+        Boolean(pendingIngredientClarifyRef.current) &&
+        isBareIngredientFollowupPick(trimmed);
+      const useIngredientRules =
+        pendingIngredientFollowup ||
+        isIngredientDirectAsk(ingredientIntent) ||
+        isIngredientOnlyAsk(ingredientIntent) ||
+        isIngredientPolarityOnlyAsk(ingredientIntent);
+
       const agent = agentRef.current;
-      if (agent) {
+      if (agent && !useIngredientRules) {
         agent
           .respond(trimmed, (line) => {
             updateMessage(loaderId, (message) => {
@@ -3202,11 +3347,31 @@ export function SidecarAssistant({
         appendMessage({ id: loaderId, kind: "agent_loader", variant: "answering" });
         scheduleResponse(() => {
           removeMessage(loaderId);
+          const presence = buildIngredientPresenceAnswer(firstProduct, label);
           appendMessage({
             id: nextId("agent"),
             kind: "agent_simple",
-            body: resolveProductFaq(firstProduct, label),
+            body: presence?.body ?? resolveProductFaq(firstProduct, label),
           });
+
+          // Missing ingredient on this SKU → offer find-with category/routine
+          // chips (polarity already "include"), then keep product FAQ follow-ups.
+          if (presence && !presence.hasIngredient) {
+            const pendingIng = {
+              ingredientId: presence.detection.ingredientId,
+              label: presence.detection.label,
+              polarity: "include" as const,
+            };
+            pendingIngredientClarifyRef.current = pendingIng;
+            const clarifyItems = buildIngredientClarifyNbas(pendingIng);
+            appendMessage(buildStageNbasMessage("clarify", clarifyItems, false));
+            emitAssistantTelemetry("nba_impression", {
+              stage: "clarify",
+              labels: clarifyItems.map((item) => item.label),
+              lanes: clarifyItems.map((item) => item.lane),
+            });
+          }
+
           // Offer an in-chat follow-up row so the shopper can keep exploring
           // this product (still-unanswered FAQs) or move forward (add / show
           // similar). Answered questions are dropped so the row keeps
@@ -4680,7 +4845,14 @@ export function SidecarAssistant({
         resolved.kind === "explicit" &&
         isProductQuestion(value) &&
         !isProductListingQuery(value);
-      if (faqFromSelection || faqFromExplicit || intent.kind === "empty") {
+      const faqFromPresence =
+        isIngredientPresenceQuestion(value) && !isProductListingQuery(value);
+      if (
+        faqFromSelection ||
+        faqFromExplicit ||
+        faqFromPresence ||
+        intent.kind === "empty"
+      ) {
         handleContextualPill(value, singleSlug);
         setTruncateComposerGhost(false);
         setSelectedSlugs([]);
@@ -4720,10 +4892,15 @@ export function SidecarAssistant({
    * the input. If we collapse the keyboard on that blur, layout shifts and
    * the click never lands. Suppress the blur for interactive targets, let
    * their click handlers run, then dismiss the keyboard. */
+  /* Typing surface + sim keyboard only — not the whole input shell. Selection
+   * NBAs / remove pills live in the shell and must get mousedown preventDefault
+   * or blur collapses the keyboard before their click can send. */
   const isSimKeyboardChromeTarget = (target: EventTarget | null) => {
     if (!(target instanceof Element)) return false;
     return Boolean(
-      target.closest(".sim-ios-keyboard, .sidecar-assistant__input-shell, .sidecar-assistant__input"),
+      target.closest(
+        ".sim-ios-keyboard, .sidecar-assistant__input-field, .sidecar-assistant__input",
+      ),
     );
   };
 
