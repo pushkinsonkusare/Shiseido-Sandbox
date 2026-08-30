@@ -4352,10 +4352,11 @@ export function SidecarAssistant({
 
     // `?scenario=clarifying-pdp`: seed shopper ask + AgentPDPCard in the same
     // commit so auto-scroll does not thrash on multi-step appends.
+    // Do not retarget conversationSlugs — the context pill should stay on the
+    // open storefront PDP (Sun Protector), not the in-chat cleanser card.
     if (DEMO_SCENARIO === "clarifying-pdp") {
       const product = getProductBySlug(CLARIFYING_PDP_SCENARIO_SLUG);
       if (product) {
-        establishConversationProduct([product.slug]);
         seedMessages.push({
           id: nextId("shopper"),
           kind: "shopper_text",
@@ -4432,7 +4433,6 @@ export function SidecarAssistant({
     messages.length,
     userTestingLock,
     getProductBySlug,
-    establishConversationProduct,
     buildPdpStageContext,
   ]);
 
