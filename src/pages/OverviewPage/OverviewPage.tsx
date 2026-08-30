@@ -94,10 +94,10 @@ function OverviewPage() {
             ))}
           </nav>
           <div className="figma-overview__top-actions">
+            <OpenPersonalAssistantNavButton />
             <button type="button" aria-label="Search" onClick={openSearchOverlay}>
               <SearchIcon width={16} height={16} />
             </button>
-            <OpenPersonalAssistantNavButton />
             <button type="button" aria-label="Account" onClick={() => navigate(ROUTES.account)}>
               <UserIcon width={16} height={16} />
             </button>

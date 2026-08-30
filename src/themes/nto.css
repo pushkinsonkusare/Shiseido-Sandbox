@@ -1337,8 +1337,17 @@ html[data-demo-theme="consumer-electronics"] .site-gate__submit {
   border-radius: var(--nto-radius-btn);
 }
 
-html[data-demo-theme="consumer-electronics"] .personal-assistant-nav-trigger {
-  border-radius: var(--nto-radius-btn);
+html[data-demo-theme="consumer-electronics"] .personal-assistant-nav-trigger,
+html[data-demo-theme="consumer-electronics"] .unified-top-header__top-actions .personal-assistant-nav-trigger,
+html[data-demo-theme="consumer-electronics"] .figma-storefront__top-actions .personal-assistant-nav-trigger,
+html[data-demo-theme="consumer-electronics"] .figma-plp__top-actions .personal-assistant-nav-trigger,
+html[data-demo-theme="consumer-electronics"] .figma-pdp__top-actions .personal-assistant-nav-trigger,
+html[data-demo-theme="consumer-electronics"] .figma-cart__top-actions .personal-assistant-nav-trigger,
+html[data-demo-theme="consumer-electronics"] .figma-checkout__top-actions .personal-assistant-nav-trigger,
+html[data-demo-theme="consumer-electronics"] .figma-order-confirmation__top-actions .personal-assistant-nav-trigger,
+html[data-demo-theme="consumer-electronics"] .figma-about__top-actions .personal-assistant-nav-trigger,
+html[data-demo-theme="consumer-electronics"] .figma-overview__top-actions .personal-assistant-nav-trigger {
+  border-radius: var(--nto-radius-pill);
 }
 
 /* Experience switcher (.agent-mode-bar) stays Market Street chrome. */

@@ -76,10 +76,10 @@ export function UnifiedTopHeader({
             ))}
           </nav>
           <div className="unified-top-header__top-actions">
+            <OpenPersonalAssistantNavButton />
             <button type="button" aria-label="Search" onClick={openSearchOverlay}>
               <SearchIcon width={16} height={16} />
             </button>
-            <OpenPersonalAssistantNavButton />
             <button type="button" aria-label="Account" onClick={() => navigate(ROUTES.login)}>
               <UserIcon width={16} height={16} />
             </button>
