@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { SparkleIcon } from "../icons/StorefrontIcons";
 import { useAgentMode } from "../AgentModeBar/AgentModeContext";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+import { useFabInvite } from "../../hooks/useFabInvite";
 import { SidecarAssistant, type PendingAsk } from "./SidecarAssistant";
 import type { AskAssistantEventDetail } from "../../pages/ProductDetailPage/PdpNbaPanel";
 // Reuse the SideBySide docking shell CSS for desktop grid + mobile overlay.
@@ -30,6 +31,7 @@ export function SidecarDockLayout({ children }: Props) {
   // slides out via `--closing`).
   const [panelMounted, setPanelMounted] = useState(() => userTestingLock);
   const [fabVisible, setFabVisible] = useState(() => !userTestingLock);
+  const fabInvite = useFabInvite(fabVisible && sidecarAvailable && !isMobileViewport);
   // An ask request that landed before the assistant mounted; see the listener.
   const [pendingAsk, setPendingAsk] = useState<PendingAsk | null>(null);
   const clearPendingAsk = useCallback(() => setPendingAsk(null), []);
@@ -257,11 +259,18 @@ export function SidecarDockLayout({ children }: Props) {
       {fabVisible && sidecarAvailable ? (
         <button
           type="button"
-          className="sxs-layout__fab"
+          className={
+            "sxs-layout__fab" + (fabInvite ? " sxs-layout__fab--invite" : "")
+          }
           aria-label="Open Beauty Advisor"
           onClick={openPanel}
         >
-          <SparkleIcon width={22} height={22} className="sxs-layout__fab-icon" />
+          <SparkleIcon
+            width={22}
+            height={22}
+            className="sxs-layout__fab-icon"
+            fill="currentColor"
+          />
           <span className="sxs-layout__fab-label" aria-hidden="true">
             glow with me
           </span>

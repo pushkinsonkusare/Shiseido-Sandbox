@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { SparkleIcon } from "../icons/StorefrontIcons";
 import { useAgentMode } from "../AgentModeBar/AgentModeContext";
+import { useFabInvite } from "../../hooks/useFabInvite";
 import { SideBySideAssistant } from "./SideBySideAssistant";
 import {
   SideBySidePanelProvider,
@@ -32,6 +33,7 @@ function SideBySideLayoutInner({ children }: Props) {
   // `--closing` class, so an unmounted assistant is not required to hide it.
   const [panelMounted, setPanelMounted] = useState(panelOpen);
   const [fabVisible, setFabVisible] = useState(!panelOpen);
+  const fabInvite = useFabInvite(fabVisible && !isMobileViewport);
 
   useEffect(() => {
     if (panelOpen) {
@@ -206,7 +208,9 @@ function SideBySideLayoutInner({ children }: Props) {
       {fabVisible ? (
         <button
           type="button"
-          className="sxs-layout__fab"
+          className={
+            "sxs-layout__fab" + (fabInvite ? " sxs-layout__fab--invite" : "")
+          }
           aria-label="Open Personal Assistant"
           onClick={openPanel}
         >
@@ -214,6 +218,7 @@ function SideBySideLayoutInner({ children }: Props) {
             width={22}
             height={22}
             className="sxs-layout__fab-icon"
+            fill="currentColor"
           />
           <span className="sxs-layout__fab-label" aria-hidden="true">
             glow with me
