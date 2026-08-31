@@ -231,9 +231,9 @@ export const GUARDRAIL_NBAS: Record<GuardrailKind, readonly string[]> = {
     "See return policy",
   ],
   age_safety: [
+    "What are the key ingredients?",
     "Is this good for sensitive skin?",
     "Mineral sunscreen",
-    "Products for dry skin",
   ],
   off_domain: [
     "Build a full routine",

@@ -111,7 +111,9 @@ import {
 import {
   GUARDRAIL_BODIES,
   GUARDRAIL_NBAS,
+  ageSafetyAnswer,
   classifyGuardrail,
+  detectAgeSafetyAsk,
   type GuardrailKind,
 } from "./conversation/guardrails";
 import {
@@ -3179,17 +3181,21 @@ export function SidecarAssistant({
 
   const renderGuardrailResponse = useCallback(
     (kind: GuardrailKind) => {
+      const body =
+        kind === "age_safety"
+          ? ageSafetyAnswer(askingAboutProduct?.title)
+          : GUARDRAIL_BODIES[kind];
       appendMessage({
         id: nextId("agent"),
         kind: "agent_simple",
-        body: GUARDRAIL_BODIES[kind],
+        body,
       });
       const labels = GUARDRAIL_NBAS[kind];
       if (labels.length > 0) {
         appendMessage(buildNbasMessage(labels, false));
       }
     },
-    [appendMessage],
+    [appendMessage, askingAboutProduct?.title],
   );
 
   const dispatchShopperMessage = useCallback(
@@ -3353,11 +3359,25 @@ export function SidecarAssistant({
         scheduleResponse(() => {
           removeMessage(loaderId);
           const presence = buildIngredientPresenceAnswer(firstProduct, label);
+          const ageAsk = detectAgeSafetyAsk(label);
+          const body = ageAsk
+            ? ageSafetyAnswer(firstProduct.title)
+            : (presence?.body ?? resolveProductFaq(firstProduct, label));
           appendMessage({
             id: nextId("agent"),
             kind: "agent_simple",
-            body: presence?.body ?? resolveProductFaq(firstProduct, label),
+            body,
           });
+
+          // Age/pediatric suitability: refuse chips only — do not keep
+          // offering sunscreen FAQs that imply we answered the safety ask.
+          if (ageAsk) {
+            appendMessage(
+              buildNbasMessage([...GUARDRAIL_NBAS.age_safety], false),
+            );
+            setContextualThreadActive(true);
+            return;
+          }
 
           // Missing ingredient on this SKU → offer find-with category/routine
           // chips (polarity already "include"), then keep product FAQ follow-ups.
