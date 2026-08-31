@@ -995,6 +995,29 @@ function isIngredientsIntent(q: string): boolean {
   return tokens.some((token) => nearKeyword(token, INGREDIENTS_NEAR_KEYWORDS, 2));
 }
 
+/** Shopper accepted an offer to share the ingredient list ("yes please do"). */
+export function isAffirmativeIngredientOfferAccept(text: string): boolean {
+  const t = text
+    .trim()
+    .toLowerCase()
+    .replace(/[“”"']/g, "")
+    .replace(/[.!?]+$/g, "")
+    .replace(/\s+/g, " ");
+  if (!t) return false;
+  return (
+    /^(yes|yeah|yep|yup|sure|ok|okay|please)(\s+please)?(\s+do)?$/.test(t) ||
+    /^(yes|yeah|yep|sure),?\s+(please|do|share|show)\b/.test(t) ||
+    /^(please\s+do|do\s+it|go\s+ahead|share\s+(them|it|the\s+(list|ingredients))|show\s+(me\s+)?(them|it|the\s+(list|ingredients)))$/.test(
+      t,
+    )
+  );
+}
+
+/** Agent copy that invited a follow-up for the ingredient list. */
+export function agentOfferedIngredientList(body: string): boolean {
+  return /share the ingredient list/i.test(body);
+}
+
 /**
  * Last-resort answer source for unknown questions: scan specs for any
  * row whose label or value contains a content token from the prompt.

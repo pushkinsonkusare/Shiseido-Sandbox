@@ -126,7 +126,11 @@ import type { ChatMessage, RoutineSection } from "./conversation/types";
 import type { CatalogProduct } from "../../catalog/catalog";
 import type { AskAssistantEventDetail } from "../../pages/ProductDetailPage/PdpNbaPanel";
 import { ROUTES, usePrototypeNavigation } from "../../prototypeRoutes";
-import { resolveProductFaq } from "../SideBySideAssistant/conversation/productFaq";
+import {
+  agentOfferedIngredientList,
+  isAffirmativeIngredientOfferAccept,
+  resolveProductFaq,
+} from "../SideBySideAssistant/conversation/productFaq";
 import {
   buildRowProductsFromSpec,
   type BroadSubTopicSpec,
@@ -1368,6 +1372,8 @@ export function SidecarAssistant({
   const pendingIngredientClarifyRef = useRef<PendingIngredientClarify | null>(
     null,
   );
+  /** Set when an agent reply offered to share the ingredient list (e.g. pregnancy). */
+  const pendingIngredientListOfferRef = useRef(false);
   const lastRoutineIntentRef = useRef<RoutineIntent | null>(null);
   const shopperProfileRef = useRef<ShopperProfile>({});
   const lastStageNbaClickRef = useRef<{
@@ -3360,18 +3366,39 @@ export function SidecarAssistant({
           removeMessage(loaderId);
           const presence = buildIngredientPresenceAnswer(firstProduct, label);
           const ageAsk = detectAgeSafetyAsk(label);
+          const acceptIngredientOffer =
+            pendingIngredientListOfferRef.current &&
+            isAffirmativeIngredientOfferAccept(label);
+          if (acceptIngredientOffer) {
+            pendingIngredientListOfferRef.current = false;
+          }
+
+          const faqPrompt = acceptIngredientOffer
+            ? INGREDIENTS_FAQ_LABEL
+            : label;
           const body = ageAsk
             ? ageSafetyAnswer(firstProduct.title)
-            : (presence?.body ?? resolveProductFaq(firstProduct, label));
+            : acceptIngredientOffer
+              ? resolveProductFaq(firstProduct, faqPrompt)
+              : (presence?.body ?? resolveProductFaq(firstProduct, faqPrompt));
           appendMessage({
             id: nextId("agent"),
             kind: "agent_simple",
             body,
           });
 
+          if (agentOfferedIngredientList(body)) {
+            pendingIngredientListOfferRef.current = true;
+          } else if (!isAffirmativeIngredientOfferAccept(label)) {
+            pendingIngredientListOfferRef.current = false;
+          }
+
           // Age/pediatric suitability: refuse chips only — do not keep
           // offering sunscreen FAQs that imply we answered the safety ask.
           if (ageAsk) {
+            if (agentOfferedIngredientList(body)) {
+              pendingIngredientListOfferRef.current = true;
+            }
             appendMessage(
               buildNbasMessage([...GUARDRAIL_NBAS.age_safety], false),
             );
@@ -3381,7 +3408,7 @@ export function SidecarAssistant({
 
           // Missing ingredient on this SKU → offer find-with category/routine
           // chips (polarity already "include"), then keep product FAQ follow-ups.
-          if (presence && !presence.hasIngredient) {
+          if (presence && !presence.hasIngredient && !acceptIngredientOffer) {
             const pendingIng = {
               ingredientId: presence.detection.ingredientId,
               label: presence.detection.label,
@@ -3397,6 +3424,25 @@ export function SidecarAssistant({
             });
           }
 
+          // After offering the ingredient list (pregnancy caution), lead with
+          // that chip so "yes please do" is not the only way to accept.
+          const answeredForRow = new Set(answered);
+          if (acceptIngredientOffer) {
+            answeredForRow.add(INGREDIENTS_FAQ_LABEL);
+          }
+          let followupLabels = buildContextualFollowupLabels(
+            firstProduct,
+            answeredForRow,
+          );
+          if (agentOfferedIngredientList(body)) {
+            followupLabels = [
+              INGREDIENTS_FAQ_LABEL,
+              ...followupLabels.filter(
+                (item) => item !== INGREDIENTS_FAQ_LABEL,
+              ),
+            ].slice(0, 5);
+          }
+
           // Offer an in-chat follow-up row so the shopper can keep exploring
           // this product (still-unanswered FAQs) or move forward (add / show
           // similar). Answered questions are dropped so the row keeps
@@ -3407,10 +3453,7 @@ export function SidecarAssistant({
             contextual: true,
             productSlug: firstProduct.slug,
             regenerateButton: false,
-            nbas: buildNbaItems(
-              buildContextualFollowupLabels(firstProduct, answered),
-              "nba-followup",
-            ),
+            nbas: buildNbaItems(followupLabels, "nba-followup"),
           });
           setContextualThreadActive(true);
         });
