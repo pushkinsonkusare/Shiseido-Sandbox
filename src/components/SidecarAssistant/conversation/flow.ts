@@ -369,7 +369,105 @@ export type Intent = {
    * relaxed to category/related picks. Drives honest intro copy.
    */
   ingredientFilterRelaxed?: boolean;
+  /**
+   * Exclusive SPF floor from "higher-SPF than … SPF N" asks. Products must
+   * parse to a strictly greater SPF; soft-falls back to `>= N` peers when
+   * the catalog has nothing higher (sets `spfFilterRelaxed`).
+   */
+  spfMinExclusive?: number;
+  /**
+   * Inclusive SPF floor from "other SPF N+ options" asks.
+   */
+  spfMinInclusive?: number;
+  /**
+   * True when a higher-SPF ask had to relax to same-SPF peers because nothing
+   * in the catalog exceeds the referenced product.
+   */
+  spfFilterRelaxed?: boolean;
 };
+
+/** Pull the first SPF number from a title, slug, or free-text query. */
+export function extractSpfNumber(text: string | null | undefined): number | null {
+  if (!text) return null;
+  const match =
+    text.match(/\bspf\s*(\d+)\s*\+?/i) ?? text.match(/spf[_-](\d+)/i);
+  if (!match) return null;
+  const n = Number(match[1]);
+  return Number.isFinite(n) ? n : null;
+}
+
+function productSpf(product: CatalogProduct): number | null {
+  return extractSpfNumber(product.title) ?? extractSpfNumber(product.slug);
+}
+
+/**
+ * Title named after "than …" in a higher-SPF ask, so we can drop that SKU
+ * from the carousel instead of recommending the product they already have.
+ */
+function excludeReferencedProduct(
+  pool: CatalogProduct[],
+  rawQuery: string | undefined,
+): CatalogProduct[] {
+  if (!rawQuery || pool.length === 0) return pool;
+  const than = rawQuery
+    .match(/\bthan\b\s+(?:the\s+)?(.+?)\.?$/i)?.[1]
+    ?.trim()
+    .toLowerCase();
+  const alt = rawQuery
+    .match(/\balternatives?\s+to\s+(?:the\s+)?(.+?)\.?$/i)?.[1]
+    ?.trim()
+    .toLowerCase();
+  const clause = than || alt;
+  if (!clause) return pool;
+
+  let best: CatalogProduct | undefined;
+  let bestLen = 0;
+  for (const product of pool) {
+    const title = product.title.toLowerCase();
+    if (clause.includes(title) || title.includes(clause)) {
+      if (title.length > bestLen) {
+        best = product;
+        bestLen = title.length;
+      }
+    }
+  }
+  if (!best) return pool;
+  return pool.filter((product) => product.slug !== best!.slug);
+}
+
+const HIGHER_SPF_ASK =
+  /\bhigher[-\s]?spf\b|\bspf\s*higher\b|\bmore\s+spf\b|\bstronger\s+(?:spf|sun\s*protect)/i;
+const OTHER_SPF_OPTIONS =
+  /\bother\s+spf\s*(\d+)\s*\+?\b|\bspf\s*(\d+)\s*\+?\s+(?:sunscreen\s+)?options?\b/i;
+
+/** Attach SPF step-up constraints when the shopper asks for higher / peer SPF. */
+function withSpfStepUpConstraints(intent: Intent, trimmed: string): Intent {
+  const otherMatch = trimmed.match(OTHER_SPF_OPTIONS);
+  if (otherMatch) {
+    const floor = Number(otherMatch[1] || otherMatch[2]);
+    if (!Number.isFinite(floor)) return intent;
+    return {
+      ...intent,
+      spfMinInclusive: floor,
+      categories: intent.categories ?? ["Sunscreen"],
+      categoryLabel: intent.categoryLabel ?? "sunscreen",
+    };
+  }
+
+  if (!HIGHER_SPF_ASK.test(trimmed)) return intent;
+
+  const thanClause =
+    trimmed.match(/\bthan\b\s+(?:the\s+)?(.+?)\.?$/i)?.[1] ?? "";
+  const refSpf = extractSpfNumber(thanClause) ?? extractSpfNumber(trimmed);
+  if (refSpf == null) return intent;
+
+  return {
+    ...intent,
+    spfMinExclusive: refSpf,
+    categories: intent.categories ?? ["Sunscreen"],
+    categoryLabel: intent.categoryLabel ?? "sunscreen",
+  };
+}
 
 const BUNDLE_QUERY_PATTERN =
   /\b(bundle|bundles|combo|combos|kit|kits|set|sets|save\s*more)\b/i;
@@ -457,7 +555,10 @@ const SUBTYPES_BY_CATEGORY_LABEL: Record<string, string[]> = {};
 export function classifyIntent(query: string): Intent {
   const trimmed = query.trim();
   if (!trimmed) return { kind: "empty" };
+  return withSpfStepUpConstraints(classifyIntentBase(trimmed), trimmed);
+}
 
+function classifyIntentBase(trimmed: string): Intent {
   const categoryHit = CATEGORY_PATTERNS.find((entry) => entry.test.test(trimmed));
   const detectedActivities = detectActivitiesFromQuery(trimmed);
   const priceMatch = trimmed.match(
@@ -2207,6 +2308,50 @@ export function filterProducts(
     }
   }
 
+  // Higher / peer SPF: never surface lower-SPF sunscreens for a step-up ask.
+  if (
+    typeof intent.spfMinExclusive === "number" ||
+    typeof intent.spfMinInclusive === "number"
+  ) {
+    const exclusive = intent.spfMinExclusive;
+    const inclusive = intent.spfMinInclusive;
+    const scored = pool.map((product) => ({
+      product,
+      spf: productSpf(product),
+    }));
+    const strict =
+      typeof exclusive === "number"
+        ? scored
+            .filter((row) => row.spf != null && row.spf > exclusive)
+            .map((row) => row.product)
+        : scored
+            .filter(
+              (row) =>
+                row.spf != null &&
+                typeof inclusive === "number" &&
+                row.spf >= inclusive,
+            )
+            .map((row) => row.product);
+    const strictWithoutRef = excludeReferencedProduct(strict, intent.rawQuery);
+    if (strictWithoutRef.length > 0) {
+      pool = strictWithoutRef;
+      intent.spfFilterRelaxed = false;
+    } else if (typeof exclusive === "number") {
+      // Catalog ceiling: keep same-SPF peers, still never recommend lower SPF.
+      const peers = excludeReferencedProduct(
+        scored
+          .filter((row) => row.spf != null && row.spf >= exclusive)
+          .map((row) => row.product),
+        intent.rawQuery,
+      );
+      pool = peers;
+      intent.spfFilterRelaxed = peers.length > 0;
+    } else {
+      pool = excludeReferencedProduct(strict, intent.rawQuery);
+      intent.spfFilterRelaxed = false;
+    }
+  }
+
   return pool;
 }
 
@@ -2239,6 +2384,14 @@ export function pickRecommendations(
 
   return [...usable]
     .sort((a, b) => {
+      if (
+        intent?.spfMinExclusive != null ||
+        intent?.spfMinInclusive != null
+      ) {
+        const spfDelta = (productSpf(b) ?? 0) - (productSpf(a) ?? 0);
+        if (spfDelta !== 0) return spfDelta;
+      }
+
       if (concern && concern !== "skip") {
         if (concern === "best-value") {
           const tierDelta = valueTierRank(a) - valueTierRank(b);
@@ -3598,6 +3751,16 @@ export function buildPlpIntro(query: string, intent: Intent, count: number): str
   if (intent.ingredientExclude) {
     const name = ingredientDisplayLabel(intent.ingredientExclude);
     return `Here are ${noun} without ${name}. Here's what stands out:`;
+  }
+
+  if (typeof intent.spfMinExclusive === "number") {
+    if (intent.spfFilterRelaxed) {
+      return `Nothing in our catalog goes above SPF ${intent.spfMinExclusive}, so here are other SPF ${intent.spfMinExclusive}+ ${noun} I'd put next to it:`;
+    }
+    return `Stepping up from SPF ${intent.spfMinExclusive}, these are the higher-SPF ${noun} I'd look at:`;
+  }
+  if (typeof intent.spfMinInclusive === "number") {
+    return `Here are SPF ${intent.spfMinInclusive}+ ${noun} as alternatives. Here's what stands out:`;
   }
 
   const concernIntro = buildConcernPlpIntro(intent, noun);

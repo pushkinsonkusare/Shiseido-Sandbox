@@ -3249,9 +3249,14 @@ export function SidecarAssistant({
         isIngredientDirectAsk(ingredientIntent) ||
         isIngredientOnlyAsk(ingredientIntent) ||
         isIngredientPolarityOnlyAsk(ingredientIntent);
+      // Higher / peer SPF asks must stay deterministic — the LLM otherwise
+      // ranks popular lower-SPF sunscreens ahead of a real step-up.
+      const useSpfStepUpRules =
+        ingredientIntent.spfMinExclusive != null ||
+        ingredientIntent.spfMinInclusive != null;
 
       const agent = agentRef.current;
-      if (agent && !useIngredientRules) {
+      if (agent && !useIngredientRules && !useSpfStepUpRules) {
         agent
           .respond(trimmed, (line) => {
             updateMessage(loaderId, (message) => {

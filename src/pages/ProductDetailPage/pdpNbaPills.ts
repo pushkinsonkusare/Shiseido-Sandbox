@@ -410,24 +410,35 @@ const SUNSCREEN_LANE: LanePack = {
       kind: "faq",
     },
   ],
-  hookFeatures: (product) => [
-    {
-      pill: {
-        id: "upsell-sun-higher",
-        label: "See a higher-SPF option",
-        prompt: `Show me a higher-SPF option than the ${product.title}.`,
-        kind: "upsell",
+  hookFeatures: (product) => {
+    const spfMatch = product.title.match(/\bspf\s*(\d+)\s*\+?/i);
+    const spf = spfMatch ? Number(spfMatch[1]) : null;
+    // Catalog tops out at SPF 60+, so at that ceiling offer peer options
+    // instead of promising a higher number that does not exist.
+    const atCeiling = spf != null && spf >= 60;
+    return [
+      {
+        pill: {
+          id: "upsell-sun-higher",
+          label: atCeiling
+            ? "See other SPF 60+ options"
+            : "See a higher-SPF option",
+          prompt: atCeiling
+            ? `Show me other SPF 60+ sunscreen options as alternatives to the ${product.title}.`
+            : `Show me a higher-SPF option than the ${product.title}.`,
+          kind: "upsell",
+        },
       },
-    },
-    {
-      pill: {
-        id: "upsell-sun-tinted",
-        label: "See a tinted option",
-        prompt: `Is there a tinted version of the ${product.title}?`,
-        kind: "upsell",
+      {
+        pill: {
+          id: "upsell-sun-tinted",
+          label: "See a tinted option",
+          prompt: `Is there a tinted version of the ${product.title}?`,
+          kind: "upsell",
+        },
       },
-    },
-  ],
+    ];
+  },
   bundles: (product, catalog) =>
     routineBundlePills(product, catalog, "What to layer under it?"),
 };
