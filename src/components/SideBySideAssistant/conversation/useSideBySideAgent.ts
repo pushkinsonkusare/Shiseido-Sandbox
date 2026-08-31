@@ -43,6 +43,11 @@ import { resolveProductFaq } from "./productFaq";
 import type { SxsMessage } from "./types";
 import { isLlmConfigured } from "../../../lib/openaiClient";
 import { stripEmDashes } from "../../../lib/sanitizeText";
+import {
+  classifyGuardrail,
+  GUARDRAIL_BODIES,
+  GUARDRAIL_NBAS,
+} from "../../SidecarAssistant/conversation/guardrails";
 
 /**
  * Sitewide em-dash scrub for agent utterances. Applied to every message before
@@ -1270,6 +1275,25 @@ export function useSideBySideAgent() {
       lastQueryRef.current = trimmed;
 
       appendMessage({ id: nextId("shopper"), kind: "shopper", text: trimmed });
+
+      // Safety lanes (crisis / medical / age) before PDP FAQ or LLM browse.
+      const guardrail = classifyGuardrail(trimmed);
+      if (guardrail) {
+        appendMessage({
+          id: nextId("agent"),
+          kind: "agent_text",
+          body: GUARDRAIL_BODIES[guardrail],
+        });
+        const labels = GUARDRAIL_NBAS[guardrail];
+        if (labels.length > 0) {
+          appendMessage({
+            id: nextId("nbas"),
+            kind: "agent_nbas",
+            pills: buildPillsFromLabels([...labels]),
+          });
+        }
+        return;
+      }
 
       // ---------- PDP-origin fast paths (NBA pill clicks) ----------
       // These three pill kinds have deterministic answers tied to the

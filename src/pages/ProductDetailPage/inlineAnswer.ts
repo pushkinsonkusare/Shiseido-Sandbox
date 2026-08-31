@@ -1,6 +1,7 @@
 import type { CatalogProduct } from "../../catalog/catalog";
 import {
   classifyGuardrail,
+  detectAgeSafetyAsk,
   GUARDRAIL_BODIES,
   type GuardrailKind,
 } from "../../components/SidecarAssistant/conversation/guardrails";
@@ -144,6 +145,9 @@ export function buildInlineThinkingPlan(
       ) {
         steps.push(`Checking who the ${productName} is for`);
         steps.push("Matching skin-type guidance to this formula");
+      } else if (detectAgeSafetyAsk(trimmed)) {
+        steps.push("Checking whether I can advise on age or pediatric use");
+        steps.push("Preparing careful guidance");
       } else if (
         /\b(sensitive|gentle|irritat\w*|allerg\w*|pregnant|pregnancy|nursing)\b/.test(
           q,

@@ -1,6 +1,10 @@
 import type { CatalogProduct } from "../../../catalog/catalog";
 import { getBundleComponents } from "../../../catalog/catalog";
 import { buildIngredientPresenceAnswer } from "../../SidecarAssistant/conversation/ingredients";
+import {
+  ageSafetyAnswer,
+  detectAgeSafetyAsk,
+} from "../../SidecarAssistant/conversation/guardrails";
 
 /**
  * Programmatic FAQ floor for PDP-origin shopper questions.
@@ -1041,6 +1045,11 @@ export function resolveProductFaq(
   const presence = buildIngredientPresenceAnswer(product, prompt);
   if (presence) {
     return presence.body;
+  }
+
+  // --- Pediatric / age-group suitability: never invent from overview ---
+  if (detectAgeSafetyAsk(prompt)) {
+    return ageSafetyAnswer(product.title);
   }
 
   // --- Ingredients / formula / composition ---

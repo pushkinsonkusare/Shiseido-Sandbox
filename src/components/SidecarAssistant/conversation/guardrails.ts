@@ -19,6 +19,7 @@
 export type GuardrailKind =
   | "crisis"
   | "medical"
+  | "age_safety"
   | "off_domain"
   | "unintelligible";
 
@@ -28,9 +29,66 @@ export type GuardrailKind =
  * refused because it also mentioned, say, a car ride. Deliberately
  * wider than `CATEGORY_PATTERNS` in `flow.ts`: it covers concerns,
  * routine language and order hygiene, not just product families.
+ * Does NOT suppress `age_safety` — "is this sunscreen safe for toddlers"
+ * is on-topic beauty language that still must refuse.
  */
 const BEAUTY_VOCAB =
   /\b(skin|skincare|face|facial|complexion|routine|regimen|cleanser|cleansing|wash|softener|toner|essence|serum|treatment|concentrate|ampoule|moisturi[sz]er|cream|emulsion|lotion|oil|mask|eye|lip|sunscreen|sunblock|spf|sun|uv|balm|exfoliat\w*|peel|pore|acne|blemish|wrinkle|fine\s*lines?|aging|ageing|anti[-\s]?age\w*|firm\w*|lift\w*|sag\w*|bright\w*|dull\w*|dark\s*spots?|pigment\w*|hydrat\w*|dry|oily|combination|sensitive|redness|glow|radiance|collagen|retinol|vitamin\s*c|hyaluronic|niacinamide|peptide|ceramide|fragrance|shiseido|ultimune|benefiance|eudermine|bio[-\s]?performance|vital\s*perfection|future\s*solution|product|products|price|cheaper|budget|bundle|set|kit|gift|cart|checkout|order|delivery|shipping|return|refund|promo|coupon|discount)\b/i;
+
+/**
+ * Pediatric / age-group audience cues. Matched together with a suitability
+ * ask (safe for / can use / ok for) OR alone when the message is clearly
+ * about that audience using a product ("sunscreen for toddlers").
+ */
+const AGE_AUDIENCE =
+  /\b(toddlers?|infants?|newborns?|babies|baby|pediatric|paediatric|children|child|kids?|teenagers?|teens?|adolescents?|adolescence)\b/i;
+
+const AGE_RELATION =
+  /\b(my|our|the)\s+(son|daughter|child|kid|baby|toddler|infant|newborn)\b/i;
+
+/** "under 3 years" / "2 year old" / "2-year-old" — not "under $60". */
+const AGE_YEARS =
+  /\b(?:under|over|about|around)?\s*\d{1,2}[-\s]*(?:year|yr|month|mo)s?[-\s]?olds?\b|\b\d{1,2}[-\s]*(?:year|yr|month|mo)s?[-\s]?old\b|\bunder\s+\d{1,2}\s*(?:years?|yrs?|months?|mos?)\b/i;
+
+const SUITABILITY_ASK =
+  /\b(safe\s+for|okay\s+for|ok\s+for|suitable\s+for|good\s+for|can\s+(?:i|we|they|my|someone)\s+use|can\s+(?:a|my|our|the)\b|use\s+on|for\s+use\s+on|recommend\s+for|recommended\s+for)\b/i;
+
+const PRODUCT_FOR_AGE =
+  /\b(sunscreen|moisturizer|moisturiser|cleanser|serum|cream|lotion|spf|product|this|it)\s+for\s+(?:a\s+|my\s+|our\s+)?(?:toddler|infant|baby|child|kid|teen)/i;
+
+/**
+ * True when the shopper is asking about product use for children,
+ * infants, teens, or a stated age — not adult skin-type shopping.
+ */
+export function detectAgeSafetyAsk(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  if (AGE_YEARS.test(trimmed) && SUITABILITY_ASK.test(trimmed)) return true;
+  if (AGE_YEARS.test(trimmed) && PRODUCT_FOR_AGE.test(trimmed)) return true;
+  if (AGE_RELATION.test(trimmed) && (SUITABILITY_ASK.test(trimmed) || /\b(use|safe|okay|ok)\b/i.test(trimmed))) {
+    return true;
+  }
+  if (!AGE_AUDIENCE.test(trimmed)) return false;
+  if (SUITABILITY_ASK.test(trimmed)) return true;
+  if (PRODUCT_FOR_AGE.test(trimmed)) return true;
+  // Bare "for toddlers?" / "toddlers?" with product context still counts.
+  if (
+    /\b(for|about)\s+(toddlers?|infants?|babies|baby|children|kids?|teens?)\b/i.test(
+      trimmed,
+    )
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/** Refuse copy for age/pediatric suitability. Optional product title for FAQ. */
+export function ageSafetyAnswer(productTitle?: string): string {
+  if (productTitle) {
+    return `I can't advise whether the ${productTitle} is appropriate for children, toddlers, babies, teens, or any other age group. Please check with a pediatrician or dermatologist. I can share the ingredient list or help with adult skin-type questions.`;
+  }
+  return "I can't advise on product use for children, toddlers, babies, teens, or specific age groups. Please check with a pediatrician or dermatologist. I can help with adult skincare, ingredients, or finding the right product for your skin type.";
+}
 
 /**
  * Crisis language. Handled ahead of every other lane and answered
@@ -125,7 +183,8 @@ function isUnintelligible(text: string): boolean {
 /**
  * Returns the lane a message belongs to, or `null` to let the normal
  * intent pipeline handle it. Order matters: safety outranks scope,
- * scope outranks readability.
+ * scope outranks readability. Age/pediatric suitability refuses even
+ * when beauty vocabulary is present.
  */
 export function classifyGuardrail(text: string): GuardrailKind | null {
   const trimmed = text.trim();
@@ -133,6 +192,7 @@ export function classifyGuardrail(text: string): GuardrailKind | null {
 
   if (CRISIS.test(trimmed)) return "crisis";
   if (ACUTE_INJURY.test(trimmed) || MEDICAL_HELP.test(trimmed)) return "medical";
+  if (detectAgeSafetyAsk(trimmed)) return "age_safety";
 
   // Beauty vocabulary means the shopper is on-topic even if the
   // phrasing is unusual, so the remaining lanes stand down.
@@ -149,6 +209,7 @@ export const GUARDRAIL_BODIES: Record<GuardrailKind, string> = {
     "I'm sorry you're going through this, and I'm not the right kind of help for it. Please reach out to your local emergency number or a crisis line now, they can support you properly.",
   medical:
     "I can't give medical advice. If your skin is burning, broken, or reacting, please check with a doctor or dermatologist first. Once you're cleared, I'm happy to help you find something gentle.",
+  age_safety: ageSafetyAnswer(),
   off_domain:
     "I'm the Shiseido beauty advisor, so I can only help with skincare, your cart, and store questions. Here's where I can actually be useful:",
   unintelligible:
@@ -168,6 +229,11 @@ export const GUARDRAIL_NBAS: Record<GuardrailKind, readonly string[]> = {
     "Gentle cleansers for sensitive skin",
     "Fragrance-free moisturizers",
     "See return policy",
+  ],
+  age_safety: [
+    "Is this good for sensitive skin?",
+    "Mineral sunscreen",
+    "Products for dry skin",
   ],
   off_domain: [
     "Build a full routine",
