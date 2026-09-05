@@ -28,6 +28,7 @@ import {
 import {
   AgentCart,
   AgentCompareCard,
+  AgentCompareSummariesCard,
   AgentNBAs,
   AgentOrderSummary,
   AgentPDPCard,
@@ -40,6 +41,7 @@ import {
   type AgentCartLineItem,
   type AgentCompareColumn,
   type AgentCompareRow,
+  type AgentCompareSummaryProduct,
   type AgentPDPSizeOption,
   type AgentPLPProduct,
 } from "./components";
@@ -144,6 +146,13 @@ import {
   priceSpread,
   type SkinType,
 } from "./conversation/compareAnswers";
+import {
+  detectCategoryOnlyReply,
+  detectOrdinalCompare,
+  listingFromMessages,
+  resolveOrdinalCompare,
+  type OrdinalCompareAsk,
+} from "./conversation/ordinalCompare";
 import {
   createOpenAIAgent,
   type AgentAction,
@@ -620,13 +629,26 @@ function buildTranscriptText(messages: ChatMessage[]): string {
         break;
       case "agent_compare":
         lines.push(`Assistant: ${message.intro}`);
-        lines.push(`  ${message.columns.map((column) => column.title).join(" vs ")}`);
-        for (const row of message.rows) {
+        if (message.variant === "summaries" && message.summaries?.length) {
+          for (const product of message.summaries) {
+            lines.push(
+              `  • ${product.title} (${product.category}, ${product.price})`,
+            );
+            if (product.summary.trim()) {
+              lines.push(`      ${product.summary.trim()}`);
+            }
+          }
+        } else {
           lines.push(
-            `    ${row.label}: ${row.values
-              .map((value) => value ?? "N/A")
-              .join(" | ")}`,
+            `  ${message.columns.map((column) => column.title).join(" vs ")}`,
           );
+          for (const row of message.rows) {
+            lines.push(
+              `    ${row.label}: ${row.values
+                .map((value) => value ?? "N/A")
+                .join(" | ")}`,
+            );
+          }
         }
         if (message.recommendation) {
           lines.push(`Assistant: ${message.recommendation}`);
@@ -737,6 +759,73 @@ function toCompareColumn(product: CatalogProduct): AgentCompareColumn {
     comparePrice: product.comparePriceFormatted ?? undefined,
     rating: product.rating ?? undefined,
     reviewCount: product.reviewCount ?? undefined,
+  };
+}
+
+const SUMMARY_FEATURE_SPEC_LABELS = [
+  "Skin type",
+  "Targets",
+  "Type",
+  "Collection",
+];
+
+/** Fold catalog copy into 1–2 readable sentences for the summaries card
+ * when the LLM blurb is unavailable. */
+function buildHostCompareSummary(product: CatalogProduct): string {
+  const about =
+    product.shortDescription?.trim() ||
+    product.overview
+      ?.split(/\n+/)
+      .map((line) => line.trim())
+      .find(Boolean) ||
+    "";
+  const benefits = product.keyBenefits
+    .map((benefit) => benefit.trim())
+    .filter(Boolean)
+    .slice(0, 2);
+
+  const parts: string[] = [];
+  if (about) {
+    parts.push(about.length > 220 ? `${about.slice(0, 217).trimEnd()}…` : about);
+  }
+  if (benefits.length === 1) {
+    parts.push(
+      benefits[0].endsWith(".") ? benefits[0] : `${benefits[0]}.`,
+    );
+  } else if (benefits.length >= 2) {
+    const first = benefits[0].replace(/\.$/, "");
+    const second = benefits[1].replace(/\.$/, "");
+    parts.push(`Notable strengths include ${first} and ${second}.`);
+  }
+  if (parts.length > 0) return parts.join(" ");
+
+  const specBits: string[] = [];
+  for (const label of SUMMARY_FEATURE_SPEC_LABELS) {
+    const spec = product.specs.find((entry) => entry.label === label);
+    if (!spec?.value) continue;
+    specBits.push(`${label.toLowerCase()} ${spec.value}`);
+    if (specBits.length >= 2) break;
+  }
+  if (specBits.length > 0) {
+    const category = product.category?.trim() || "Shiseido";
+    return `A ${category} option suited for ${specBits.join(" and ")}.`;
+  }
+  return `${compactProductTitle(product.title)} is a Shiseido pick at ${product.priceFormatted}.`;
+}
+
+/** Build a stacked-summary block for one product with host fallback prose. */
+function toCompareSummaryProduct(
+  product: CatalogProduct,
+): AgentCompareSummaryProduct {
+  return {
+    slug: product.slug,
+    imageUrl: product.imageUrl,
+    imageAlt: product.imageAlt,
+    title: product.title,
+    category: product.category,
+    price: product.priceFormatted,
+    comparePrice: product.comparePriceFormatted ?? undefined,
+    summary: buildHostCompareSummary(product),
   };
 }
 
@@ -1080,7 +1169,7 @@ export function SidecarAssistant({
   const { products, heroProduct, getProductBySlug, getRelatedProducts, orderHistory } =
     useCatalog();
   const { currentRoute, currentProductSlug } = usePrototypeNavigation();
-  const { accordionRecommendations, contextIsland, contextPill, productSelection, productSelectionType, viewportMode, userTestingLock } =
+  const { accordionRecommendations, contextIsland, contextPill, productSelection, productSelectionType, compareFeature, compareFeatureType, viewportMode, userTestingLock } =
     useAgentMode();
   const demoTheme = useSyncExternalStore(
     (onStoreChange) => {
@@ -1324,17 +1413,19 @@ export function SidecarAssistant({
     return buildNbaItems(["Show similar", faq1, faq2], "nba-contextual");
   }, [selectedSlugs, getProductBySlug]);
 
-  // When products are selected, the input invites a product-scoped question.
-  // The "Asking about" pill already names the SKU, so keep the field helper
-  // generic in that case.
+  // Selection-aware helper: one pick names the product; two+ invites compare.
+  // Long titles stay on one line via the CSS ellipsis overlay (native
+  // textarea placeholders cannot truncate).
   const inputPlaceholder = useMemo(() => {
-    if (askingAboutProduct) return PLACEHOLDER_INPUT;
+    if (selectedSlugs.length >= 2) {
+      return "Ask questions or compare selected";
+    }
     if (selectedSlugs.length === 1) {
       const product = getProductBySlug(selectedSlugs[0]);
       if (product) return `Ask me anything about ${product.title}`;
     }
-    if (selectedSlugs.length > 1) {
-      return `Ask me anything about your ${selectedSlugs.length} selected products`;
+    if (askingAboutProduct) {
+      return `Ask me anything about ${askingAboutProduct.title}`;
     }
     return PLACEHOLDER_INPUT;
   }, [askingAboutProduct, selectedSlugs, getProductBySlug]);
@@ -1390,6 +1481,17 @@ export function SidecarAssistant({
     /** Chips already used, so re-offering the row doesn't repeat them. */
     answered: string[];
   } | null>(null);
+  /** Open accordion section on the latest routine card (null = closed / all-open mode). */
+  const routineOpenIndexRef = useRef<number | null>(0);
+  /** After all-open ordinal compare clarify, wait for a category chip or reply. */
+  const pendingOrdinalCompareRef = useRef<OrdinalCompareAsk | null>(null);
+  /** Filled once `runCompareForProducts` is defined — lets early dispatch intercepts call it. */
+  const runCompareForProductsRef = useRef<
+    (
+      products: CatalogProduct[],
+      options?: { appendShopperBubble?: boolean },
+    ) => void
+  >(() => {});
 
   const takeWhoForLabels = (labels: string[], genericSkincare?: boolean) => {
     const next = applyWhoForChip(labels, shopperProfileRef.current, {
@@ -3239,6 +3341,87 @@ export function SidecarAssistant({
         return;
       }
 
+      // Ordinal compare against the open listing ("1st and 3rd") — host-owned,
+      // never invents SKUs via the LLM. Also completes a pending category clarify.
+      // Skip when 2+ checkboxes are already selected (Compare pill / alias owns that).
+      {
+        let ordinalAsk = detectOrdinalCompare(trimmed);
+        if (!ordinalAsk && pendingOrdinalCompareRef.current) {
+          const hint = detectCategoryOnlyReply(trimmed);
+          if (hint) {
+            ordinalAsk = {
+              ordinals: pendingOrdinalCompareRef.current.ordinals,
+              categoryHint: hint,
+            };
+          }
+        }
+        if (
+          ordinalAsk &&
+          (pendingOrdinalCompareRef.current ||
+            selectedSlugsRef.current.length < 2)
+        ) {
+          const listing = listingFromMessages(
+            messagesRef.current,
+            accordionRecommendations,
+          );
+          const result = resolveOrdinalCompare(
+            ordinalAsk,
+            listing,
+            accordionRecommendations ? routineOpenIndexRef.current : null,
+          );
+          if (result.kind === "clarify") {
+            pendingOrdinalCompareRef.current = {
+              ordinals: result.ordinals,
+              categoryHint: null,
+            };
+            const loaderId = nextId("loader");
+            appendMessage({
+              id: loaderId,
+              kind: "agent_loader",
+              variant: "answering",
+            });
+            scheduleResponse(() => {
+              removeMessage(loaderId);
+              appendMessage({
+                id: nextId("agent"),
+                kind: "agent_simple",
+                body: result.body,
+              });
+              appendMessage(buildNbasMessage(result.chips, false));
+            }, 450);
+            return;
+          }
+          pendingOrdinalCompareRef.current = null;
+          if (result.kind === "error") {
+            const loaderId = nextId("loader");
+            appendMessage({
+              id: loaderId,
+              kind: "agent_loader",
+              variant: "answering",
+            });
+            scheduleResponse(() => {
+              removeMessage(loaderId);
+              appendMessage({
+                id: nextId("agent"),
+                kind: "agent_simple",
+                body: result.body,
+              });
+            }, 450);
+            return;
+          }
+          const productsToCompare = result.slugs
+            .map((slug) => getProductBySlug(slug))
+            .filter((p): p is CatalogProduct => Boolean(p));
+          if (productsToCompare.length >= 2) {
+            setSelectedSlugs(result.slugs.slice(0, MAX_SELECTED_PRODUCTS));
+            runCompareForProductsRef.current(productsToCompare, {
+              appendShopperBubble: false,
+            });
+            return;
+          }
+        }
+      }
+
       const searchPlan = buildSearchLoaderPlan(trimmed);
       const loaderId = nextId("loader");
       appendMessage({
@@ -3308,8 +3491,221 @@ export function SidecarAssistant({
       renderGuardrailResponse,
       scheduleResponse,
       updateMessage,
+      accordionRecommendations,
+      getProductBySlug,
     ],
   );
+
+  /**
+   * Shared Compare-table path used by the selection pill and by ordinal
+   * "1st and 3rd" resolve. When `appendShopperBubble` is false, the caller
+   * already wrote the shopper turn (e.g. free-text dispatch).
+   */
+  const runCompareForProducts = useCallback(
+    (
+      selectedProducts: CatalogProduct[],
+      options?: { appendShopperBubble?: boolean },
+    ) => {
+      const appendShopperBubble = options?.appendShopperBubble !== false;
+      const firstProduct = selectedProducts[0];
+      if (!firstProduct) return;
+
+      if (appendShopperBubble) {
+        appendMessage({
+          id: nextId("shopper"),
+          kind: "shopper_text",
+          text: buildCompareQuery(selectedProducts),
+        });
+      }
+
+      const comparePlan = buildCompareLoaderPlan(selectedProducts);
+      const loaderId = nextId("loader");
+      appendMessage({
+        id: loaderId,
+        kind: "agent_loader",
+        variant: "answering",
+        steps: comparePlan.steps,
+        stepIntervalMs: comparePlan.stepIntervalMs,
+      });
+
+      const compareProducts = [...selectedProducts];
+      const included = new Set(compareProducts.map((p) => p.slug));
+      if (compareProducts.length < 2) {
+        for (const candidate of getRelatedProducts(firstProduct.slug, 6)) {
+          if (included.has(candidate.slug)) continue;
+          included.add(candidate.slug);
+          compareProducts.push(candidate);
+          if (compareProducts.length >= MAX_SELECTED_PRODUCTS) break;
+        }
+      }
+      const comparedProducts = compareProducts.slice(0, MAX_SELECTED_PRODUCTS);
+      const columns = comparedProducts.map(toCompareColumn);
+      // Stamp the type at turn start so toggling the switcher mid-thread does
+      // not flip an already-shown compare card.
+      const compareVariant =
+        compareFeature && compareFeatureType === "product-summaries"
+          ? "summaries"
+          : "table";
+      let summaries =
+        compareVariant === "summaries"
+          ? comparedProducts.map(toCompareSummaryProduct)
+          : undefined;
+      const rows =
+        compareVariant === "table"
+          ? buildCompareRows(comparedProducts)
+          : [];
+
+      const finishCompare = (
+        recommended: CatalogProduct,
+        recommendation: string,
+        nextSummaries = summaries,
+      ) => {
+        removeMessage(loaderId);
+        if (columns.length < 2) {
+          appendMessage({
+            id: nextId("agent"),
+            kind: "agent_simple",
+            body: `I need at least two products to compare. Select another item and I'll line them up side by side.`,
+          });
+          return;
+        }
+        appendMessage({
+          id: nextId("compare"),
+          kind: "agent_compare",
+          intro: buildCompareIntro(comparedProducts),
+          variant: compareVariant,
+          columns,
+          rows,
+          summaries: nextSummaries,
+          recommendation,
+          recommendedSlug: recommended.slug,
+        });
+        lastCompareRef.current = {
+          slugs: comparedProducts.map((product) => product.slug),
+          recommendedSlug: recommended.slug,
+          answered: [],
+        };
+        const compareNbas = buildStageNbas({
+          stage: "compare",
+          products: comparedProducts,
+          recommended,
+          inCartSlugs: cartSlugsFromMessages(messagesRef.current),
+        });
+        appendMessage(
+          buildStageNbasMessage("compare", compareNbas, false, {
+            productSlug: recommended.slug,
+          }),
+        );
+        emitAssistantTelemetry("nba_impression", {
+          stage: "compare",
+          labels: compareNbas.map((item) => item.label),
+          lanes: compareNbas.map((item) => item.lane),
+        });
+        setSelectedSlugs([]);
+      };
+
+      if (columns.length < 2) {
+        scheduleResponse(
+          () => finishCompare(firstProduct, ""),
+          COMPARE_LATENCY_MS,
+        );
+        return;
+      }
+
+      const ratingWinner = [...comparedProducts].sort(
+        (a, b) =>
+          (b.rating ?? 0) - (a.rating ?? 0) ||
+          (b.reviewCount ?? 0) - (a.reviewCount ?? 0),
+      )[0];
+      const hostRecommendation = buildCompareRationale(
+        comparedProducts,
+        ratingWinner,
+      );
+      const agent = agentRef.current;
+      if (!agent) {
+        scheduleResponse(
+          () => finishCompare(ratingWinner, hostRecommendation),
+          COMPARE_LATENCY_MS,
+        );
+        return;
+      }
+
+      const startedAt = Date.now();
+      const applyLiveStatus = (line: string) => {
+        updateMessage(loaderId, (message) => {
+          if (message.kind !== "agent_loader") return message;
+          return {
+            ...message,
+            label: line,
+            steps: undefined,
+            stepIntervalMs: undefined,
+          };
+        });
+      };
+      agent
+        .recommendComparison(comparedProducts, { onStatus: applyLiveStatus })
+        .then((pick) => {
+          const recommended = pick
+            ? (comparedProducts.find(
+                (product) => product.slug === pick.recommendedSlug,
+              ) ?? ratingWinner)
+            : ratingWinner;
+          const recommendation =
+            pick?.recommendation.trim() || hostRecommendation;
+          let mergedSummaries = summaries;
+          if (
+            summaries &&
+            pick?.productSummaries &&
+            pick.productSummaries.length > 0
+          ) {
+            const bySlug = new Map(
+              pick.productSummaries.map((entry) => [
+                entry.slug,
+                entry.summary.trim(),
+              ]),
+            );
+            mergedSummaries = summaries.map((product) => {
+              const next = bySlug.get(product.slug);
+              return next ? { ...product, summary: next } : product;
+            });
+            summaries = mergedSummaries;
+          }
+          const wait = Math.max(
+            0,
+            COMPARE_LATENCY_MS - (Date.now() - startedAt),
+          );
+          window.setTimeout(
+            () => finishCompare(recommended, recommendation, mergedSummaries),
+            wait,
+          );
+        })
+        .catch((error) => {
+          console.error(
+            "[SidecarAssistant] Comparison recommendation failed",
+            error,
+          );
+          const wait = Math.max(
+            0,
+            COMPARE_LATENCY_MS - (Date.now() - startedAt),
+          );
+          window.setTimeout(
+            () => finishCompare(ratingWinner, hostRecommendation),
+            wait,
+          );
+        });
+    },
+    [
+      appendMessage,
+      compareFeature,
+      compareFeatureType,
+      getRelatedProducts,
+      removeMessage,
+      scheduleResponse,
+      updateMessage,
+    ],
+  );
+
+  runCompareForProductsRef.current = runCompareForProducts;
 
   /** Contextual (selected-product) pills, routed conditionally:
    *  - Informational pills ("Is this waterproof?", "Ingredients") answer
@@ -3512,153 +3908,7 @@ export function SidecarAssistant({
       }
 
       if (firstProduct && label === "Compare") {
-        appendMessage({
-          id: nextId("shopper"),
-          kind: "shopper_text",
-          text: buildCompareQuery(selectedProducts),
-        });
-        const comparePlan = buildCompareLoaderPlan(selectedProducts);
-        const loaderId = nextId("loader");
-        appendMessage({
-          id: loaderId,
-          kind: "agent_loader",
-          variant: "answering",
-          steps: comparePlan.steps,
-          stepIntervalMs: comparePlan.stepIntervalMs,
-        });
-
-        const compareProducts = [...selectedProducts];
-        const included = new Set(compareProducts.map((p) => p.slug));
-        // Pad with related products so a single-selection compare still
-        // produces a meaningful multi-column table.
-        if (compareProducts.length < 2) {
-          for (const candidate of getRelatedProducts(firstProduct.slug, 6)) {
-            if (included.has(candidate.slug)) continue;
-            included.add(candidate.slug);
-            compareProducts.push(candidate);
-            if (compareProducts.length >= MAX_SELECTED_PRODUCTS) break;
-          }
-        }
-        const comparedProducts = compareProducts.slice(0, MAX_SELECTED_PRODUCTS);
-        const columns = comparedProducts.map(toCompareColumn);
-
-        const finishCompare = (
-          recommended: CatalogProduct,
-          recommendation: string,
-        ) => {
-          removeMessage(loaderId);
-          if (columns.length < 2) {
-            appendMessage({
-              id: nextId("agent"),
-              kind: "agent_simple",
-              body: `I need at least two products to compare. Select another item and I'll line them up side by side.`,
-            });
-            return;
-          }
-          appendMessage({
-            id: nextId("compare"),
-            kind: "agent_compare",
-            intro: buildCompareIntro(comparedProducts),
-            columns,
-            rows: buildCompareRows(comparedProducts),
-            recommendation,
-            recommendedSlug: recommended.slug,
-          });
-          lastCompareRef.current = {
-            slugs: comparedProducts.map((product) => product.slug),
-            recommendedSlug: recommended.slug,
-            answered: [],
-          };
-          const compareNbas = buildStageNbas({
-            stage: "compare",
-            products: comparedProducts,
-            recommended,
-            inCartSlugs: cartSlugsFromMessages(messagesRef.current),
-          });
-          appendMessage(
-            buildStageNbasMessage("compare", compareNbas, false, {
-              productSlug: recommended.slug,
-            }),
-          );
-          emitAssistantTelemetry("nba_impression", {
-            stage: "compare",
-            labels: compareNbas.map((item) => item.label),
-            lanes: compareNbas.map((item) => item.lane),
-          });
-          setSelectedSlugs([]);
-        };
-
-        if (columns.length < 2) {
-          scheduleResponse(
-            () => finishCompare(firstProduct, ""),
-            COMPARE_LATENCY_MS,
-          );
-          return;
-        }
-
-        const ratingWinner = [...comparedProducts].sort(
-          (a, b) =>
-            (b.rating ?? 0) - (a.rating ?? 0) ||
-            (b.reviewCount ?? 0) - (a.reviewCount ?? 0),
-        )[0];
-        const hostRecommendation = buildCompareRationale(
-          comparedProducts,
-          ratingWinner,
-        );
-        const agent = agentRef.current;
-        if (!agent) {
-          scheduleResponse(
-            () => finishCompare(ratingWinner, hostRecommendation),
-            COMPARE_LATENCY_MS,
-          );
-          return;
-        }
-
-        const startedAt = Date.now();
-        const applyLiveStatus = (line: string) => {
-          updateMessage(loaderId, (message) => {
-            if (message.kind !== "agent_loader") return message;
-            return {
-              ...message,
-              label: line,
-              steps: undefined,
-              stepIntervalMs: undefined,
-            };
-          });
-        };
-        agent
-          .recommendComparison(comparedProducts, { onStatus: applyLiveStatus })
-          .then((pick) => {
-            const recommended = pick
-              ? (comparedProducts.find(
-                  (product) => product.slug === pick.recommendedSlug,
-                ) ?? ratingWinner)
-              : ratingWinner;
-            const recommendation =
-              pick?.recommendation.trim() || hostRecommendation;
-            const wait = Math.max(
-              0,
-              COMPARE_LATENCY_MS - (Date.now() - startedAt),
-            );
-            window.setTimeout(
-              () => finishCompare(recommended, recommendation),
-              wait,
-            );
-          })
-          .catch((error) => {
-            console.error(
-              "[SidecarAssistant] Comparison recommendation failed",
-              error,
-            );
-            const wait = Math.max(
-              0,
-              COMPARE_LATENCY_MS - (Date.now() - startedAt),
-            );
-            window.setTimeout(
-              () => finishCompare(ratingWinner, hostRecommendation),
-              wait,
-            );
-          });
+        runCompareForProducts(selectedProducts, { appendShopperBubble: true });
         return;
       }
 
@@ -3676,6 +3926,7 @@ export function SidecarAssistant({
       handleAddToCart,
       updateMessage,
       establishConversationProduct,
+      runCompareForProducts,
     ],
   );
 
@@ -5003,6 +5254,24 @@ export function SidecarAssistant({
       return true;
     }
 
+    /* Ordinal compare against the open listing must win over product-FAQ
+     * routing (a sticky conversation product would otherwise treat
+     * "compare the 1st and 3rd" as an overview dump). Selection Compare
+     * still wins when 2+ checkboxes are active. */
+    if (
+      selectedSlugs.length < 2 &&
+      (detectOrdinalCompare(value) ||
+        (pendingOrdinalCompareRef.current &&
+          detectCategoryOnlyReply(value)))
+    ) {
+      dispatchShopperMessage(value);
+      setSelectedSlugs([]);
+      if (simulateMobileKeyboard) {
+        dismissSimulatedKeyboard();
+      }
+      return true;
+    }
+
     /* With a selection open, typed "compare" / "show similar" / FAQ copy
      * should take the same path as the tray pills — not the generic probe. */
     const contextualLabel = resolveContextualComposerLabel(
@@ -5177,8 +5446,15 @@ export function SidecarAssistant({
   /* ---------- render ---------- */
 
   const renderedMessages = useMemo(
-    () =>
-      messages.map((message) => {
+    () => {
+      let latestRoutineId: string | null = null;
+      for (let i = messages.length - 1; i >= 0; i -= 1) {
+        if (messages[i].kind === "agent_routine") {
+          latestRoutineId = messages[i].id;
+          break;
+        }
+      }
+      return messages.map((message) => {
         switch (message.kind) {
           case "agent_simple":
             return (
@@ -5237,6 +5513,13 @@ export function SidecarAssistant({
                 selectionLimitReached={selectedSet.size >= MAX_SELECTED_PRODUCTS}
                 accordion={accordionRecommendations}
                 streaming={message.streaming}
+                onOpenSectionChange={
+                  message.id === latestRoutineId
+                    ? (index) => {
+                        routineOpenIndexRef.current = index;
+                      }
+                    : undefined
+                }
               />
             );
           case "agent_pdp":
@@ -5259,7 +5542,19 @@ export function SidecarAssistant({
               />
             );
           case "agent_compare":
-            return (
+            return message.variant === "summaries" &&
+              message.summaries &&
+              message.summaries.length > 0 ? (
+              <AgentCompareSummariesCard
+                key={message.id}
+                intro={message.intro}
+                summaries={message.summaries}
+                recommendation={message.recommendation}
+                recommendedSlug={message.recommendedSlug}
+                onSelect={handleProductSelect}
+                onAddToCart={(slug) => handleAddToCart(slug, 1)}
+              />
+            ) : (
               <AgentCompareCard
                 key={message.id}
                 intro={message.intro}
@@ -5386,7 +5681,8 @@ export function SidecarAssistant({
           default:
             return null;
         }
-      }),
+      });
+    },
     [
       handleAddToCart,
       handleApplyPromo,
@@ -5449,6 +5745,8 @@ export function SidecarAssistant({
     lastRoutineIntentRef.current = null;
     shopperProfileRef.current = {};
     lastCompareRef.current = null;
+    pendingOrdinalCompareRef.current = null;
+    routineOpenIndexRef.current = 0;
     answeredFaqsBySlugRef.current.clear();
     agentRef.current?.reset();
     setWelcomeRefreshCount(0);

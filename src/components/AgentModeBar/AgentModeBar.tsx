@@ -3,6 +3,7 @@ import { Settings, X } from "lucide-react";
 import "./AgentModeBar.css";
 import {
   AGENT_MODES,
+  COMPARE_FEATURE_TYPES,
   PRODUCT_SELECTION_TYPES,
   PDP_INLINE_WIDGET_POSITIONS,
   PDP_INLINE_WIDGET_TYPES,
@@ -44,6 +45,10 @@ export function AgentModeBar() {
     setPdpInlineWidgetType,
     pdpInlineWidgetPosition,
     setPdpInlineWidgetPosition,
+    compareFeature,
+    setCompareFeature,
+    compareFeatureType,
+    setCompareFeatureType,
     userTestingLock,
   } = useAgentMode();
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
@@ -363,6 +368,46 @@ export function AgentModeBar() {
                             }
                             aria-pressed={pdpInlineWidgetPosition === id}
                             onClick={() => setPdpInlineWidgetPosition(id)}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <label className="agent-mode-bar__feature">
+                  <input
+                    type="checkbox"
+                    className="agent-mode-bar__feature-checkbox"
+                    checked={compareFeature}
+                    onChange={(event) => setCompareFeature(event.target.checked)}
+                  />
+                  <span className="agent-mode-bar__feature-label">Compare</span>
+                </label>
+                {/* Sibling of the label, not a child: nested inside it, every
+                    click on a sub-option would also toggle the checkbox. */}
+                {compareFeature && (
+                  <div className="agent-mode-bar__sub-options">
+                    <div
+                      className="agent-mode-bar__sub-group"
+                      role="group"
+                      aria-label="Compare type"
+                    >
+                      <span className="agent-mode-bar__sub-title">Type</span>
+                      <div className="agent-mode-bar__option-grid">
+                        {COMPARE_FEATURE_TYPES.map(({ id, label }) => (
+                          <button
+                            key={id}
+                            type="button"
+                            className={
+                              "agent-mode-bar__option-button agent-mode-bar__option-button--sm" +
+                              (compareFeatureType === id
+                                ? " agent-mode-bar__option-button--active"
+                                : "")
+                            }
+                            aria-pressed={compareFeatureType === id}
+                            onClick={() => setCompareFeatureType(id)}
                           >
                             {label}
                           </button>

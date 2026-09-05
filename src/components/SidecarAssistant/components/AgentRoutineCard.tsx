@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AgentProductCarousel,
   type AgentCarouselProduct,
@@ -44,6 +44,8 @@ export type AgentRoutineCardProps = {
   /** True while sections are still arriving: holds a placeholder below the last
    *  one so the card reads as still being written. */
   streaming?: boolean;
+  /** Notifies the host when the open accordion section changes (null = all closed). */
+  onOpenSectionChange?: (index: number | null) => void;
   /** Optional class name appended to the root element. */
   className?: string;
 };
@@ -66,9 +68,14 @@ export function AgentRoutineCard({
   selectionLimitReached,
   accordion = true,
   streaming = false,
+  onOpenSectionChange,
   className,
 }: AgentRoutineCardProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  useEffect(() => {
+    onOpenSectionChange?.(accordion ? openIndex : null);
+  }, [accordion, openIndex, onOpenSectionChange]);
 
   // While streaming the card opens on the acknowledgement alone, so an empty
   // section list is a valid state rather than nothing to render.

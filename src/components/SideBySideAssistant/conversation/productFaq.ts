@@ -556,13 +556,67 @@ function scentAnswer(product: CatalogProduct): string {
     return `Yes — the ${product.title} is fragrance-free.`;
   }
   const raw = product.ingredients || "";
-  if (/\bfragrance[-\s]?free\b/i.test(raw)) {
+  if (/\bfragrance[-\s]?free\b|\bunscented\b|\bno\s+fragrance\b/i.test(raw)) {
     return `The ${product.title} is fragrance-free.`;
   }
-  if (/\bfragrance\b|\bparfum\b/i.test(raw)) {
-    return `The ${product.title} includes a light fragrance. If you're scent-sensitive, patch-test first.`;
+  const formula = raw.replace(
+    /\bfragrance[-\s]?free\b|\bunscented\b|\bno\s+fragrance\b/gi,
+    " ",
+  );
+  if (/\b(fragrances?|parfums?|perfumes?)\b/i.test(formula)) {
+    return `The ${product.title} includes fragrance in the formula. If you're scent-sensitive, patch-test first.`;
   }
-  return `The ${product.title} doesn't call out a strong scent — most of what you'll notice is the texture and finish.`;
+  for (const block of product.featureBlocks) {
+    if (/\bfragrance[-\s]?free\b|\bunscented\b|\bno\s+fragrance\b/i.test(block)) {
+      continue;
+    }
+    if (/\b(fragrances?|parfums?|perfumes?)\b/i.test(block)) {
+      return `The ${product.title} includes fragrance. If you're scent-sensitive, patch-test first.`;
+    }
+  }
+  return `The ${product.title} doesn't list fragrance or Parfum in the formula notes we have — check the packaging for the full INCI if scent is a concern.`;
+}
+
+/**
+ * Honest non-certification answer for non-toxic / green / clean / organic asks.
+ * Never invents EWG or "green" certifications; may quote a real free-of /
+ * mineral / fragrance-free benefit when present.
+ */
+function formulationClaimAnswer(product: CatalogProduct): string {
+  const related = product.featureBlocks
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .filter((block) =>
+      /\b(fragrance[-\s]?free|paraben[-\s]?free|alcohol[-\s]?free|mineral[-\s]?oil[-\s]?free|mineral[-\s]?based|free\s+of|reef[-\s]?safe|oxybenzone|octinoxate)\b/i.test(
+        block,
+      ),
+    )
+    .filter((block) => !/\bgreen\s+floral\b/i.test(block));
+  const parts = [
+    `We don't certify the ${product.title} as non-toxic, green, clean, organic, or EWG-rated — those labels aren't something we assign here.`,
+  ];
+  if (related[0]) {
+    parts.push(`What we do note on this formula: ${related[0].replace(/\.*$/, ".")}`);
+  }
+  parts.push(
+    "For formula detail, I can share the ingredient list, or you can check the packaging. For safety concerns, a dermatologist is the best guide.",
+  );
+  return joinSentences(parts);
+}
+
+function isFormulationClaimAsk(q: string): boolean {
+  return (
+    /\bnon[-\s]?toxic\b/.test(q) ||
+    /\btoxin\w*\b/.test(q) ||
+    /\b(clean\s*beauty|clean\s*ingredient\w*|eco[-\s]?friendly|reef[-\s]?safe)\b/.test(
+      q,
+    ) ||
+    /\bEWG\b/i.test(q) ||
+    /\b(organic|natural)\b/.test(q) ||
+    // "green" beauty / considered green — not "green tea" alone as a product ask
+    /\b(considered\s+)?green\b/.test(q) ||
+    /\bis\s+it\s+clean\b/.test(q)
+  );
 }
 
 function aboutProductAnswer(product: CatalogProduct): string {
@@ -1083,8 +1137,9 @@ export function resolveProductFaq(
   }
 
   // --- Sensitive / gentle / allergy / pregnancy caution ---
+  // Fragrance-free / unscented route to scentAnswer below (not sensitive).
   if (
-    /\b(sensitive|gentle|fragrance[-\s]?free|unscented|non[-\s]?comedogenic|won'?t\s+clog|clog\s+(my\s+)?pores?|irritat\w*|reactive|allerg\w*|hypoallergenic|patch[-\s]?test|pregnant|pregnancy|nursing|breastfeed\w*)\b/.test(
+    /\b(sensitive|gentle|non[-\s]?comedogenic|won'?t\s+clog|clog\s+(my\s+)?pores?|irritat\w*|reactive|allerg\w*|hypoallergenic|patch[-\s]?test|pregnant|pregnancy|nursing|breastfeed\w*)\b/.test(
       q,
     )
   ) {
@@ -1092,6 +1147,11 @@ export function resolveProductFaq(
       return `For pregnancy or nursing, check with your dermatologist before using the ${product.title}. I can share the ingredient list if that helps your conversation.`;
     }
     return waterproofAnswer(product);
+  }
+
+  // --- Non-toxic / green / clean / organic (no invented certifications) ---
+  if (isFormulationClaimAsk(q)) {
+    return formulationClaimAnswer(product);
   }
 
   // --- Skin type ---
@@ -1194,8 +1254,12 @@ export function resolveProductFaq(
     return stabilizationAnswer(product);
   }
 
-  // --- Scent ---
-  if (/\b(scent|smell|fragrance|perfume|odour|odor|aromatic)\b/.test(q)) {
+  // --- Scent / fragrance presence labeling ---
+  if (
+    /\b(scent|smell|fragrances?|perfumes?|parfums?|odour|odor|aromatic|unscented)\b/.test(
+      q,
+    )
+  ) {
     return scentAnswer(product);
   }
 

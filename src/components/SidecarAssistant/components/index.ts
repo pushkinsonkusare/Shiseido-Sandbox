@@ -53,6 +53,12 @@ export {
 } from "./AgentCompareCard";
 
 export {
+  AgentCompareSummariesCard,
+  type AgentCompareSummaryProduct,
+  type AgentCompareSummariesCardProps,
+} from "./AgentCompareSummariesCard";
+
+export {
   AgentCart,
   type AgentCartItem,
   type AgentCartLineItem,

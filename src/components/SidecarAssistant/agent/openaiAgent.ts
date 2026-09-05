@@ -223,6 +223,8 @@ export type OpenAIAgentDeps = {
 export type ComparisonPick = {
   recommendedSlug: string;
   recommendation: string;
+  /** Per-product narrative blurbs for the Product summaries compare card. */
+  productSummaries: { slug: string; summary: string }[];
 };
 
 export type OpenAIAgent = {
@@ -232,7 +234,8 @@ export type OpenAIAgent = {
   ) => Promise<AgentAction[]>;
   /**
    * Separate from `respond` so a compare turn does not pollute shopping
-   * history. Table specs stay host-built; this only writes the pick.
+   * history. Spec rows stay host-built; this writes per-product summaries
+   * (when used) plus the closing pick.
    */
   recommendComparison: (
     products: CatalogProduct[],
@@ -786,6 +789,8 @@ function buildSystemPrompt(products: CatalogProduct[]): string {
     "",
     "STYLE: Be concise, warm, and helpful. Keep to 1-2 short sentences per turn unless the shopper asks for detail. Never invent product titles, slugs, or prices; always call `search_catalog` first to ground recommendations. Never give medical or dermatological diagnoses. Recommend products and suggest seeing a dermatologist for persistent concerns.",
     "AGE AND PEDIATRIC SAFETY: Never claim a product is safe or suitable for toddlers, babies, infants, children, kids, teens, or any stated age. Do not call `search_catalog` or recommend products for pediatric use. Refuse briefly, suggest a pediatrician or dermatologist, and offer adult skin-type help or the ingredient list instead.",
+    "PRODUCT CLAIMS: Never claim a product is non-toxic, green, clean beauty, organic, reef-safe, or EWG-rated unless you are quoting an exact catalog benefit or formula note. For fragrance presence, answer Yes/No from fragrance-free claims and INCI (Fragrance/Parfum), including plural 'fragrances'; offer the ingredient list rather than inventing certifications.",
+    "ORDINAL COMPARE: When a product listing or routine card is on screen, the host resolves 'compare the 1st and 3rd' (and similar) against that carousel. Do not invent which SKUs those positions mean; if you lack listing context, ask which products rather than guessing titles.",
     "ACKNOWLEDGEMENT: Every recommendation response (the `intro` on `show_product_listing`, `show_broad_listing`, and `propose_broad_recipe`) MUST open like a helpful store associate, not a system message. In 1-2 sentences: briefly acknowledge what the shopper asked for, name the constraints they gave (skin type, budget, occasion, ingredient, brand, or concern) naturally, and give a light rationale for your picks before the products appear. When they have given two clues (a skin type AND a concern), name BOTH in the intro, not just one. Reflect their actual request; for a broad ask, acknowledge the broader goal and explain how you're narrowing it. Do NOT use generic phrases like 'Here are some products', do NOT repeat specific product names in the intro, and do NOT overpromise medical or skincare outcomes (favor 'help', 'support', 'designed to'). Example — shopper: 'skincare for oily skin' → 'Got it. For oily skin, I'd focus on lightweight, balancing formulas that help manage shine without over-drying. Here's a simple routine to keep pores clear and skin comfortable through the day.' Example — follow-up 'I also get breakouts' after an oily routine → 'Oily skin and breakouts, got it. I'd keep the steps lightweight and clarifying so you're managing shine without stripping. Here's the routine with that in mind.'",
     "FORMATTING: Reply in plain conversational prose. Do NOT use Markdown: no `**bold**`, no `*italic*`, no headers, no bullet or numbered lists. Do NOT use em dashes (\u2014); use commas, periods, or parentheses instead. When you need to enumerate items, write them inline as a comma-separated sentence (e.g. \"Start with the cleanser, then the softener, then the serum, and finish with a moisturizer.\").",
     "",
@@ -955,22 +960,43 @@ const CHOOSE_COMPARISON_PICK_TOOL: ChatCompletionTool = {
   function: {
     name: "choose_comparison_pick",
     description:
-      "Pick exactly one of the compared products and write the closing recommendation under the spec table.",
+      "Write a short narrative summary for each compared product, pick one overall recommendation, and write the closing synthesis.",
     parameters: {
       type: "object",
       properties: {
+        productSummaries: {
+          type: "array",
+          description:
+            "One entry per compared product. Each summary is 2-3 sentences in a 'The X is the better pick if…' voice: when to use it, texture/role, and who it is for. Ground only in the fact sheet.",
+          items: {
+            type: "object",
+            properties: {
+              slug: {
+                type: "string",
+                description: "Catalog slug of the product this summary is about.",
+              },
+              summary: {
+                type: "string",
+                description:
+                  "2-3 short sentences about this product only. Do not invent facts.",
+              },
+            },
+            required: ["slug", "summary"],
+            additionalProperties: false,
+          },
+        },
         recommendedSlug: {
           type: "string",
           description:
-            "Catalog slug of the product you are recommending. Must be one of the slugs in the fact sheet.",
+            "Catalog slug of the product you are recommending overall. Must be one of the slugs in the fact sheet.",
         },
         recommendation: {
           type: "string",
           description:
-            "2-3 short sentences: who the pick is for, why it wins on formula / skin / use versus the other column(s), and when the other is the better choice. Do not invent facts.",
+            "Closing synthesis (2-3 short sentences), ideally starting like \"So the simplest answer…\": when to choose each, and which one if the shopper only picks one. Do not invent facts.",
         },
       },
-      required: ["recommendedSlug", "recommendation"],
+      required: ["productSummaries", "recommendedSlug", "recommendation"],
       additionalProperties: false,
     },
   },
@@ -1030,7 +1056,37 @@ function parseComparisonPick(
   if (!recommendedSlug || !allowedSlugs.has(recommendedSlug) || !recommendation) {
     return null;
   }
-  return { recommendedSlug, recommendation };
+
+  const rawSummaries = Array.isArray(args.productSummaries)
+    ? args.productSummaries
+    : null;
+  if (!rawSummaries) return null;
+
+  const bySlug = new Map<string, string>();
+  for (const entry of rawSummaries) {
+    if (!entry || typeof entry !== "object") continue;
+    const record = entry as Record<string, unknown>;
+    const slug = typeof record.slug === "string" ? record.slug.trim() : "";
+    const summary =
+      typeof record.summary === "string" ? record.summary.trim() : "";
+    if (!slug || !allowedSlugs.has(slug) || !summary) continue;
+    bySlug.set(slug, summary);
+  }
+  // Require a non-empty summary for every compared product so the host can
+  // fall back cleanly when the model omits one.
+  if (bySlug.size !== allowedSlugs.size) return null;
+  for (const slug of allowedSlugs) {
+    if (!bySlug.has(slug)) return null;
+  }
+
+  return {
+    recommendedSlug,
+    recommendation,
+    productSummaries: [...allowedSlugs].map((slug) => ({
+      slug,
+      summary: bySlug.get(slug)!,
+    })),
+  };
 }
 
 /* ---------- agent factory ---------- */
@@ -1725,16 +1781,17 @@ export function createOpenAIAgent({
 
     const system = [
       "You are the Shiseido Personal Beauty Advisor.",
-      "The shopper asked to compare the products in the fact sheet. A spec table already shows category, collection, skin type, targets, and price.",
-      "Your job is ONLY the closing recommendation under that table.",
-      "Pick exactly one product and pass its catalog slug.",
-      "Write 2-3 short sentences: who the pick is for, why it wins on formula / skin / texture / when-to-use versus the other column(s), and when the other is the better choice.",
-      "Reason from the facts given. Do not invent ingredients, clinical claims, or prices.",
+      "The shopper asked to compare the products in the fact sheet.",
+      "Call choose_comparison_pick with:",
+      "(1) productSummaries — for EACH compared product, write 2-3 sentences in a \"The [product] is the better pick if…\" voice: when to use it, texture/role, and who it is for;",
+      "(2) recommendedSlug — exactly one catalog slug from the sheet;",
+      "(3) recommendation — a closing synthesis (ideally \"So the simplest answer…\") that says when to choose each and which one if they only pick one.",
+      "Ground every claim in the fact sheet only. Do not invent ingredients, clinical claims, or prices.",
       "Do not lead with star rating unless that is genuinely the only difference.",
       "Do not start with \"I'd point you to\". Sound like a store associate, not a spec sheet.",
       explainSlug
-        ? `The shopper is asking why you recommended slug "${explainSlug}". Keep that as recommendedSlug and explain the reasoning.`
-        : "Choose the better fit for a typical shopper given the differences on the sheet.",
+        ? `The shopper is asking why you recommended slug "${explainSlug}". Keep that as recommendedSlug, explain the reasoning in recommendation, and still include a productSummaries entry for every compared slug.`
+        : "Choose the better overall fit for a typical shopper given the differences on the sheet.",
     ].join(" ");
 
     const user = `Compared products:\n\n${comparisonFactSheet(products)}`;

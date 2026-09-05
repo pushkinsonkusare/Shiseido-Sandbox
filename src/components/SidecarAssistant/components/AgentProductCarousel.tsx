@@ -98,7 +98,7 @@ export function AgentProductCarousel({
         onClick={() => scroll("left")}
         disabled={atStart}
       >
-        <ArrowLeftIcon width={16} height={16} />
+        <ArrowLeftIcon width={18} height={18} />
       </button>
       <button
         type="button"
@@ -107,7 +107,7 @@ export function AgentProductCarousel({
         onClick={() => scroll("right")}
         disabled={atEnd}
       >
-        <ArrowRightIcon width={16} height={16} />
+        <ArrowRightIcon width={18} height={18} />
       </button>
 
       <div className="agent-plp__track" ref={trackRef}>

@@ -104,7 +104,15 @@ const INGREDIENT_LEXICON: IngredientEntry[] = [
   {
     id: "fragrance",
     label: "fragrance",
-    aliases: ["fragrance", "parfum", "perfume", "scented"],
+    aliases: [
+      "fragrances",
+      "fragrance",
+      "parfums",
+      "parfum",
+      "perfumes",
+      "perfume",
+      "scented",
+    ],
   },
   {
     id: "paraben",
@@ -204,10 +212,49 @@ export function ingredientMatchTerms(ingredientId: string): string[] {
     .filter((a) => a.length > 1 && a !== "aha"); // AHA alone is too noisy in INCI
 }
 
+/** Explicit fragrance-free / unscented claim on benefits or formula notes. */
+export function productHasFragranceFreeClaim(product: CatalogProduct): boolean {
+  const blob = [
+    ...(product.featureBlocks ?? []),
+    ...(product.keyBenefits ?? []),
+    product.ingredients ?? "",
+  ].join(" ");
+  return /\bfragrance[-\s]?free\b|\bunscented\b|\bno\s+fragrance\b/i.test(blob);
+}
+
+/**
+ * Fragrance presence from INCI / formula notes (and positive fragrance
+ * benefit lines). Skips overview marketing so phrases like "functional
+ * fragrance" or "green floral fragrance" in long copy do not override a
+ * fragrance-free claim, and fragrance-free is always a hard No.
+ */
+function productContainsFragrance(product: CatalogProduct): boolean {
+  if (productHasFragranceFreeClaim(product)) return false;
+  const ingredients = (product.ingredients ?? "").replace(
+    /\bfragrance[-\s]?free\b|\bunscented\b|\bno\s+fragrance\b/gi,
+    " ",
+  );
+  if (/\b(fragrances?|parfums?|perfumes?)\b/i.test(ingredients)) return true;
+  // Positive benefit mentions (e.g. "Green floral fragrance…"), not free-of.
+  for (const block of [
+    ...(product.featureBlocks ?? []),
+    ...(product.keyBenefits ?? []),
+  ]) {
+    if (/\bfragrance[-\s]?free\b|\bunscented\b|\bno\s+fragrance\b/i.test(block)) {
+      continue;
+    }
+    if (/\b(fragrances?|parfums?|perfumes?)\b/i.test(block)) return true;
+  }
+  return false;
+}
+
 export function productContainsIngredient(
   product: CatalogProduct,
   ingredientId: string,
 ): boolean {
+  if (ingredientId === "fragrance") {
+    return productContainsFragrance(product);
+  }
   const haystack = `${product.ingredients ?? ""} ${product.title} ${product.overview ?? ""}`.toLowerCase();
   if (!haystack.trim()) return false;
   return ingredientMatchTerms(ingredientId).some((term) => {
@@ -324,9 +371,20 @@ export function buildIngredientPresenceAnswer(
   const hasIngredient = productContainsIngredient(product, detection.ingredientId);
   const name = detection.label;
   if (hasIngredient) {
+    const patchNote =
+      detection.ingredientId === "fragrance"
+        ? " If you're scent-sensitive, patch-test first."
+        : "";
     return {
-      body: `Yes — the ${product.title} includes ${name}.`,
+      body: `Yes — the ${product.title} includes ${name}.${patchNote}`,
       hasIngredient: true,
+      detection,
+    };
+  }
+  if (detection.ingredientId === "fragrance" && productHasFragranceFreeClaim(product)) {
+    return {
+      body: `No — the ${product.title} is fragrance-free.`,
+      hasIngredient: false,
       detection,
     };
   }

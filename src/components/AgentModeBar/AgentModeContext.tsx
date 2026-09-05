@@ -48,6 +48,17 @@ export const PRODUCT_SELECTION_TYPES: {
   { id: "in-chat", label: "In chat" },
 ];
 
+/** How the sidecar renders a multi-product compare turn. */
+export type CompareFeatureType = "side-by-side-table" | "product-summaries";
+
+export const COMPARE_FEATURE_TYPES: {
+  id: CompareFeatureType;
+  label: string;
+}[] = [
+  { id: "side-by-side-table", label: "Side by side table" },
+  { id: "product-summaries", label: "Product summaries" },
+];
+
 /** Single welcome NBA shown under UserTesting lock (`?ut=`). */
 export const UT_WELCOME_NBA_LABEL = "Skincare for oily skin";
 
@@ -87,6 +98,8 @@ type UserTestingBootstrap = {
   pdpInlineWidget: boolean;
   pdpInlineWidgetType: PdpInlineWidgetType;
   pdpInlineWidgetPosition: PdpInlineWidgetPosition;
+  compareFeature: boolean;
+  compareFeatureType: CompareFeatureType;
 };
 
 type AgentModeContextValue = {
@@ -119,6 +132,12 @@ type AgentModeContextValue = {
   setPdpInlineWidgetType: (type: PdpInlineWidgetType) => void;
   pdpInlineWidgetPosition: PdpInlineWidgetPosition;
   setPdpInlineWidgetPosition: (position: PdpInlineWidgetPosition) => void;
+  /** Compare feature toggle — when on, compare turns use `compareFeatureType`. */
+  compareFeature: boolean;
+  setCompareFeature: (enabled: boolean) => void;
+  /** Sub-option of Compare; retained while the parent checkbox is off. */
+  compareFeatureType: CompareFeatureType;
+  setCompareFeatureType: (type: CompareFeatureType) => void;
   /**
    * False while the PDP widget answers inline, which is the point of that
    * mode: it shows what the storefront looks like for a customer who never
@@ -149,6 +168,8 @@ const DEFAULT_PDP_INLINE_WIDGET = true;
 const DEFAULT_PDP_INLINE_WIDGET_TYPE: PdpInlineWidgetType = "agent-redirect";
 const DEFAULT_PDP_INLINE_WIDGET_POSITION: PdpInlineWidgetPosition =
   "left-under-image";
+const DEFAULT_COMPARE_FEATURE = true;
+const DEFAULT_COMPARE_FEATURE_TYPE: CompareFeatureType = "side-by-side-table";
 
 function parseFlag(raw: string | null, fallback: boolean): boolean {
   if (raw == null || raw.trim() === "") return fallback;
@@ -174,6 +195,8 @@ function unlockedBootstrap(): UserTestingBootstrap {
     pdpInlineWidget: DEFAULT_PDP_INLINE_WIDGET,
     pdpInlineWidgetType: DEFAULT_PDP_INLINE_WIDGET_TYPE,
     pdpInlineWidgetPosition: DEFAULT_PDP_INLINE_WIDGET_POSITION,
+    compareFeature: DEFAULT_COMPARE_FEATURE,
+    compareFeatureType: DEFAULT_COMPARE_FEATURE_TYPE,
   };
 }
 
@@ -210,6 +233,13 @@ function readUserTestingBootstrap(): UserTestingBootstrap {
       ? pdpPosRaw
       : DEFAULT_PDP_INLINE_WIDGET_POSITION;
 
+  const compareTypeRaw = (params.get("compareType") || "").trim().toLowerCase();
+  const compareType: CompareFeatureType =
+    compareTypeRaw === "product-summaries" ||
+    compareTypeRaw === "side-by-side-table"
+      ? compareTypeRaw
+      : DEFAULT_COMPARE_FEATURE_TYPE;
+
   return {
     userTestingLock: Boolean(utRaw),
     accordionRecommendations: parseFlag(
@@ -224,6 +254,8 @@ function readUserTestingBootstrap(): UserTestingBootstrap {
     pdpInlineWidget: parseFlag(params.get("pdp"), DEFAULT_PDP_INLINE_WIDGET),
     pdpInlineWidgetType: pdpType,
     pdpInlineWidgetPosition: pdpPos,
+    compareFeature: parseFlag(params.get("compare"), DEFAULT_COMPARE_FEATURE),
+    compareFeatureType: compareType,
   };
 }
 
@@ -259,6 +291,11 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
     useState<PdpInlineWidgetType>(UT_BOOTSTRAP.pdpInlineWidgetType);
   const [pdpInlineWidgetPosition, setPdpInlineWidgetPosition] =
     useState<PdpInlineWidgetPosition>(UT_BOOTSTRAP.pdpInlineWidgetPosition);
+  const [compareFeature, setCompareFeature] = useState<boolean>(
+    UT_BOOTSTRAP.compareFeature,
+  );
+  const [compareFeatureType, setCompareFeatureType] =
+    useState<CompareFeatureType>(UT_BOOTSTRAP.compareFeatureType);
 
   const value = useMemo(
     () => ({
@@ -282,6 +319,10 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       setPdpInlineWidgetType,
       pdpInlineWidgetPosition,
       setPdpInlineWidgetPosition,
+      compareFeature,
+      setCompareFeature,
+      compareFeatureType,
+      setCompareFeatureType,
       sidecarAvailable:
         DEMO_SCENARIO != null ||
         !(pdpInlineWidget && pdpInlineWidgetType === "inline-answer"),
@@ -298,6 +339,8 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       pdpInlineWidget,
       pdpInlineWidgetType,
       pdpInlineWidgetPosition,
+      compareFeature,
+      compareFeatureType,
     ],
   );
 

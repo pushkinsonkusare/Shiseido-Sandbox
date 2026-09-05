@@ -7,6 +7,7 @@ import type {
   AgentCartLineItem,
   AgentCompareColumn,
   AgentCompareRow,
+  AgentCompareSummaryProduct,
   LatencyLoaderVariant,
 } from "../components";
 import type { NbaLane, NbaStage } from "./flow";
@@ -146,13 +147,20 @@ export type AgentPdpMessage = {
 export type AgentCompareMessage = {
   id: string;
   kind: "agent_compare";
-  /** Body copy rendered above the comparison table. */
+  /** Body copy rendered above the comparison table or summaries. */
   intro: string;
-  /** Products compared, one per table column. */
+  /**
+   * Presentation stamped when the turn was built. `"summaries"` renders the
+   * stacked product-summary card; omit or `"table"` keeps the attribute table.
+   */
+  variant?: "table" | "summaries";
+  /** Products compared, one per table column (also used for title lookup). */
   columns: AgentCompareColumn[];
-  /** Attribute rows, each with one value per column. */
+  /** Attribute rows for the table variant; empty for summaries. */
   rows: AgentCompareRow[];
-  /** Optional closing recommendation shown beneath the table. */
+  /** Per-product blocks for the summaries variant. */
+  summaries?: AgentCompareSummaryProduct[];
+  /** Optional closing recommendation shown beneath the comparison. */
   recommendation?: string;
   /** Slug of the recommended product, bolded inside the recommendation copy. */
   recommendedSlug?: string;

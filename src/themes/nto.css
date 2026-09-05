@@ -442,6 +442,7 @@ html[data-demo-theme="consumer-electronics"] .agent-summary__card,
 html[data-demo-theme="consumer-electronics"] .agent-summary__box,
 html[data-demo-theme="consumer-electronics"] .agent-compare,
 html[data-demo-theme="consumer-electronics"] .agent-product-card,
+html[data-demo-theme="consumer-electronics"] .agent-compare-summaries__top,
 html[data-demo-theme="consumer-electronics"] .agent-loader {
   border: 1px solid #ececec;
   border-radius: var(--nto-radius-card);
@@ -452,7 +453,8 @@ html[data-demo-theme="consumer-electronics"] .agent-msg__card {
   overflow: hidden;
 }
 
-html[data-demo-theme="consumer-electronics"] .agent-product-card {
+html[data-demo-theme="consumer-electronics"] .agent-product-card,
+html[data-demo-theme="consumer-electronics"] .agent-compare-summaries__top {
   box-shadow: 0 1px 3px rgba(16, 24, 40, 0.03);
 }
 
