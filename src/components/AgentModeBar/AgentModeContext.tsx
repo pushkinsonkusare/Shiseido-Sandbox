@@ -96,6 +96,7 @@ type UserTestingBootstrap = {
   contextPill: boolean;
   productSelection: boolean;
   productSelectionType: ProductSelectionType;
+  selectedProductSlugs: string[];
   pdpInlineWidget: boolean;
   pdpInlineWidgetType: PdpInlineWidgetType;
   pdpInlineWidgetPosition: PdpInlineWidgetPosition;
@@ -200,6 +201,7 @@ function unlockedBootstrap(): UserTestingBootstrap {
     contextPill: DEFAULT_CONTEXT_PILL,
     productSelection: DEFAULT_PRODUCT_SELECTION,
     productSelectionType: DEFAULT_PRODUCT_SELECTION_TYPE,
+    selectedProductSlugs: [],
     pdpInlineWidget: DEFAULT_PDP_INLINE_WIDGET,
     pdpInlineWidgetType: DEFAULT_PDP_INLINE_WIDGET_TYPE,
     pdpInlineWidgetPosition: DEFAULT_PDP_INLINE_WIDGET_POSITION,
@@ -230,6 +232,19 @@ function readUserTestingBootstrap(): UserTestingBootstrap {
     selectionTypeRaw === "in-chat" || selectionTypeRaw === "drawer"
       ? selectionTypeRaw
       : DEFAULT_PRODUCT_SELECTION_TYPE;
+
+  const selectedRaw = (params.get("select") || params.get("selected") || "")
+    .trim();
+  const selectedFromQuery = selectedRaw
+    .split(/[|,]/)
+    .map((slug) => slug.trim())
+    .filter(Boolean);
+  const selectedProductSlugs =
+    selectedFromQuery.length > 0
+      ? selectedFromQuery
+      : readDemoScenario() === "clarifying-pdp"
+        ? [CLARIFYING_PDP_SCENARIO_SLUG]
+        : [];
 
   const pdpTypeRaw = (params.get("pdpType") || "").trim().toLowerCase();
   const pdpType: PdpInlineWidgetType =
@@ -272,6 +287,7 @@ function readUserTestingBootstrap(): UserTestingBootstrap {
     contextPill: parseFlag(params.get("pill"), DEFAULT_CONTEXT_PILL),
     productSelection: parseFlag(params.get("selection"), DEFAULT_PRODUCT_SELECTION),
     productSelectionType: selectionType,
+    selectedProductSlugs,
     pdpInlineWidget: parseFlag(params.get("pdp"), DEFAULT_PDP_INLINE_WIDGET),
     pdpInlineWidgetType: pdpType,
     pdpInlineWidgetPosition: pdpPos,
@@ -327,7 +343,7 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
   const [productSelectionType, setProductSelectionType] =
     useState<ProductSelectionType>(UT_BOOTSTRAP.productSelectionType);
   const [selectedProductSlugs, setSelectedProductSlugs] = useState<string[]>(
-    [],
+    UT_BOOTSTRAP.selectedProductSlugs,
   );
   const [pdpInlineWidget, setPdpInlineWidget] = useState<boolean>(
     UT_BOOTSTRAP.pdpInlineWidget,
