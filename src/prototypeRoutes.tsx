@@ -179,6 +179,42 @@ function toBrowserPath(route: string): string {
   return `${basePath}${route === "/" ? "/" : route}`;
 }
 
+/** Experience-switcher / UserTesting flags that must survive in-app navigations. */
+const DEMO_QUERY_KEYS = [
+  "viewport",
+  "chrome",
+  "mobileChrome",
+  "mobile-chrome",
+  "ut",
+  "accordion",
+  "theme",
+  "island",
+  "pill",
+  "selection",
+  "selectionType",
+  "pdp",
+  "pdpType",
+  "pdpPos",
+  "compare",
+  "compareType",
+  "scenario",
+  "open",
+] as const;
+
+function withDemoSearch(url: string): string {
+  if (typeof window === "undefined") return url;
+  const current = new URLSearchParams(window.location.search);
+  const qIndex = url.indexOf("?");
+  const path = qIndex >= 0 ? url.slice(0, qIndex) : url;
+  const next = new URLSearchParams(qIndex >= 0 ? url.slice(qIndex + 1) : "");
+  for (const key of DEMO_QUERY_KEYS) {
+    const value = current.get(key);
+    if (value != null && !next.has(key)) next.set(key, value);
+  }
+  const qs = next.toString();
+  return qs ? `${path}?${qs}` : path;
+}
+
 function normalizeCapabilities(capabilities: string[] | undefined): string[] {
   if (!capabilities || capabilities.length === 0) return [];
   const seen = new Set<string>();
@@ -199,7 +235,7 @@ function parseCapabilitiesParam(value: string | null): string[] {
 
 function buildBrowserUrl(route: StaticRoute, options?: NavigateOptions) {
   const path = toBrowserPath(route);
-  if (route !== ROUTES.productListing) return path;
+  if (route !== ROUTES.productListing) return withDemoSearch(path);
   const params = new URLSearchParams();
   if (options?.category) params.set(CATEGORY_PARAM, options.category);
   const categoryList = (options?.categories ?? [])
@@ -253,7 +289,7 @@ function buildBrowserUrl(route: StaticRoute, options?: NavigateOptions) {
   const searchQuery = options?.searchQuery?.trim();
   if (searchQuery) params.set(SEARCH_QUERY_PARAM, searchQuery);
   const qs = params.toString();
-  return qs ? `${path}?${qs}` : path;
+  return withDemoSearch(qs ? `${path}?${qs}` : path);
 }
 
 type RouteState = {
@@ -549,8 +585,9 @@ export function PrototypeNavigationProvider({ children }: { children: ReactNode 
       },
       navigateToProduct: (slug) => {
         const nextRoute = `/products/${slug}`;
-        const nextBrowserPath = toBrowserPath(nextRoute);
-        if (window.location.pathname !== nextBrowserPath) {
+        const nextBrowserPath = withDemoSearch(toBrowserPath(nextRoute));
+        const currentBrowserUrl = `${window.location.pathname}${window.location.search}`;
+        if (currentBrowserUrl !== nextBrowserPath) {
           window.history.pushState({}, "", nextBrowserPath);
         }
         setRouteState({

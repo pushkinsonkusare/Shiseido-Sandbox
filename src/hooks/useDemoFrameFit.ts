@@ -18,6 +18,12 @@ export function useDemoFrameFit(
 ) {
   useEffect(() => {
     const root = document.documentElement;
+    root.setAttribute("data-demo-viewport", viewportMode);
+    if (viewportMode === "mobile" && mobileChrome) {
+      root.setAttribute("data-demo-mobile-chrome", "true");
+    } else {
+      root.removeAttribute("data-demo-mobile-chrome");
+    }
 
     const apply = () => {
       if (viewportMode !== "mobile") {

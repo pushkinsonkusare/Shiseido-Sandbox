@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useLayoutEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
 export type AgentMode =
@@ -254,7 +254,17 @@ function readUserTestingBootstrap(): UserTestingBootstrap {
       isLegacyB ? false : isLegacyA ? true : DEFAULT_ACCORDION_RECOMMENDATIONS,
     ),
     viewportMode,
-    mobileChrome: viewportMode === "mobile" && parseFlag(params.get("chrome"), false),
+    /* Mobile links include the iPhone chrome unless explicitly turned off
+     * (`chrome=0`). `chrome=1` is still accepted; some hosts drop a param
+     * named `chrome`, so `mobileChrome` is an alias. */
+    mobileChrome:
+      viewportMode === "mobile" &&
+      parseFlag(
+        params.get("chrome") ??
+          params.get("mobileChrome") ??
+          params.get("mobile-chrome"),
+        true,
+      ),
     contextIsland: parseFlag(params.get("island"), DEFAULT_CONTEXT_ISLAND),
     contextPill: parseFlag(params.get("pill"), DEFAULT_CONTEXT_PILL),
     productSelection: parseFlag(params.get("selection"), DEFAULT_PRODUCT_SELECTION),
@@ -281,6 +291,14 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
   const [mobileChrome, setMobileChromeState] = useState(
     UT_BOOTSTRAP.mobileChrome,
   );
+
+  useLayoutEffect(() => {
+    /* Re-read on mount so a late query string (cached HTML, UserTesting
+     * wrappers) still turns Mobile Chrome on. */
+    const next = readUserTestingBootstrap();
+    setViewportModeState(next.viewportMode);
+    setMobileChromeState(next.mobileChrome);
+  }, []);
 
   const setViewportMode = (mode: DemoViewportMode) => {
     setViewportModeState(mode);
