@@ -91,6 +91,7 @@ type UserTestingBootstrap = {
   userTestingLock: boolean;
   accordionRecommendations: boolean;
   viewportMode: DemoViewportMode;
+  mobileChrome: boolean;
   contextIsland: boolean;
   contextPill: boolean;
   productSelection: boolean;
@@ -191,6 +192,7 @@ function unlockedBootstrap(): UserTestingBootstrap {
     userTestingLock: false,
     accordionRecommendations: DEFAULT_ACCORDION_RECOMMENDATIONS,
     viewportMode: DEFAULT_VIEWPORT_MODE,
+    mobileChrome: false,
     contextIsland: DEFAULT_CONTEXT_ISLAND,
     contextPill: DEFAULT_CONTEXT_PILL,
     productSelection: DEFAULT_PRODUCT_SELECTION,
@@ -217,6 +219,8 @@ function readUserTestingBootstrap(): UserTestingBootstrap {
   const viewportRaw = (params.get("viewport") || "").trim().toLowerCase();
   const viewportOverride: DemoViewportMode | null =
     viewportRaw === "mobile" || viewportRaw === "desktop" ? viewportRaw : null;
+  const viewportMode: DemoViewportMode =
+    viewportOverride ?? (isLegacyA || isLegacyB ? "mobile" : DEFAULT_VIEWPORT_MODE);
 
   const selectionTypeRaw = (params.get("selectionType") || "").trim().toLowerCase();
   const selectionType: ProductSelectionType =
@@ -249,7 +253,8 @@ function readUserTestingBootstrap(): UserTestingBootstrap {
       params.get("accordion"),
       isLegacyB ? false : isLegacyA ? true : DEFAULT_ACCORDION_RECOMMENDATIONS,
     ),
-    viewportMode: viewportOverride ?? (isLegacyA || isLegacyB ? "mobile" : DEFAULT_VIEWPORT_MODE),
+    viewportMode,
+    mobileChrome: viewportMode === "mobile" && parseFlag(params.get("chrome"), false),
     contextIsland: parseFlag(params.get("island"), DEFAULT_CONTEXT_ISLAND),
     contextPill: parseFlag(params.get("pill"), DEFAULT_CONTEXT_PILL),
     productSelection: parseFlag(params.get("selection"), DEFAULT_PRODUCT_SELECTION),
@@ -273,7 +278,9 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
   const [viewportMode, setViewportModeState] = useState<DemoViewportMode>(
     UT_BOOTSTRAP.viewportMode,
   );
-  const [mobileChrome, setMobileChromeState] = useState(false);
+  const [mobileChrome, setMobileChromeState] = useState(
+    UT_BOOTSTRAP.mobileChrome,
+  );
 
   const setViewportMode = (mode: DemoViewportMode) => {
     setViewportModeState(mode);
