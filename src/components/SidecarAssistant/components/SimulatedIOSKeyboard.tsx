@@ -76,31 +76,16 @@ export function SimulatedIOSKeyboard({
           onClick={onDismiss}
         >
           <svg
-            width="22"
-            height="16"
-            viewBox="0 0 22 16"
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
             fill="none"
             aria-hidden="true"
           >
-            <rect
-              x="0.75"
-              y="0.75"
-              width="20.5"
-              height="11.5"
-              rx="2"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
             <path
-              d="M7 5.5h8M11 8.5V4"
+              d="M4.5 7.25 10 12.75 15.5 7.25"
               stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-            <path
-              d="M6 14.5L11 11.5L16 14.5"
-              stroke="currentColor"
-              strokeWidth="1.5"
+              strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
             />

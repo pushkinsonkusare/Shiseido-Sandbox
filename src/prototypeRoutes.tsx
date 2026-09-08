@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { PRIMARY_ACTIVITY_VALUES, SERIES_VALUES } from "./catalog/catalog";
 
 export const ROUTES = {
@@ -165,6 +165,8 @@ type NavigationContextValue = {
   currentSearchQuery: string;
   navigate: (route: StaticRoute, options?: NavigateOptions) => void;
   navigateToProduct: (slug: string) => void;
+  /** Demo page-load hold after in-app navigation. */
+  isPageLoading: boolean;
 };
 
 const NavigationContext = createContext<NavigationContextValue | null>(null);
@@ -461,11 +463,37 @@ export function scrollAppToTop() {
   });
 }
 
+/** Demo-only pause so in-app navigation reads as a real page load. */
+export const PAGE_TRANSITION_MS = 2000;
+
 export function PrototypeNavigationProvider({ children }: { children: ReactNode }) {
   const [routeState, setRouteState] = useState<RouteState>(() => {
     if (typeof window === "undefined") return EMPTY_ROUTE_STATE;
     return getRouteState(window.location.pathname, window.location.search);
   });
+  const [isPageLoading, setIsPageLoading] = useState(false);
+  const routeStateRef = useRef(routeState);
+  const loadTimerRef = useRef<number | null>(null);
+  routeStateRef.current = routeState;
+
+  const beginPageLoad = useCallback(() => {
+    setIsPageLoading(true);
+    if (loadTimerRef.current != null) window.clearTimeout(loadTimerRef.current);
+    loadTimerRef.current = window.setTimeout(() => {
+      setIsPageLoading(false);
+      loadTimerRef.current = null;
+    }, PAGE_TRANSITION_MS);
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isPageLoading) {
+      root.setAttribute("data-demo-page-loading", "true");
+    } else {
+      root.removeAttribute("data-demo-page-loading");
+    }
+    return () => root.removeAttribute("data-demo-page-loading");
+  }, [isPageLoading]);
 
   useEffect(() => {
     try {
@@ -474,13 +502,17 @@ export function PrototypeNavigationProvider({ children }: { children: ReactNode 
       /* ignore: some browsers block this in embedded webviews */
     }
     const handlePopState = () => {
+      beginPageLoad();
       setRouteState(getRouteState(window.location.pathname, window.location.search));
       scrollAppToTop();
     };
 
     window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      if (loadTimerRef.current != null) window.clearTimeout(loadTimerRef.current);
+    };
+  }, [beginPageLoad]);
 
   const value = useMemo<NavigationContextValue>(
     () => ({
@@ -500,7 +532,12 @@ export function PrototypeNavigationProvider({ children }: { children: ReactNode 
       currentPrimaryActivities: routeState.currentPrimaryActivities,
       currentSlugs: routeState.currentSlugs,
       currentSearchQuery: routeState.currentSearchQuery,
+      isPageLoading,
       navigate: (route, options) => {
+        const current = routeStateRef.current;
+        if (route !== current.currentRoute) {
+          beginPageLoad();
+        }
         const nextBrowserUrl = buildBrowserUrl(route, options);
         const currentBrowserUrl = `${window.location.pathname}${window.location.search}`;
         if (currentBrowserUrl !== nextBrowserUrl) {
@@ -584,6 +621,13 @@ export function PrototypeNavigationProvider({ children }: { children: ReactNode 
         requestAnimationFrame(scrollAppToTop);
       },
       navigateToProduct: (slug) => {
+        const current = routeStateRef.current;
+        if (
+          current.currentRoute !== ROUTES.productDetail ||
+          current.currentProductSlug !== slug
+        ) {
+          beginPageLoad();
+        }
         const nextRoute = `/products/${slug}`;
         const nextBrowserPath = withDemoSearch(toBrowserPath(nextRoute));
         const currentBrowserUrl = `${window.location.pathname}${window.location.search}`;
@@ -616,6 +660,8 @@ export function PrototypeNavigationProvider({ children }: { children: ReactNode 
       routeState.currentPrimaryActivities,
       routeState.currentSlugs,
       routeState.currentSearchQuery,
+      isPageLoading,
+      beginPageLoad,
     ],
   );
 

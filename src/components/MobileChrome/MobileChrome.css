@@ -120,6 +120,7 @@
 }
 
 .mobile-chrome__url {
+  position: relative;
   flex: 1 1 auto;
   min-width: 0;
   height: 34px;
@@ -134,6 +135,93 @@
   font-weight: 400;
   letter-spacing: -0.24px;
   color: #000000;
+  overflow: hidden;
+}
+
+.mobile-chrome__url--loading {
+  justify-content: flex-start;
+  gap: 8px;
+  padding-left: 12px;
+}
+
+.mobile-chrome__url-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-chrome__spinner {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  border: 1.6px solid rgba(0, 0, 0, 0.18);
+  border-top-color: #000000;
+  border-radius: 50%;
+  animation: mobile-chrome-spin 700ms linear infinite;
+}
+
+.mobile-chrome__url-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: #1a73e8;
+  transform-origin: left center;
+  animation: mobile-chrome-url-progress 2000ms cubic-bezier(0.2, 0, 0.2, 1) forwards;
+}
+
+.mobile-chrome__page-progress {
+  position: absolute;
+  top: var(--mobile-chrome-status, 54px);
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(26, 115, 232, 0.16);
+  z-index: 1;
+  overflow: hidden;
+}
+
+.mobile-chrome__page-progress::after {
+  content: "";
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: #1a73e8;
+  transform-origin: left center;
+  animation: mobile-chrome-url-progress 2000ms cubic-bezier(0.2, 0, 0.2, 1) forwards;
+}
+
+@keyframes mobile-chrome-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes mobile-chrome-url-progress {
+  0% {
+    transform: scaleX(0.04);
+  }
+  70% {
+    transform: scaleX(0.82);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-chrome__spinner,
+  .mobile-chrome__url-progress,
+  .mobile-chrome__page-progress::after {
+    animation: none;
+  }
+
+  .mobile-chrome__url-progress,
+  .mobile-chrome__page-progress::after {
+    transform: scaleX(1);
+  }
 }
 
 html[data-demo-viewport="mobile"][data-demo-mobile-chrome="true"] {

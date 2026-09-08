@@ -3,6 +3,7 @@ import AboutUsPage from "./pages/AboutUsPage/AboutUsPage";
 import { AgentModeBar } from "./components/AgentModeBar/AgentModeBar";
 import { AgentModeProvider, useAgentMode } from "./components/AgentModeBar/AgentModeContext";
 import { MobileChrome } from "./components/MobileChrome/MobileChrome";
+import { PageSkeleton } from "./components/PageSkeleton/PageSkeleton";
 import { useDemoFrameFit } from "./hooks/useDemoFrameFit";
 import { CatalogProvider } from "./catalog/CatalogContext";
 import CheckoutPage from "./pages/CheckoutPage/CheckoutPage";
@@ -21,11 +22,15 @@ import StorefrontPage from "./pages/StorefrontPage/StorefrontPage";
 import { PrototypeNavigationProvider, ROUTES, scrollAppToTop, usePrototypeNavigation } from "./prototypeRoutes";
 
 function RoutedApp() {
-  const { currentRoute, currentProductSlug } = usePrototypeNavigation();
+  const { currentRoute, currentProductSlug, isPageLoading } = usePrototypeNavigation();
 
   useLayoutEffect(() => {
     scrollAppToTop();
-  }, [currentRoute, currentProductSlug]);
+  }, [currentRoute, currentProductSlug, isPageLoading]);
+
+  if (isPageLoading) {
+    return <PageSkeleton route={currentRoute} />;
+  }
 
   switch (currentRoute) {
     case ROUTES.productListing:

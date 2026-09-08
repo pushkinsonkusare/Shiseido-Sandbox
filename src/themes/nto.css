@@ -812,7 +812,6 @@ html[data-demo-theme="consumer-electronics"] .figma-product-card__swatch.is-sele
 /* PLP / PDP / cart / checkout / order / storefront pages                      */
 /* -------------------------------------------------------------------------- */
 
-html[data-demo-theme="consumer-electronics"] .figma-plp__filter-group,
 html[data-demo-theme="consumer-electronics"] .figma-plp__price-field,
 html[data-demo-theme="consumer-electronics"] .figma-cart__section-card,
 html[data-demo-theme="consumer-electronics"] .figma-cart__summary,
@@ -823,6 +822,12 @@ html[data-demo-theme="consumer-electronics"] .figma-order-confirmation__recommen
   border-color: transparent;
   border-radius: var(--nto-radius-card);
   box-shadow: var(--nto-shadow-card);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-plp__filter-group {
+  border: 1px solid #eeeeee;
+  border-radius: var(--nto-radius-card);
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04);
 }
 
 html[data-demo-theme="consumer-electronics"] .figma-pdp__benefits article {

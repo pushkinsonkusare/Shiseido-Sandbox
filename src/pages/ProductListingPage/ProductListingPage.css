@@ -17,8 +17,9 @@
   --plp-mobile-header-gap: 16px;
   --plp-mobile-breadcrumb-size: 12px;
   --plp-mobile-breadcrumb-line: 16px;
-  --plp-mobile-title-size: 34px;
+  --plp-mobile-title-size: 28px;
   --plp-mobile-title-tracking: -0.02em;
+  --plp-mobile-title-weight: 400;
   --plp-mobile-filter-collapsed-height: 60px;
   --plp-mobile-filter-title-size: 18px;
   --plp-mobile-filter-title-line: 1.2;
@@ -589,12 +590,14 @@ a.prototype-brand-link.figma-plp__brand-mark {
 
   .figma-plp__title {
     font-size: var(--plp-mobile-title-size);
-    line-height: 1;
+    font-weight: var(--plp-mobile-title-weight);
+    line-height: 1.2;
     letter-spacing: var(--plp-mobile-title-tracking);
   }
 
   .figma-plp__filters {
     gap: 8px;
+    overflow: visible;
   }
 
   .figma-plp__filter-group {
@@ -681,7 +684,6 @@ html[data-demo-viewport="mobile"] .figma-plp__page-inner {
   padding: 16px max(var(--space-page-mobile, 16px), var(--safe-area-left, 0px))
     calc(24px + var(--safe-area-bottom, 0px))
     max(var(--space-page-mobile, 16px), var(--safe-area-right, 0px));
-  overflow-x: hidden;
 }
 
 html[data-demo-viewport="mobile"] .figma-plp__header {
@@ -697,7 +699,8 @@ html[data-demo-viewport="mobile"] .figma-plp__breadcrumbs {
 
 html[data-demo-viewport="mobile"] .figma-plp__title {
   font-size: var(--plp-mobile-title-size);
-  line-height: 1;
+  font-weight: var(--plp-mobile-title-weight);
+  line-height: 1.2;
   letter-spacing: var(--plp-mobile-title-tracking);
 }
 
@@ -714,7 +717,7 @@ html[data-demo-viewport="mobile"] .figma-plp__filters {
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow-x: hidden;
+  overflow: visible;
 }
 
 html[data-demo-viewport="mobile"] .figma-plp__filter-group {

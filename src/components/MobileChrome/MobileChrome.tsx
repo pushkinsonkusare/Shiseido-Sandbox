@@ -1,4 +1,5 @@
 import { useAgentMode } from "../AgentModeBar/AgentModeContext";
+import { usePrototypeNavigation } from "../../prototypeRoutes";
 import "./MobileChrome.css";
 
 function CellularIcon() {
@@ -101,10 +102,12 @@ function OverflowIcon() {
 
 export function MobileChrome() {
   const { viewportMode, mobileChrome } = useAgentMode();
+  const { isPageLoading } = usePrototypeNavigation();
   if (viewportMode !== "mobile" || !mobileChrome) return null;
 
   return (
     <div className="mobile-chrome" aria-hidden="true">
+      {isPageLoading ? <div className="mobile-chrome__page-progress" /> : null}
       <div className="mobile-chrome__status">
         <span className="mobile-chrome__time">12:47</span>
         <span className="mobile-chrome__island" />
@@ -124,7 +127,16 @@ export function MobileChrome() {
         <span className="mobile-chrome__tool">
           <TabsIcon />
         </span>
-        <span className="mobile-chrome__url">shiseido.com</span>
+        <span
+          className={
+            "mobile-chrome__url" +
+            (isPageLoading ? " mobile-chrome__url--loading" : "")
+          }
+        >
+          {isPageLoading ? <span className="mobile-chrome__spinner" /> : null}
+          <span className="mobile-chrome__url-text">shiseido.com</span>
+          {isPageLoading ? <span className="mobile-chrome__url-progress" /> : null}
+        </span>
         <span className="mobile-chrome__tool">
           <RefreshIcon />
         </span>
