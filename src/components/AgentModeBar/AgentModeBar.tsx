@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Settings, X } from "lucide-react";
 import "./AgentModeBar.css";
 import {
@@ -29,6 +30,8 @@ export function AgentModeBar() {
     setMode,
     viewportMode,
     setViewportMode,
+    mobileChrome,
+    setMobileChrome,
     accordionRecommendations,
     setAccordionRecommendations,
     contextIsland,
@@ -98,12 +101,17 @@ export function AgentModeBar() {
      * is applied even when the FAB is hidden. */
     const root = document.documentElement;
     root.setAttribute("data-demo-viewport", viewportMode);
+    if (viewportMode === "mobile" && mobileChrome) {
+      root.setAttribute("data-demo-mobile-chrome", "true");
+    } else {
+      root.removeAttribute("data-demo-mobile-chrome");
+    }
     try {
       window.localStorage.removeItem("agent-demo-viewport-mode");
     } catch {
       /* localStorage can fail in private mode; ignore gracefully. */
     }
-  }, [viewportMode]);
+  }, [viewportMode, mobileChrome]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -122,7 +130,7 @@ export function AgentModeBar() {
    * above still run. */
   if (userTestingLock) return null;
 
-  return (
+  return createPortal(
     <div className="agent-mode-bar" role="banner" aria-label="Experience switcher">
       <button
         type="button"
@@ -208,6 +216,21 @@ export function AgentModeBar() {
                   Mobile
                 </button>
               </div>
+              <label
+                className={
+                  "agent-mode-bar__feature agent-mode-bar__feature--platform" +
+                  (viewportMode !== "mobile" ? " agent-mode-bar__feature--disabled" : "")
+                }
+              >
+                <input
+                  type="checkbox"
+                  className="agent-mode-bar__feature-checkbox"
+                  checked={viewportMode === "mobile" && mobileChrome}
+                  disabled={viewportMode !== "mobile"}
+                  onChange={(event) => setMobileChrome(event.target.checked)}
+                />
+                <span className="agent-mode-bar__feature-label">Mobile Chrome</span>
+              </label>
             </div>
 
             <div className="agent-mode-bar__section">
@@ -436,7 +459,8 @@ export function AgentModeBar() {
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }
 

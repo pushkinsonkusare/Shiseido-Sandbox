@@ -80,11 +80,16 @@ export function UnifiedTopHeader({
             <button type="button" aria-label="Search" onClick={openSearchOverlay}>
               <SearchIcon width={16} height={16} />
             </button>
-            <button type="button" aria-label="Account" onClick={() => navigate(ROUTES.login)}>
-              <UserIcon width={16} height={16} />
-            </button>
             <button type="button" aria-label="Cart" onClick={() => navigate(ROUTES.cart)}>
               <ShoppingCartIcon width={16} height={16} />
+            </button>
+            <button
+              type="button"
+              className="unified-top-header__action--account"
+              aria-label="Account"
+              onClick={() => navigate(ROUTES.login)}
+            >
+              <UserIcon width={16} height={16} />
             </button>
           </div>
         </div>

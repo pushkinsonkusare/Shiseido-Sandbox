@@ -784,9 +784,11 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   padding: 0;
   color: #17171b;
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(23, 23, 27, 0.45);
   border-radius: 999px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  box-shadow:
+    0 0 0 1px rgba(23, 23, 27, 0.12),
+    0 4px 8px rgba(0, 0, 0, 0.12);
   cursor: pointer;
   animation: sidecar-jump-to-latest-in 160ms ease;
 }
@@ -1749,6 +1751,8 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__fab {
   .sidecar-assistant__chat,
   html[data-demo-viewport="mobile"] .sidecar-assistant__chat {
     overflow-x: hidden;
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
   .sidecar-assistant__input-bar,
@@ -1765,6 +1769,11 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__fab {
   html[data-demo-viewport="mobile"] .sidecar-assistant__product-card {
     width: 200px;
   }
+}
+
+html[data-demo-viewport="mobile"] .sidecar-assistant--docked .sidecar-assistant__chat {
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 /* Demo phone frame has no device home-indicator inset — keep the composer

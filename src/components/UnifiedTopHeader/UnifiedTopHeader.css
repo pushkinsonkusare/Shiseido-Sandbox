@@ -76,6 +76,7 @@ a.prototype-brand-link.unified-top-header__brand-mark {
   align-items: center;
   gap: 2px;
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 .unified-top-header__top-actions button {
@@ -238,6 +239,10 @@ a.prototype-brand-link.unified-top-header__brand-mark {
     display: inline-flex;
     flex: 0 0 auto;
   }
+
+  .unified-top-header__action--account {
+    display: none;
+  }
 }
 
 html[data-demo-viewport="mobile"] .unified-top-header__top-nav {
@@ -257,6 +262,16 @@ html[data-demo-viewport="mobile"] .unified-top-header__brand-row {
 html[data-demo-viewport="mobile"] .unified-top-header__mobile-menu-trigger {
   display: inline-flex;
   flex: 0 0 auto;
+}
+
+html[data-demo-viewport="mobile"] .unified-top-header__action--account {
+  display: none;
+}
+
+html[data-demo-viewport="mobile"] .unified-top-header__brand-mark,
+html[data-demo-viewport="mobile"] .unified-top-header__brand-mark > img {
+  width: auto;
+  max-width: 108px;
 }
 
 /* `#root` is the fixed containing block — pin drawers to the phone

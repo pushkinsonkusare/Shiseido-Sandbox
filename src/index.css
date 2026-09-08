@@ -288,22 +288,40 @@ body {
   background: transparent;
 }
 
+html[data-demo-viewport="mobile"] {
+  --demo-frame-extra: 0px;
+  --demo-frame-gutter: 24px;
+  --demo-frame-scale: 1;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+html[data-demo-viewport="mobile"][data-demo-mobile-chrome="true"] {
+  --demo-frame-extra: 8px;
+}
+
 html[data-demo-viewport="mobile"] body {
   background: #eceff3;
-  min-height: 100vh;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
   min-width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 12px;
   box-sizing: border-box;
-  overflow: auto;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
-/* Simulated iPhone 17 Pro frame: fixed 402 × 874 CSS px (6.3" display,
- * @3x logical resolution). Always that exact size and centered in the
- * browser window; if the window is smaller, body scrolls so the frame
- * stays intact.
+/* Simulated iPhone 17 Pro frame: layout stays 402 × 874 CSS px so
+ * container queries and overlays keep working. `--demo-frame-scale`
+ * (never above 1) shrinks the visual phone so the full device fits
+ * any window, display scale, or browser zoom. Negative margins cancel
+ * the leftover layout box after `transform: scale`.
  *
  * `#root` itself does NOT scroll — storefront scrolling lives on
  * `.sxs-shell` so overlays (assistant panel, FAB, drawers) that are
@@ -320,10 +338,12 @@ html[data-demo-viewport="mobile"] #root {
   min-height: 874px;
   max-width: 402px;
   flex: 0 0 auto;
-  margin: 0;
   overflow: hidden;
   background: #ffffff;
-  transform: translateZ(0);
+  transform: scale(var(--demo-frame-scale));
+  transform-origin: center center;
+  margin-block: calc((var(--demo-frame-scale) - 1) * 437px);
+  margin-inline: calc((var(--demo-frame-scale) - 1) * 201px);
   box-shadow:
     0 0 0 1px rgba(15, 23, 42, 0.08),
     0 24px 60px rgba(15, 23, 42, 0.18);

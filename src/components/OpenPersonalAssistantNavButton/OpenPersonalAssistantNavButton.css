@@ -14,6 +14,8 @@
   color: #17171b;
   cursor: pointer;
   border-radius: 6px;
+  font-family: inherit;
+  line-height: 1;
   transition: background-color 120ms ease, color 120ms ease;
 }
 
@@ -46,11 +48,44 @@
 }
 
 .personal-assistant-nav-trigger__label {
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.01em;
   line-height: 1;
   white-space: nowrap;
+}
+
+.personal-assistant-nav-trigger__label--short {
+  display: none;
+}
+
+html[data-demo-viewport="mobile"] .personal-assistant-nav-trigger {
+  padding: 0 14px 0 10px;
+}
+
+html[data-demo-viewport="mobile"] .personal-assistant-nav-trigger__label--full {
+  display: none;
+}
+
+html[data-demo-viewport="mobile"] .personal-assistant-nav-trigger__label--short {
+  display: inline-flex;
+}
+
+@media (max-width: 430px) {
+  .personal-assistant-nav-trigger {
+    padding: 0 14px 0 10px;
+  }
+
+  .personal-assistant-nav-trigger__label--full {
+    display: none;
+  }
+
+  .personal-assistant-nav-trigger__label--short {
+    display: inline-flex;
+  }
 }
 
 .personal-assistant-nav-trigger:hover {

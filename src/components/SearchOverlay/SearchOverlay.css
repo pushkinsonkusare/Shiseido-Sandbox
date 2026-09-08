@@ -420,6 +420,10 @@
     width: 100%;
     max-width: none;
   }
+
+  .search-overlay__recent-list > :nth-child(n + 7) {
+    display: none;
+  }
 }
 
 .search-overlay__col {
@@ -1038,6 +1042,10 @@ html[data-demo-viewport="mobile"] .search-overlay__col--recent {
   flex: 0 0 auto;
   width: 100%;
   max-width: none;
+}
+
+html[data-demo-viewport="mobile"] .search-overlay__recent-list > :nth-child(n + 7) {
+  display: none;
 }
 
 html[data-demo-viewport="mobile"] .search-overlay__col--bestsellers {

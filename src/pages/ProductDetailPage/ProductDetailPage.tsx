@@ -27,6 +27,7 @@ export default function ProductDetailPage() {
     pdpInlineWidget,
     pdpInlineWidgetPosition,
     pdpInlineWidgetType,
+    viewportMode,
   } = useAgentMode();
   /* The "Ask Assistant" widget is entirely behind the PDP inline widget feature
    * flag: unchecked means the PDP carries no assistant affordance at all.
@@ -41,6 +42,15 @@ export default function ProductDetailPage() {
     agentMode === "assistant-only" || agentMode === "side-by-side";
   const showNbaPanel =
     pdpInlineWidget && (nbaAnswerMode === "inline-answer" || assistantMounted);
+  /* Mobile stacks gallery above info, so a left-under-image panel would sit
+   * above the buy box. Park the widget in the info rail there (both themes);
+   * desktop keeps the configured placement. */
+  const isMobileViewport = viewportMode === "mobile";
+  const showNbaUnderGallery =
+    showNbaPanel && nbaPlacement === "left-under-image" && !isMobileViewport;
+  const showNbaInRightRail =
+    showNbaPanel &&
+    (isMobileViewport || nbaPlacement === "right-rail");
   const product = getProductBySlug(currentProductSlug) ?? featuredProducts[0] ?? products[0];
   const gallery = product.gallery.length > 0 ? product.gallery : [product.imageUrl];
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -142,7 +152,7 @@ export default function ProductDetailPage() {
               ))}
             </div>
 
-            {showNbaPanel && nbaPlacement === "left-under-image" ? (
+            {showNbaUnderGallery ? (
               <PdpNbaPanel
                 product={product}
                 catalog={products}
@@ -194,15 +204,13 @@ export default function ProductDetailPage() {
             </div>
             <p className="figma-pdp__pay-note">Pay in 4 interest-free payments of $12.25 with PayPal. Learn more</p>
 
-            {showNbaPanel && nbaPlacement === "right-rail" ? (
+            {showNbaInRightRail ? (
               <PdpNbaPanel
                 product={product}
                 catalog={products}
                 answerMode={nbaAnswerMode}
               />
             ) : null}
-
-            <p className="figma-pdp__desc">{product.shortDescription}</p>
 
             <div className="figma-pdp__benefits">
               {detailSections.map((section, index) => {

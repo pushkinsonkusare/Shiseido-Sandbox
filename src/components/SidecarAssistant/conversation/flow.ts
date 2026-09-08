@@ -996,9 +996,7 @@ const SERUM_CONCERN_PILLS = [
   HELP_WITH_DARK_SPOTS,
   SOMETHING_FOR_WRINKLES,
   WANT_MORE_FIRMNESS,
-  TEXTURE_FEELS_UNEVEN,
   SKIN_FEELS_DRY,
-  WHATS_A_GOOD_VALUE,
   JUST_SHOW_ME_A_FEW,
 ] as const;
 
@@ -1287,7 +1285,15 @@ export function buildCategoryClarifyBody(intent: Intent): string {
 export function buildCategoryClarifyNbas(intent: Intent): StageNbaItem[] {
   const category = intent.categories?.[0] ?? "";
   const labels = CONCERN_PILLS_BY_CATEGORY[category] ?? DEFAULT_CONCERN_PILLS;
-  return labels.map((label) => ({
+  // Keep the row tight: up to 4 concern answers + one "just show me" escape.
+  const concerns = labels.filter(
+    (label) => detectCategoryConcern(label) !== "skip",
+  );
+  const skip =
+    labels.find((label) => detectCategoryConcern(label) === "skip") ??
+    JUST_SHOW_ME_A_FEW;
+  const picked = [...concerns.slice(0, 4), skip];
+  return picked.map((label) => ({
     label,
     lane: detectCategoryConcern(label) === "skip" ? "escape" : "capture",
   }));

@@ -1521,14 +1521,17 @@ export function SidecarAssistant({
   // Selecting a product moves focus to the composer (cursor blinking) so the
   // shopper can immediately ask about it; the placeholder names the product.
   // A selection change also resets the contextual thread so the tray shows its
-  // entry pills again for the new selection.
+  // entry pills again for the new selection. Skip autofocus in mobile keyboard
+  // mode — the sim keyboard should open only when the textarea is tapped.
   useEffect(() => {
     if (selectedSlugs.length > previousSelectedCountRef.current) {
-      inputRef.current?.focus();
+      if (!(docked && viewportMode === "mobile")) {
+        inputRef.current?.focus();
+      }
     }
     previousSelectedCountRef.current = selectedSlugs.length;
     setContextualThreadActive(false);
-  }, [selectedSlugs]);
+  }, [selectedSlugs, docked, viewportMode]);
 
   /* ---------- mutation helpers ---------- */
 
@@ -2566,6 +2569,33 @@ export function SidecarAssistant({
         // render the matching carousel instead of stacking a question on top.
         if (alreadySpecific) return false;
 
+        // Category-only ask: keep the model's question copy when present, but
+        // always use host concern chips so follow-ups answer the clarify
+        // instead of pivoting to routines / other categories.
+        if (isCategoryOnlyAsk(intent)) {
+          pendingCategoryClarifyRef.current = {
+            categories: intent.categories ?? [],
+            categoryLabel:
+              intent.categoryLabel ?? intent.categories?.[0] ?? "",
+          };
+          appendMessage({
+            id: nextId("agent"),
+            kind: "agent_simple",
+            body: sayText || buildCategoryClarifyBody(intent),
+          });
+          const clarifyItems = buildCategoryClarifyNbas(intent);
+          appendMessage(buildStageNbasMessage("clarify", clarifyItems, false));
+          emitAssistantTelemetry("nba_impression", {
+            stage: "clarify",
+            labels: clarifyItems.map((item) => item.label),
+            lanes: clarifyItems.map((item) => item.lane),
+          });
+          return true;
+        }
+
+        // Routine asks need the accordion host path, not a text-only reply.
+        if (detectRoutineIntent(shopperText).isRoutine) return false;
+
         if (sayText) {
           appendMessage({
             id: nextId("agent"),
@@ -2632,12 +2662,17 @@ export function SidecarAssistant({
         };
       };
 
+      const routineAsk = detectRoutineIntent(shopperText);
       const presentSections = (
         intro: string,
         sections: RoutineSection[],
       ): void => {
         if (sections.length === 0) return;
+        // A broad routine ask must stay an accordion. Collapsing a 1-row
+        // LLM recipe into a PLP is what made "skincare for oily skin" flake
+        // on the first turn.
         if (sections.length === 1) {
+          if (routineAsk.isRoutine) return;
           const slugs = [
             ...sections[0].products.map((product) => product.id),
             ...(sections[0].remainingSlugs ?? []),
@@ -2694,6 +2729,8 @@ export function SidecarAssistant({
       for (const action of actions) {
         switch (action.type) {
           case "show_product_listing": {
+            // Routine asks belong on the accordion host path, not a lone PLP.
+            if (routineAsk.isRoutine) break;
             holdFollowUp = true;
             const shown = renderPlpCard(
               action.intro,
@@ -2858,6 +2895,12 @@ export function SidecarAssistant({
           });
         });
         return true;
+      }
+
+      // Routine asks that never produced a multi-section accordion are a
+      // failed orchestration — let the host rebuild the card.
+      if (routineAsk.isRoutine && !lastRoutineForNbas) {
+        return false;
       }
 
       if (lastRoutineForNbas) {
@@ -3449,9 +3492,18 @@ export function SidecarAssistant({
       const useSpfStepUpRules =
         ingredientIntent.spfMinExclusive != null ||
         ingredientIntent.spfMinInclusive != null;
+      // Broad routine / skin-type asks (e.g. landing "skincare for oily skin")
+      // must stay on the host accordion. The LLM often returns a single PLP
+      // or a 1-row recipe on first turn, which looks broken until refresh.
+      const useRoutineRules = detectRoutineIntent(trimmed).isRoutine;
 
       const agent = agentRef.current;
-      if (agent && !useIngredientRules && !useSpfStepUpRules) {
+      if (
+        agent &&
+        !useIngredientRules &&
+        !useSpfStepUpRules &&
+        !useRoutineRules
+      ) {
         agent
           .respond(trimmed, (line) => {
             updateMessage(loaderId, (message) => {
@@ -5194,7 +5246,9 @@ export function SidecarAssistant({
   const composerDisabledRef = useRef(false);
   composerDisabledRef.current = composerDisabled;
   // Disabling the input blurs it, so remember that the shopper was mid-thought
-  // and hand focus back once the answer lands.
+  // and hand focus back once the answer lands. In mobile keyboard mode, only
+  // restore focus when the sim keyboard is already open — otherwise wait for
+  // an explicit textarea tap.
   const composerHadFocusRef = useRef(false);
   useEffect(() => {
     if (composerDisabled) return;
@@ -5203,8 +5257,9 @@ export function SidecarAssistant({
     setTruncateComposerGhost(false);
     if (!composerHadFocusRef.current) return;
     composerHadFocusRef.current = false;
+    if (simulateMobileKeyboard && !simKeyboardOpen) return;
     inputRef.current?.focus({ preventScroll: true });
-  }, [composerDisabled]);
+  }, [composerDisabled, simulateMobileKeyboard, simKeyboardOpen]);
 
   // The composer is a textarea so a long question wraps instead of scrolling
   // away to the right, which means its height has to follow its content. Reset
@@ -6154,9 +6209,13 @@ export function SidecarAssistant({
               event.preventDefault();
               submitComposer();
             }}
+            onPointerDown={() => {
+              // Open the sim keyboard only on an explicit tap — not on
+              // programmatic focus from product select or post-reply restore.
+              if (simulateMobileKeyboard) setSimKeyboardOpen(true);
+            }}
             onFocus={() => {
               composerHadFocusRef.current = true;
-              if (simulateMobileKeyboard) setSimKeyboardOpen(true);
             }}
             onBlur={() => {
               // The blur that disabling causes isn't the shopper leaving, so

@@ -19,7 +19,12 @@ export function OpenPersonalAssistantNavButton() {
       }
     >
       <SparkleIcon width={16} height={16} />
-      <span className="personal-assistant-nav-trigger__label">beauty advisor</span>
+      <span className="personal-assistant-nav-trigger__label personal-assistant-nav-trigger__label--full">
+        beauty advisor
+      </span>
+      <span className="personal-assistant-nav-trigger__label personal-assistant-nav-trigger__label--short">
+        Advisor
+      </span>
     </button>
   );
 }

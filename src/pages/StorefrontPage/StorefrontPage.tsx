@@ -13,10 +13,36 @@ import { useSearchOverlay } from "../../components/SearchOverlay/SearchOverlayCo
 import { ROUTES, usePrototypeNavigation } from "../../prototypeRoutes";
 import { PRIMARY_NAV_ITEMS, SITE_BRAND, SITE_FOOTER_COPY } from "../../siteContent";
 import bannerUltimune from "../../assets/banner-ultimune.webp";
+import bannerUltimuneMobile from "../../assets/banner-ultimune-mobile.png";
 import bannerMineralSunscreen from "../../assets/banner-mineral-sunscreen.webp";
+import bannerMineralSunscreenMobile from "../../assets/banner-mineral-sunscreen-mobile.png";
 import bannerVitalPerfection from "../../assets/banner-vital-perfection.png";
+import categoryCleansersLifestyle from "../../assets/category-cleansers-lifestyle.png";
+import categoryTreatmentsLifestyle from "../../assets/category-treatments-lifestyle.png";
 import shiseidoLogo from "../../assets/shiseido-logo.png";
 import "./StorefrontPage.css";
+
+/** Category tiles (not SKUs): lifestyle art + PLP deep-links. */
+const CATEGORY_PROMO_CARDS = [
+  {
+    id: "cleansers",
+    title: "Cleansers",
+    description:
+      "Start every ritual with a clean canvas — foams, oils, and milks for every skin type.",
+    image: categoryCleansersLifestyle,
+    imageAlt: "Woman gently cleansing her face with a foaming cleanser",
+    category: "Cleansers",
+  },
+  {
+    id: "serums-treatments",
+    title: "Serums & Treatments",
+    description:
+      "Targeted concentrates for firmness, radiance, and everyday skin resilience.",
+    image: categoryTreatmentsLifestyle,
+    imageAlt: "Woman applying serum to her cheek in soft morning light",
+    category: "Serums",
+  },
+] as const;
 
 export default function StorefrontPage() {
   const { featuredProducts, promoProducts, spotlightProducts } = useCatalog();
@@ -29,6 +55,7 @@ export default function StorefrontPage() {
     {
       id: "ultimune",
       image: bannerUltimune,
+      imageMobile: bannerUltimuneMobile,
       imageAlt: "Shiseido Ultimune Power Infusing Serum",
       eyebrow: "ULTIMUNE POWER INFUSING SERUM",
       title: "Slow the Skin Aging Cycle*",
@@ -42,6 +69,7 @@ export default function StorefrontPage() {
     {
       id: "mineral-clear",
       image: bannerMineralSunscreen,
+      imageMobile: bannerMineralSunscreenMobile,
       imageAlt: "Shiseido Urban Environment Mineral Clear Sunscreen SPF 50",
       eyebrow: "URBAN ENVIRONMENT",
       title: "Urban Environment Mineral Clear Sunscreen SPF 50",
@@ -70,7 +98,7 @@ export default function StorefrontPage() {
       <UnifiedTopHeader navigate={navigate} openSearchOverlay={openSearchOverlay} />
 
       <main className="figma-storefront__page-inner">
-        <section className="figma-storefront__hero">
+        <section className={"figma-storefront__hero figma-storefront__hero--" + activeSlide.id}>
           <button
             type="button"
             className="figma-storefront__hero-arrow figma-storefront__hero-arrow--play"
@@ -113,7 +141,16 @@ export default function StorefrontPage() {
               )}
             </div>
           </div>
-          <img src={activeSlide.image} alt={activeSlide.imageAlt} className="figma-storefront__hero-image" />
+          <img
+            src={activeSlide.image}
+            alt={activeSlide.imageAlt}
+            className="figma-storefront__hero-image figma-storefront__hero-image--desktop"
+          />
+          <img
+            src={activeSlide.imageMobile}
+            alt={activeSlide.imageAlt}
+            className="figma-storefront__hero-image figma-storefront__hero-image--mobile"
+          />
         </section>
 
         <section className="figma-storefront__tagline-banner" aria-label="Brand promise">
@@ -200,15 +237,22 @@ export default function StorefrontPage() {
         </section>
 
         <section className="figma-storefront__promo-grid" aria-label="More Shiseido recommendations">
-          {featuredProducts.slice(0, 2).map((product) => (
-            <article key={`bottom-${product.slug}`} className="figma-storefront__promo-card">
-              <div className="figma-storefront__promo-card-image-shell">
-                <img src={product.imageUrl} alt={product.imageAlt} />
+          {CATEGORY_PROMO_CARDS.map((card) => (
+            <article key={card.id} className="figma-storefront__promo-card">
+              <div className="figma-storefront__promo-card-image-shell figma-storefront__promo-card-image-shell--lifestyle">
+                <img src={card.image} alt={card.imageAlt} />
               </div>
               <div className="figma-storefront__promo-card-body">
-                <h3>{product.category}</h3>
-                <p>{product.shortDescription}</p>
-                <button type="button" onClick={() => navigateToProduct(product.slug)}>DISCOVER MORE</button>
+                <h3>{card.title}</h3>
+                <p>{card.description}</p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(ROUTES.productListing, { category: card.category })
+                  }
+                >
+                  DISCOVER MORE
+                </button>
               </div>
             </article>
           ))}

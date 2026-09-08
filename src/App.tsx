@@ -1,6 +1,8 @@
 import AboutUsPage from "./pages/AboutUsPage/AboutUsPage";
 import { AgentModeBar } from "./components/AgentModeBar/AgentModeBar";
 import { AgentModeProvider, useAgentMode } from "./components/AgentModeBar/AgentModeContext";
+import { MobileChrome } from "./components/MobileChrome/MobileChrome";
+import { useDemoFrameFit } from "./hooks/useDemoFrameFit";
 import { CatalogProvider } from "./catalog/CatalogContext";
 import CheckoutPage from "./pages/CheckoutPage/CheckoutPage";
 import LoginPage from "./pages/LoginPage/LoginPage";
@@ -43,6 +45,12 @@ function RoutedApp() {
   }
 }
 
+function DemoFrameFit() {
+  const { viewportMode, mobileChrome } = useAgentMode();
+  useDemoFrameFit(viewportMode, mobileChrome);
+  return null;
+}
+
 function ModeAwareRoot() {
   const { mode } = useAgentMode();
 
@@ -72,9 +80,11 @@ function App() {
         <PrototypeNavigationProvider>
           <CatalogProvider>
             <SearchOverlayProvider>
+              <DemoFrameFit />
               <AgentModeBar />
               <ModeAwareRoot />
               <SearchOverlay />
+              <MobileChrome />
             </SearchOverlayProvider>
           </CatalogProvider>
         </PrototypeNavigationProvider>

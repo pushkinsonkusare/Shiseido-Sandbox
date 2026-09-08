@@ -107,6 +107,9 @@ type AgentModeContextValue = {
   setMode: (mode: AgentMode) => void;
   viewportMode: DemoViewportMode;
   setViewportMode: (mode: DemoViewportMode) => void;
+  /** Decorative iPhone 17 + Chrome bars around the mobile demo frame. */
+  mobileChrome: boolean;
+  setMobileChrome: (enabled: boolean) => void;
   /** When true, routine category recommendations render as a single-open accordion. */
   accordionRecommendations: boolean;
   setAccordionRecommendations: (enabled: boolean) => void;
@@ -267,9 +270,20 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
    * The mid-session setters still work normally; they just don't
    * survive a reload. */
   const [mode, setMode] = useState<AgentMode>(DEFAULT_AGENT_MODE);
-  const [viewportMode, setViewportMode] = useState<DemoViewportMode>(
+  const [viewportMode, setViewportModeState] = useState<DemoViewportMode>(
     UT_BOOTSTRAP.viewportMode,
   );
+  const [mobileChrome, setMobileChromeState] = useState(false);
+
+  const setViewportMode = (mode: DemoViewportMode) => {
+    setViewportModeState(mode);
+    if (mode === "desktop") setMobileChromeState(false);
+  };
+
+  const setMobileChrome = (enabled: boolean) => {
+    if (viewportMode !== "mobile") return;
+    setMobileChromeState(enabled);
+  };
   const [accordionRecommendations, setAccordionRecommendations] = useState<boolean>(
     UT_BOOTSTRAP.accordionRecommendations,
   );
@@ -303,6 +317,8 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       setMode,
       viewportMode,
       setViewportMode,
+      mobileChrome,
+      setMobileChrome,
       accordionRecommendations,
       setAccordionRecommendations,
       contextIsland,
@@ -331,6 +347,7 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
     [
       mode,
       viewportMode,
+      mobileChrome,
       accordionRecommendations,
       contextIsland,
       contextPill,

@@ -223,7 +223,6 @@ html[data-demo-viewport="mobile"] .figma-pdp__page-inner {
 
 .figma-pdp__brand, .figma-pdp__sku { font-size: 12px; margin: 0 0 var(--pdp-space-xs); color: #33373d; }
 .figma-pdp__info h1 { margin: 0 0 var(--pdp-space-xs); font-size: 30px; line-height: 36px; letter-spacing: -0.75px; color: #3f3f46; }
-.figma-pdp__desc { margin: var(--pdp-space-md) 0; padding: var(--pdp-space-md) 0; font-size: 16px; line-height: 24px; color: rgba(23, 23, 27, 1); }
 .figma-pdp__stars { margin: 0 0 var(--pdp-space-xs); color: #f59e0b; font-size: 14px; }
 .figma-pdp__price { margin: 0 0 var(--pdp-space-sm); font-size: 24px; font-weight: 700; color: #3f3f46; }
 
@@ -812,13 +811,6 @@ html[data-demo-viewport="mobile"] .figma-pdp__page-inner {
     line-height: 1.2;
   }
 
-  .figma-pdp__desc {
-    margin: var(--pdp-space-xs) 0 var(--pdp-space-sm);
-    padding: var(--pdp-space-xs) 0 var(--pdp-space-sm);
-    font-size: 14px;
-    line-height: 1.4;
-  }
-
   .figma-pdp__shipping-row {
     grid-template-columns: 1fr;
   }
@@ -867,4 +859,10 @@ html[data-demo-viewport="mobile"] .figma-pdp__quick-links {
 html[data-demo-viewport="mobile"] .figma-pdp__top-actions {
   display: inline-flex;
   align-items: center;
+}
+
+/* Demo phone frame is still a wide outer window, so the 430px media query
+   that zeros info padding never fires — clear the desktop left gutter here. */
+html[data-demo-viewport="mobile"] .figma-pdp__info {
+  padding: 0;
 }
