@@ -169,7 +169,7 @@
   height: 2px;
   background: #1a73e8;
   transform-origin: left center;
-  animation: mobile-chrome-url-progress 1000ms cubic-bezier(0.2, 0, 0.2, 1) forwards;
+  animation: mobile-chrome-url-progress 500ms cubic-bezier(0.2, 0, 0.2, 1) forwards;
 }
 
 @keyframes mobile-chrome-spin {
