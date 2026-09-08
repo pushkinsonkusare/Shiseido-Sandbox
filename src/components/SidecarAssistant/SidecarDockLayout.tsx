@@ -23,12 +23,17 @@ const FAB_REVEAL_DELAY_MS = 280;
 
 function shouldOpenPanelFromUrl(): boolean {
   if (typeof window === "undefined") return false;
-  if (DEMO_SCENARIO != null) return true;
-  // Runtime re-read covers late URL changes / stale module constants.
-  if (readDemoScenario() != null) return true;
   const open = (new URLSearchParams(window.location.search).get("open") || "")
     .trim()
     .toLowerCase();
+  /* Explicit close wins over scenario auto-open, so a shared PDP can keep
+   * the advisor shut until the shopper taps it. */
+  if (open === "0" || open === "false" || open === "off" || open === "no") {
+    return false;
+  }
+  if (DEMO_SCENARIO != null) return true;
+  // Runtime re-read covers late URL changes / stale module constants.
+  if (readDemoScenario() != null) return true;
   return open === "1" || open === "true" || open === "yes";
 }
 

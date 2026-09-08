@@ -239,12 +239,7 @@ function readUserTestingBootstrap(): UserTestingBootstrap {
     .split(/[|,]/)
     .map((slug) => slug.trim())
     .filter(Boolean);
-  const selectedProductSlugs =
-    selectedFromQuery.length > 0
-      ? selectedFromQuery
-      : readDemoScenario() === "clarifying-pdp"
-        ? [CLARIFYING_PDP_SCENARIO_SLUG]
-        : [];
+  const selectedProductSlugs = selectedFromQuery;
 
   const pdpTypeRaw = (params.get("pdpType") || "").trim().toLowerCase();
   const pdpType: PdpInlineWidgetType =
