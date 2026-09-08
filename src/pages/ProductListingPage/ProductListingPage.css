@@ -593,6 +593,10 @@ a.prototype-brand-link.figma-plp__brand-mark {
     letter-spacing: var(--plp-mobile-title-tracking);
   }
 
+  .figma-plp__filters {
+    gap: 8px;
+  }
+
   .figma-plp__filter-group {
     padding: 0;
     min-height: var(--plp-mobile-filter-collapsed-height);
@@ -706,6 +710,7 @@ html[data-demo-viewport="mobile"] .figma-plp__main {
 html[data-demo-viewport="mobile"] .figma-plp__filters {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
   width: 100%;
   max-width: 100%;
   min-width: 0;

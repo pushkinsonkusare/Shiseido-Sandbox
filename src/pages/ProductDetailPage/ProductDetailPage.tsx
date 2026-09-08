@@ -54,22 +54,23 @@ export default function ProductDetailPage() {
   const product = getProductBySlug(currentProductSlug) ?? featuredProducts[0] ?? products[0];
   const gallery = product.gallery.length > 0 ? product.gallery : [product.imageUrl];
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
 
   useEffect(() => {
     setActiveImageIndex(0);
+    setSelectedVariantIndex(0);
   }, [product.slug]);
 
   const activeImage = gallery[activeImageIndex] ?? gallery[0];
   const relatedProducts = getRelatedProducts(product.slug, 15);
-  /* Labels for the "Key Specs" chips, which stay on the spec table. */
-  const keySpecs = (
-    product.specs.length > 0
-      ? product.specs
-      : product.featureBlocks.map((block, index) => ({
-          label: `Feature ${index + 1}`,
-          value: block,
-        }))
-  ).slice(0, 3);
+  /* Size chips only when there is something to choose. A single listed
+   * size is not a picker. */
+  const sizeOptions = product.variants.filter((variant) => Boolean(variant.label));
+  const showSizePicker = sizeOptions.length >= 2;
+  const selectedVariant = showSizePicker
+    ? sizeOptions[Math.min(selectedVariantIndex, sizeOptions.length - 1)]
+    : undefined;
+  const displayedPrice = selectedVariant?.priceFormatted ?? product.priceFormatted;
   /* Overview, Key Benefits and How To Use, straight from those dataset columns.
    * A section the dataset has nothing for is dropped rather than rendered
    * empty, so the first section with copy is the one that opens. */
@@ -169,16 +170,25 @@ export default function ProductDetailPage() {
               {product.rating ? `${product.rating.toFixed(1)} / 5` : "New release"}
               {product.reviewCount ? ` (${product.reviewCount} reviews)` : ""}
             </p>
-            <p className="figma-pdp__price">{product.priceFormatted}</p>
+            <p className="figma-pdp__price">{displayedPrice}</p>
 
-            <div className="figma-pdp__field">
-              <label>Key Specs:</label>
-              <div className="figma-pdp__chips">
-                {keySpecs.map((benefit, index) => (
-                  <button key={benefit.label} className={index === 0 ? "is-active" : undefined}>{benefit.label}</button>
-                ))}
+            {showSizePicker ? (
+              <div className="figma-pdp__field">
+                <label>Size</label>
+                <div className="figma-pdp__chips">
+                  {sizeOptions.map((variant, index) => (
+                    <button
+                      key={`${variant.label}-${index}`}
+                      type="button"
+                      className={index === selectedVariantIndex ? "is-active" : undefined}
+                      onClick={() => setSelectedVariantIndex(index)}
+                    >
+                      {variant.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : null}
 
             <div className="figma-pdp__field">
               <label>Quantity</label>

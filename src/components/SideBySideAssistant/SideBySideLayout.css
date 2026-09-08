@@ -486,6 +486,9 @@ html[data-demo-viewport="mobile"] .sxs-shell {
   overflow-x: clip;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* Keep route changes at the top; otherwise the browser anchors to the
+     clicked product card and the PDP opens mid-page. */
+  overflow-anchor: none;
 }
 
 html[data-demo-viewport="mobile"] .sxs-layout--mobile {

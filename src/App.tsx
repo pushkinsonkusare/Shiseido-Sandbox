@@ -1,3 +1,4 @@
+import { useLayoutEffect } from "react";
 import AboutUsPage from "./pages/AboutUsPage/AboutUsPage";
 import { AgentModeBar } from "./components/AgentModeBar/AgentModeBar";
 import { AgentModeProvider, useAgentMode } from "./components/AgentModeBar/AgentModeContext";
@@ -17,10 +18,14 @@ import { SideBySideLayout } from "./components/SideBySideAssistant/SideBySideLay
 import { SidecarDockLayout } from "./components/SidecarAssistant/SidecarDockLayout";
 import { SiteGate } from "./components/SiteGate/SiteGate.tsx";
 import StorefrontPage from "./pages/StorefrontPage/StorefrontPage";
-import { PrototypeNavigationProvider, ROUTES, usePrototypeNavigation } from "./prototypeRoutes";
+import { PrototypeNavigationProvider, ROUTES, scrollAppToTop, usePrototypeNavigation } from "./prototypeRoutes";
 
 function RoutedApp() {
-  const { currentRoute } = usePrototypeNavigation();
+  const { currentRoute, currentProductSlug } = usePrototypeNavigation();
+
+  useLayoutEffect(() => {
+    scrollAppToTop();
+  }, [currentRoute, currentProductSlug]);
 
   switch (currentRoute) {
     case ROUTES.productListing:

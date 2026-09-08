@@ -406,6 +406,25 @@ function getRouteState(pathname: string, search: string): RouteState {
   };
 }
 
+/**
+ * The demo phone (`html[data-demo-viewport="mobile"]`) scrolls `.sxs-shell`,
+ * not the window. `window.scrollTo(0, 0)` therefore leaves the shopper
+ * parked at the previous page's offset (e.g. mid-PLP) when a PDP opens.
+ */
+export function scrollAppToTop() {
+  if (typeof window === "undefined") return;
+  const active = document.activeElement;
+  if (active instanceof HTMLElement && active !== document.body) {
+    active.blur();
+  }
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  document.querySelectorAll(".sxs-shell").forEach((node) => {
+    if (node instanceof HTMLElement) node.scrollTop = 0;
+  });
+}
+
 export function PrototypeNavigationProvider({ children }: { children: ReactNode }) {
   const [routeState, setRouteState] = useState<RouteState>(() => {
     if (typeof window === "undefined") return EMPTY_ROUTE_STATE;
@@ -413,9 +432,14 @@ export function PrototypeNavigationProvider({ children }: { children: ReactNode 
   });
 
   useEffect(() => {
+    try {
+      window.history.scrollRestoration = "manual";
+    } catch {
+      /* ignore: some browsers block this in embedded webviews */
+    }
     const handlePopState = () => {
       setRouteState(getRouteState(window.location.pathname, window.location.search));
-      window.scrollTo(0, 0);
+      scrollAppToTop();
     };
 
     window.addEventListener("popstate", handlePopState);
@@ -520,7 +544,8 @@ export function PrototypeNavigationProvider({ children }: { children: ReactNode 
           currentSlugs: cleanSlugs,
           currentSearchQuery: cleanSearchQuery,
         });
-        window.scrollTo(0, 0);
+        scrollAppToTop();
+        requestAnimationFrame(scrollAppToTop);
       },
       navigateToProduct: (slug) => {
         const nextRoute = `/products/${slug}`;
@@ -533,7 +558,8 @@ export function PrototypeNavigationProvider({ children }: { children: ReactNode 
           currentRoute: ROUTES.productDetail,
           currentProductSlug: slug,
         });
-        window.scrollTo(0, 0);
+        scrollAppToTop();
+        requestAnimationFrame(scrollAppToTop);
       },
     }),
     [

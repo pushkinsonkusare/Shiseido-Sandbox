@@ -792,14 +792,18 @@ html[data-demo-viewport="mobile"] .figma-pdp__page-inner {
     margin-bottom: var(--pdp-space-md);
   }
 
+  .figma-pdp__gallery {
+    gap: var(--pdp-space-xs);
+  }
+
   .figma-pdp__thumbs {
     gap: var(--pdp-space-xs);
-    margin-top: var(--pdp-space-sm);
+    margin-top: 0;
   }
 
   .figma-pdp__thumb {
-    width: 74px;
-    height: 74px;
+    width: 56px;
+    height: 56px;
   }
 
   .figma-pdp__info {
@@ -826,7 +830,8 @@ html[data-demo-viewport="mobile"] .figma-pdp__page-inner {
   }
 
   .figma-pdp__rail h2 {
-    font-size: 28px;
+    font-size: 22px;
+    letter-spacing: -0.4px;
     margin-bottom: var(--pdp-space-sm);
   }
 
@@ -865,4 +870,26 @@ html[data-demo-viewport="mobile"] .figma-pdp__top-actions {
    that zeros info padding never fires — clear the desktop left gutter here. */
 html[data-demo-viewport="mobile"] .figma-pdp__info {
   padding: 0;
+}
+
+html[data-demo-viewport="mobile"] .figma-pdp__gallery {
+  gap: var(--pdp-space-xs);
+}
+
+html[data-demo-viewport="mobile"] .figma-pdp__thumbs {
+  margin-top: 0;
+  gap: var(--pdp-space-xs);
+}
+
+html[data-demo-viewport="mobile"] .figma-pdp__thumb {
+  width: 56px;
+  height: 56px;
+}
+
+/* Demo phone is a 402px frame in a wide window, so the 430px rail-title
+   shrink never fires. */
+html[data-demo-viewport="mobile"] .figma-pdp__rail h2 {
+  font-size: 22px;
+  letter-spacing: -0.4px;
+  margin-bottom: var(--pdp-space-sm);
 }

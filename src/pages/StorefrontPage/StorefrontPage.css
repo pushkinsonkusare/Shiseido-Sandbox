@@ -701,6 +701,7 @@ a.prototype-brand-link.figma-storefront__brand-mark {
   text-align: center;
   vertical-align: middle;
   box-sizing: border-box;
+  cursor: pointer;
 }
 
 .figma-storefront__step-card-image-shell img {
@@ -1016,6 +1017,14 @@ a.prototype-brand-link.figma-storefront__brand-mark {
     color: #17171b;
   }
 
+  .figma-storefront__hero--ultimune {
+    background: #e8e4df;
+  }
+
+  .figma-storefront__hero--ultimune .figma-storefront__hero-overlay {
+    color: #17171b;
+  }
+
   .figma-storefront__hero--mineral-clear .figma-storefront__hero-overlay button {
     background: #17171b;
     color: #fff;
@@ -1186,6 +1195,14 @@ html[data-demo-viewport="mobile"] .figma-storefront__hero-overlay button {
   padding: 10px 28px;
   font-size: 14px;
   border-radius: 9999px;
+}
+
+html[data-demo-viewport="mobile"] .figma-storefront__hero--ultimune {
+  background: #e8e4df;
+}
+
+html[data-demo-viewport="mobile"] .figma-storefront__hero--ultimune .figma-storefront__hero-overlay {
+  color: #17171b;
 }
 
 html[data-demo-viewport="mobile"] .figma-storefront__section {

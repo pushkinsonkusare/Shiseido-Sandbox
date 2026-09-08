@@ -13,7 +13,7 @@ import { useSearchOverlay } from "../../components/SearchOverlay/SearchOverlayCo
 import { ROUTES, usePrototypeNavigation } from "../../prototypeRoutes";
 import { PRIMARY_NAV_ITEMS, SITE_BRAND, SITE_FOOTER_COPY } from "../../siteContent";
 import bannerUltimune from "../../assets/banner-ultimune.webp";
-import bannerUltimuneMobile from "../../assets/banner-ultimune-mobile.png";
+import bannerUltimuneMobile from "../../assets/banner-ultimune-mobile-warm-grey.png";
 import bannerMineralSunscreen from "../../assets/banner-mineral-sunscreen.webp";
 import bannerMineralSunscreenMobile from "../../assets/banner-mineral-sunscreen-mobile.png";
 import bannerVitalPerfection from "../../assets/banner-vital-perfection.png";
@@ -224,7 +224,18 @@ export default function StorefrontPage() {
           <div className="figma-storefront__steps-grid">
             {spotlightProducts.map((product) => (
               <article key={product.slug} className="figma-storefront__step-card">
-                <div className="figma-storefront__step-card-image-shell">
+                <div
+                  className="figma-storefront__step-card-image-shell"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigateToProduct(product.slug)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      navigateToProduct(product.slug);
+                    }
+                  }}
+                >
                   <img src={product.imageUrl} alt={product.imageAlt} />
                 </div>
                 <button type="button" className="figma-storefront__step-card-link" onClick={() => navigateToProduct(product.slug)}>
