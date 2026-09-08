@@ -464,7 +464,7 @@ export function scrollAppToTop() {
 }
 
 /** Demo-only pause so in-app navigation reads as a real page load. */
-export const PAGE_TRANSITION_MS = 2000;
+export const PAGE_TRANSITION_MS = 1000;
 
 export function PrototypeNavigationProvider({ children }: { children: ReactNode }) {
   const [routeState, setRouteState] = useState<RouteState>(() => {

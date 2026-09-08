@@ -107,7 +107,6 @@ export function MobileChrome() {
 
   return (
     <div className="mobile-chrome" aria-hidden="true">
-      {isPageLoading ? <div className="mobile-chrome__page-progress" /> : null}
       <div className="mobile-chrome__status">
         <span className="mobile-chrome__time">12:47</span>
         <span className="mobile-chrome__island" />

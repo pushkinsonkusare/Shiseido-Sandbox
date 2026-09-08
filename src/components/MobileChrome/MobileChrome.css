@@ -169,28 +169,7 @@
   height: 2px;
   background: #1a73e8;
   transform-origin: left center;
-  animation: mobile-chrome-url-progress 2000ms cubic-bezier(0.2, 0, 0.2, 1) forwards;
-}
-
-.mobile-chrome__page-progress {
-  position: absolute;
-  top: var(--mobile-chrome-status, 54px);
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: rgba(26, 115, 232, 0.16);
-  z-index: 1;
-  overflow: hidden;
-}
-
-.mobile-chrome__page-progress::after {
-  content: "";
-  display: block;
-  height: 100%;
-  width: 100%;
-  background: #1a73e8;
-  transform-origin: left center;
-  animation: mobile-chrome-url-progress 2000ms cubic-bezier(0.2, 0, 0.2, 1) forwards;
+  animation: mobile-chrome-url-progress 1000ms cubic-bezier(0.2, 0, 0.2, 1) forwards;
 }
 
 @keyframes mobile-chrome-spin {
@@ -213,13 +192,11 @@
 
 @media (prefers-reduced-motion: reduce) {
   .mobile-chrome__spinner,
-  .mobile-chrome__url-progress,
-  .mobile-chrome__page-progress::after {
+  .mobile-chrome__url-progress {
     animation: none;
   }
 
-  .mobile-chrome__url-progress,
-  .mobile-chrome__page-progress::after {
+  .mobile-chrome__url-progress {
     transform: scaleX(1);
   }
 }
