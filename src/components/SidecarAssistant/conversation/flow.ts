@@ -212,15 +212,15 @@ export type LandingNbaLane =
 
 const LANDING_LANES: LandingNbaLane[] = [
   "productDiscovery",
-  "categoryGuidance",
   "decisionSupport",
+  "categoryGuidance",
   "supportIntent",
 ];
 
 const LANDING_NBA_BASE: Record<LandingNbaLane, string> = {
   productDiscovery: "skincare for oily skin",
   categoryGuidance: "Help me choose a serum",
-  decisionSupport: "Find sunscreen under $60",
+  decisionSupport: "Sunscreen for dry skin",
   supportIntent: "Track my recent order",
 };
 

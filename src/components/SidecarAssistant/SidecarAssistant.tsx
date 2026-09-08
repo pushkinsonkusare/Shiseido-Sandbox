@@ -1055,8 +1055,8 @@ function buildStageNbasMessage(
  * How long a search should take, and what to say while it does.
  *
  * Copy is query-grounded (`buildResearchLoaderPlan`) so a chip like
- * "skincare for oily skin" does not share a spinner with "Find sunscreen
- * under $60". Timing still splits exploring vs already-narrowed asks.
+ * "skincare for oily skin" does not share a spinner with "Sunscreen for dry skin".
+ * Timing still splits exploring vs already-narrowed asks.
  */
 function buildSearchLoaderPlan(
   query: string,
