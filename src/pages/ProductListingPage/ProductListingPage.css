@@ -24,7 +24,6 @@
   --plp-mobile-filter-title-size: 18px;
   --plp-mobile-filter-title-line: 1.2;
   --plp-mobile-filter-title-weight: 600;
-  --plp-mobile-filter-expanded-title-size: 16px;
 }
 
 .figma-plp {
@@ -601,14 +600,14 @@ a.prototype-brand-link.figma-plp__brand-mark {
   }
 
   .figma-plp__filter-group {
-    padding: 0;
+    padding: 0 16px;
     min-height: var(--plp-mobile-filter-collapsed-height);
     justify-content: center;
   }
 
   .figma-plp__filter-group h2 {
     min-height: var(--plp-mobile-filter-collapsed-height);
-    padding: 0 16px;
+    padding: 0;
     align-items: center;
     font-size: var(--plp-mobile-filter-title-size);
     line-height: var(--plp-mobile-filter-title-line);
@@ -625,13 +624,8 @@ a.prototype-brand-link.figma-plp__brand-mark {
   }
 
   .figma-plp__filter-group:not(.figma-plp__filter-group--collapsed) {
-    padding: 12px 14px 16px;
-  }
-
-  .figma-plp__filter-group:not(.figma-plp__filter-group--collapsed) h2 {
-    min-height: 44px;
-    padding: 0;
-    font-size: var(--plp-mobile-filter-expanded-title-size);
+    padding: 0 16px 16px;
+    justify-content: flex-start;
   }
 
   .figma-plp__grid {
@@ -721,7 +715,7 @@ html[data-demo-viewport="mobile"] .figma-plp__filters {
 }
 
 html[data-demo-viewport="mobile"] .figma-plp__filter-group {
-  padding: 0;
+  padding: 0 16px;
   min-height: var(--plp-mobile-filter-collapsed-height);
   justify-content: center;
   width: 100%;
@@ -732,7 +726,7 @@ html[data-demo-viewport="mobile"] .figma-plp__filter-group {
 
 html[data-demo-viewport="mobile"] .figma-plp__filter-group h2 {
   min-height: var(--plp-mobile-filter-collapsed-height);
-  padding: 0 16px;
+  padding: 0;
   align-items: center;
   font-size: var(--plp-mobile-filter-title-size);
   line-height: var(--plp-mobile-filter-title-line);
@@ -749,13 +743,8 @@ html[data-demo-viewport="mobile"] .figma-plp__filter-toggle {
 }
 
 html[data-demo-viewport="mobile"] .figma-plp__filter-group:not(.figma-plp__filter-group--collapsed) {
-  padding: 12px 14px 16px;
-}
-
-html[data-demo-viewport="mobile"] .figma-plp__filter-group:not(.figma-plp__filter-group--collapsed) h2 {
-  min-height: 44px;
-  padding: 0;
-  font-size: var(--plp-mobile-filter-expanded-title-size);
+  padding: 0 16px 16px;
+  justify-content: flex-start;
 }
 
 html[data-demo-viewport="mobile"] .figma-plp__price-range,

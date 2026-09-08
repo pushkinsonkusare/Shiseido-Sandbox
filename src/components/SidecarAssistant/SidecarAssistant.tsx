@@ -1169,7 +1169,7 @@ export function SidecarAssistant({
   const { products, heroProduct, getProductBySlug, getRelatedProducts, orderHistory } =
     useCatalog();
   const { currentRoute, currentProductSlug } = usePrototypeNavigation();
-  const { accordionRecommendations, contextIsland, contextPill, productSelection, productSelectionType, compareFeature, compareFeatureType, viewportMode, userTestingLock } =
+  const { accordionRecommendations, contextIsland, contextPill, productSelection, productSelectionType, compareFeature, compareFeatureType, viewportMode, userTestingLock, selectedProductSlugs, setSelectedProductSlugs } =
     useAgentMode();
   const demoTheme = useSyncExternalStore(
     (onStoreChange) => {
@@ -1226,7 +1226,8 @@ export function SidecarAssistant({
     cartId: string;
     itemId: string;
   } | null>(null);
-  const [selectedSlugs, setSelectedSlugs] = useState<string[]>([]);
+  const selectedSlugs = selectedProductSlugs;
+  const setSelectedSlugs = setSelectedProductSlugs;
   const selectedSet = useMemo(() => new Set(selectedSlugs), [selectedSlugs]);
   /* Shopper-established conversational product(s). Separate from the open
    * PDP (`pageProductSlug`). Agent recs / PDP cards must not write this. */

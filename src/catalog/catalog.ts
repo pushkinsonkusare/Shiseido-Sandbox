@@ -928,6 +928,7 @@ export function formatPrice(value: number) {
 
 export function toProductCardProps(product: CatalogProduct) {
   return {
+    slug: product.slug,
     imageUrl: product.imageUrl,
     imageAlt: product.imageAlt,
     images: product.gallery,

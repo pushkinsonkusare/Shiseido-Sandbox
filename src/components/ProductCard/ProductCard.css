@@ -123,7 +123,6 @@
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
 }
 
-.figma-product-card__hover-checkbox,
 .figma-product-card__carousel-btn,
 .figma-product-card__hover-cta {
   opacity: 0;
@@ -131,23 +130,48 @@
   transition: opacity 0.2s ease;
 }
 
-.figma-product-card--interactive:hover .figma-product-card__hover-checkbox,
 .figma-product-card--interactive:hover .figma-product-card__carousel-btn,
 .figma-product-card--interactive:hover .figma-product-card__hover-cta,
-.figma-product-card--interactive:focus-visible .figma-product-card__hover-checkbox,
 .figma-product-card--interactive:focus-visible .figma-product-card__carousel-btn,
 .figma-product-card--interactive:focus-visible .figma-product-card__hover-cta {
   opacity: 1;
 }
 
 .figma-product-card__hover-checkbox {
-  width: 16px;
-  height: 16px;
+  width: 36px;
+  height: 36px;
   flex: 0 0 auto;
-  border: 1px solid #d1d5db;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.96);
+  border: none;
+  border-radius: 8px;
+  box-shadow: none;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.figma-product-card__hover-checkbox-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid #737373;
   border-radius: 4px;
   background: #ffffff;
-  box-shadow: var(--pc-control-shadow);
+  color: transparent;
+  box-sizing: border-box;
+}
+
+.figma-product-card__hover-checkbox--selected .figma-product-card__hover-checkbox-box {
+  background: #131315;
+  border-color: #131315;
+  color: #ffffff;
 }
 
 .figma-product-card__carousel-btn {

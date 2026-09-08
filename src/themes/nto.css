@@ -786,7 +786,21 @@ html[data-demo-theme="consumer-electronics"] .figma-product-card__icon-btn {
 }
 
 html[data-demo-theme="consumer-electronics"] .figma-product-card__hover-checkbox {
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: var(--nto-radius-btn);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-product-card__hover-checkbox-box {
   border-radius: 4px;
+  border: 1.5px solid #737373;
+  background: #ffffff;
+  color: transparent;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-product-card__hover-checkbox--selected .figma-product-card__hover-checkbox-box {
+  background: #131315;
+  border-color: #131315;
+  color: #ffffff;
 }
 
 html[data-demo-theme="consumer-electronics"] .figma-product-card__carousel-btn {

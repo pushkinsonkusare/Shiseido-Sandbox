@@ -1,5 +1,5 @@
 import { createContext, useContext, useLayoutEffect, useMemo, useState } from "react";
-import type { ReactNode } from "react";
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 
 export type AgentMode =
   | "assistant-only"
@@ -123,6 +123,9 @@ type AgentModeContextValue = {
   /** When true, selected-product pills follow `productSelectionType`. */
   productSelection: boolean;
   setProductSelection: (enabled: boolean) => void;
+  /** Products the shopper has checked on the storefront or in-chat cards. */
+  selectedProductSlugs: string[];
+  setSelectedProductSlugs: Dispatch<SetStateAction<string[]>>;
   /** Drawer = tray above the composer. In chat = pills inside the composer
    *  box, NBAs below it. Retained while the parent checkbox is off. */
   productSelectionType: ProductSelectionType;
@@ -323,6 +326,9 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
   );
   const [productSelectionType, setProductSelectionType] =
     useState<ProductSelectionType>(UT_BOOTSTRAP.productSelectionType);
+  const [selectedProductSlugs, setSelectedProductSlugs] = useState<string[]>(
+    [],
+  );
   const [pdpInlineWidget, setPdpInlineWidget] = useState<boolean>(
     UT_BOOTSTRAP.pdpInlineWidget,
   );
@@ -354,6 +360,8 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       setProductSelection,
       productSelectionType,
       setProductSelectionType,
+      selectedProductSlugs,
+      setSelectedProductSlugs,
       pdpInlineWidget,
       setPdpInlineWidget,
       pdpInlineWidgetType,
@@ -378,6 +386,7 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       contextPill,
       productSelection,
       productSelectionType,
+      selectedProductSlugs,
       pdpInlineWidget,
       pdpInlineWidgetType,
       pdpInlineWidgetPosition,

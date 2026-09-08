@@ -1,9 +1,11 @@
 import { useState } from "react";
 import "./ProductCard.css";
-import { ArrowRightIcon, BuildingIcon, HeartIcon } from "../icons/StorefrontIcons";
+import { ArrowRightIcon, BuildingIcon, CheckIcon, HeartIcon } from "../icons/StorefrontIcons";
 import { useAgentMode } from "../AgentModeBar/AgentModeContext";
 
 export type ProductCardProps = {
+  /** Catalog slug; required to select the product into the assistant. */
+  slug?: string;
   imageUrl: string;
   imageAlt: string;
   /** Optional gallery of image URLs. When more than one is provided, the
@@ -34,6 +36,7 @@ function renderStars(rating: number | null | undefined) {
 }
 
 export function ProductCard({
+  slug,
   imageUrl,
   imageAlt,
   images,
@@ -49,7 +52,9 @@ export function ProductCard({
   showStars = true,
   onSelect,
 }: ProductCardProps) {
-  const { productSelection } = useAgentMode();
+  const { productSelection, selectedProductSlugs, setSelectedProductSlugs } =
+    useAgentMode();
+  const selected = Boolean(slug && selectedProductSlugs.includes(slug));
   const visibleSwatches = swatches.slice(0, 4);
   const extraSwatches = Math.max(0, swatches.length - visibleSwatches.length);
 
@@ -58,6 +63,17 @@ export function ProductCard({
   const safeActiveImage = activeImage % galleryImages.length;
   const currentImage = galleryImages[safeActiveImage];
   const hasCarousel = Boolean(onSelect) && galleryImages.length > 1;
+
+  const selectInAssistant = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    event.preventDefault();
+    if (!slug || !productSelection) return;
+    const willSelect = !selected;
+    setSelectedProductSlugs(willSelect ? [slug] : []);
+    if (willSelect) {
+      document.dispatchEvent(new CustomEvent("agentic:open-assistant"));
+    }
+  };
 
   const stepImage = (event: React.MouseEvent, delta: number) => {
     event.stopPropagation();
@@ -85,11 +101,25 @@ export function ProductCard({
         <div className="figma-product-card__image-wrap">
           <img className="figma-product-card__image" src={currentImage} alt={imageAlt} />
         </div>
-        <div className="figma-product-card__badge-row" aria-hidden="true">
-          {onSelect && productSelection ? (
-            <span className="figma-product-card__hover-checkbox" />
+        <div className="figma-product-card__badge-row">
+          {onSelect && productSelection && slug ? (
+            <button
+              type="button"
+              className={
+                "figma-product-card__hover-checkbox" +
+                (selected ? " figma-product-card__hover-checkbox--selected" : "")
+              }
+              aria-label={selected ? "Deselect product" : "Select product"}
+              aria-pressed={selected}
+              onClick={selectInAssistant}
+              onKeyDown={(event) => event.stopPropagation()}
+            >
+              <span className="figma-product-card__hover-checkbox-box" aria-hidden="true">
+                <CheckIcon width={13} height={13} />
+              </span>
+            </button>
           ) : null}
-          <div className="figma-product-card__badge">{badgeLabel}</div>
+          <div className="figma-product-card__badge" aria-hidden="true">{badgeLabel}</div>
         </div>
         <div className="figma-product-card__actions" aria-hidden="true">
           <span className="figma-product-card__icon-btn">

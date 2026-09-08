@@ -357,7 +357,7 @@ html[data-demo-viewport="mobile"] .figma-pdp__page-inner {
   display: flex;
   flex-direction: column;
   gap: var(--pdp-space-md);
-  margin: var(--pdp-space-xl) 0 0;
+  margin: var(--pdp-space-xl) 0;
   width: 100%;
 }
 
