@@ -102,6 +102,7 @@ type UserTestingBootstrap = {
   pdpInlineWidgetPosition: PdpInlineWidgetPosition;
   compareFeature: boolean;
   compareFeatureType: CompareFeatureType;
+  imageSearch: boolean;
 };
 
 type AgentModeContextValue = {
@@ -146,6 +147,9 @@ type AgentModeContextValue = {
   /** Sub-option of Compare; retained while the parent checkbox is off. */
   compareFeatureType: CompareFeatureType;
   setCompareFeatureType: (type: CompareFeatureType) => void;
+  /** When true, the composer shows the + control for camera / gallery search. */
+  imageSearch: boolean;
+  setImageSearch: (enabled: boolean) => void;
   /**
    * False while the PDP widget answers inline, which is the point of that
    * mode: it shows what the storefront looks like for a customer who never
@@ -178,6 +182,7 @@ const DEFAULT_PDP_INLINE_WIDGET_POSITION: PdpInlineWidgetPosition =
   "left-under-image";
 const DEFAULT_COMPARE_FEATURE = true;
 const DEFAULT_COMPARE_FEATURE_TYPE: CompareFeatureType = "side-by-side-table";
+const DEFAULT_IMAGE_SEARCH = false;
 
 function parseFlag(raw: string | null, fallback: boolean): boolean {
   if (raw == null || raw.trim() === "") return fallback;
@@ -207,6 +212,7 @@ function unlockedBootstrap(): UserTestingBootstrap {
     pdpInlineWidgetPosition: DEFAULT_PDP_INLINE_WIDGET_POSITION,
     compareFeature: DEFAULT_COMPARE_FEATURE,
     compareFeatureType: DEFAULT_COMPARE_FEATURE_TYPE,
+    imageSearch: DEFAULT_IMAGE_SEARCH,
   };
 }
 
@@ -288,6 +294,10 @@ function readUserTestingBootstrap(): UserTestingBootstrap {
     pdpInlineWidgetPosition: pdpPos,
     compareFeature: parseFlag(params.get("compare"), DEFAULT_COMPARE_FEATURE),
     compareFeatureType: compareType,
+    imageSearch: parseFlag(
+      params.get("imagesearch") ?? params.get("imageSearch"),
+      DEFAULT_IMAGE_SEARCH,
+    ),
   };
 }
 
@@ -352,6 +362,9 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
   );
   const [compareFeatureType, setCompareFeatureType] =
     useState<CompareFeatureType>(UT_BOOTSTRAP.compareFeatureType);
+  const [imageSearch, setImageSearch] = useState<boolean>(
+    UT_BOOTSTRAP.imageSearch,
+  );
 
   const value = useMemo(
     () => ({
@@ -383,6 +396,8 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       setCompareFeature,
       compareFeatureType,
       setCompareFeatureType,
+      imageSearch,
+      setImageSearch,
       sidecarAvailable:
         DEMO_SCENARIO != null ||
         !(pdpInlineWidget && pdpInlineWidgetType === "inline-answer"),
@@ -403,6 +418,7 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       pdpInlineWidgetPosition,
       compareFeature,
       compareFeatureType,
+      imageSearch,
     ],
   );
 

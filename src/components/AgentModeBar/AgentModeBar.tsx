@@ -52,6 +52,8 @@ export function AgentModeBar() {
     setCompareFeature,
     compareFeatureType,
     setCompareFeatureType,
+    imageSearch,
+    setImageSearch,
     userTestingLock,
   } = useAgentMode();
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
@@ -439,6 +441,17 @@ export function AgentModeBar() {
                     </div>
                   </div>
                 )}
+                <label className="agent-mode-bar__feature">
+                  <input
+                    type="checkbox"
+                    className="agent-mode-bar__feature-checkbox"
+                    checked={imageSearch}
+                    onChange={(event) => setImageSearch(event.target.checked)}
+                  />
+                  <span className="agent-mode-bar__feature-label">
+                    Image search
+                  </span>
+                </label>
               </div>
             </div>
 

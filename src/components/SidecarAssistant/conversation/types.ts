@@ -62,7 +62,10 @@ export type AgentSimpleMessage = {
 export type ShopperTextMessage = {
   id: string;
   kind: "shopper_text";
+  /** Empty when the shopper sent a photo with no caption. */
   text: string;
+  /** Object URL or remote URL for a photo attached to this turn. */
+  imageUrl?: string;
 };
 
 export type AgentLoaderMessage = {

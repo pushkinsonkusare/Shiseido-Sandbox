@@ -84,6 +84,10 @@ html[data-demo-theme="consumer-electronics"] .sidecar-assistant__user-bubble {
   border-radius: var(--nto-radius-card);
 }
 
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__user-image {
+  border-radius: var(--nto-radius-card);
+}
+
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__greeting-card,
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__reply-card {
   border: 1px solid #eeeeee;
@@ -268,7 +272,8 @@ html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--mu
 }
 
 /* Selection must not retune shell padding/radius — the pinned row depends on it. */
-html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--with-selection {
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--with-selection,
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--with-attachment {
   border-radius: 26px;
   padding: 6px 6px 6px 20px;
   gap: 0;
@@ -310,11 +315,70 @@ html[data-demo-theme="consumer-electronics"] .sidecar-assistant__disclaimer {
 }
 
 /* Circular black send control nestled in the right of the pill field. */
-html[data-demo-theme="consumer-electronics"] .sidecar-assistant__send {
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__send,
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__attach-btn {
   width: 40px;
   height: 40px;
   flex: 0 0 40px;
   border-radius: 50%;
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__attach {
+  margin-left: -14px;
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__attach-btn {
+  background: transparent;
+  color: #17171b;
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__attach-btn:hover:not(:disabled),
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__attach-btn[aria-expanded="true"]:not(:disabled) {
+  background: #e8e8e8;
+  color: #17171b;
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__attach-btn:disabled {
+  background: #e8e8e8;
+  color: rgba(23, 23, 27, 0.3);
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__attach-btn:focus-visible {
+  outline-color: #17171b;
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--attach-open {
+  overflow: visible;
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--selection-ready.sidecar-assistant__input-shell--with-attachment
+  .sidecar-assistant__input-shell-row {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  height: auto;
+  align-items: flex-end;
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--selection-ready.sidecar-assistant__input-shell--with-attachment
+  .sidecar-assistant__selection-slot {
+  margin-bottom: 0;
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__attach-preview {
+  /* Line up with in-shell selection pills (12px from the chatbox edge). */
+  margin-left: -8px;
+  padding: 8px 6px 8px 0;
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__attach-thumb {
+  border-radius: var(--nto-radius-btn, 4px);
+}
+
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__camera-dialog {
+  border-radius: var(--nto-radius-card);
 }
 
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__send:not(:disabled):not(.sidecar-assistant__send--stop) {
@@ -355,7 +419,9 @@ html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .sidec
 }
 
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--with-selection,
-html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .sidecar-assistant__input-shell--with-selection {
+html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .sidecar-assistant__input-shell--with-selection,
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell--with-attachment,
+html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .sidecar-assistant__input-shell--with-attachment {
   /* Keep shell padding fixed so selection-slot can bleed to an even 12px
    * inset from the chatbox border (L/T/R). */
   padding: 6px 6px 6px 20px;

@@ -8,14 +8,18 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import { useCatalog } from "../../catalog/CatalogContext";
 import { useAgentMode, UT_WELCOME_NBA_LABEL, DEMO_SCENARIO, CLARIFYING_PDP_SCENARIO_SLUG } from "../AgentModeBar/AgentModeContext";
 import {
   ArrowDownIcon,
   ArrowRightIcon,
+  CameraIcon,
   CloseIcon,
   EllipsisVerticalIcon,
   ExpandIcon,
+  ImagePlusIcon,
+  ImagesIcon,
   PlusIcon,
   SaveIcon,
   SendHorizontalIcon,
@@ -46,6 +50,7 @@ import {
   type AgentPLPProduct,
 } from "./components";
 import { SimulatedIOSKeyboard } from "./components/SimulatedIOSKeyboard";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import {
   LANDING_NBA_SUCCESS_THRESHOLDS,
   ORDER_FOLLOWUP_NBAS,
@@ -125,6 +130,11 @@ import {
   resolveActiveProductContext,
 } from "./conversation/productContext";
 import type { ChatMessage, RoutineSection } from "./conversation/types";
+import {
+  buildImageIdentifiedBody,
+  buildImageUnmatchedBody,
+  identifyCatalogProductFromImage,
+} from "./conversation/imageSearch";
 import type { CatalogProduct } from "../../catalog/catalog";
 import type { AskAssistantEventDetail } from "../../pages/ProductDetailPage/PdpNbaPanel";
 import { ROUTES, usePrototypeNavigation } from "../../prototypeRoutes";
@@ -225,13 +235,39 @@ function latestShopperText(messages: ChatMessage[]): string {
   return "";
 }
 
+/** Real phone/tablet — not the desktop demo frame. Native Camera / Photos. */
+function isRealMobileDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const uaData = (
+    navigator as Navigator & { userAgentData?: { mobile?: boolean } }
+  ).userAgentData;
+  if (typeof uaData?.mobile === "boolean") return uaData.mobile;
+  const ua = navigator.userAgent || "";
+  if (
+    /iPhone|iPod|Android.+Mobile|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua)
+  ) {
+    return true;
+  }
+  if (/iPad/.test(ua)) return true;
+  return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+}
+
 /** Maximum number of products a shopper can select at once. */
 const MAX_SELECTED_PRODUCTS = 3;
 
 /** Contextual pills that are NOT product FAQs: they trigger dedicated flows
  * (related-products carousel / comparison table / add-to-cart) rather than a
  * local answer. */
-const CONTEXTUAL_ACTION_LABELS = new Set(["Show similar", "Compare", "Add to cart"]);
+const BUY_AGAIN_NBA_LABEL = "Buy again";
+const REFILL_NBA_LABEL = "Refill this product";
+
+const CONTEXTUAL_ACTION_LABELS = new Set([
+  "Show similar",
+  "Compare",
+  "Add to cart",
+  BUY_AGAIN_NBA_LABEL,
+  REFILL_NBA_LABEL,
+]);
 
 /** Always-present FAQ pill for a single selected product. */
 const INGREDIENTS_FAQ_LABEL = "What are the ingredients?";
@@ -271,6 +307,10 @@ function resolveContextualComposerLabel(
     /^(show\s+similar|similar(\s+products?)?|find\s+similar)$/.test(normalized)
   ) {
     return "Show similar";
+  }
+  if (/^buy\s+again$/.test(normalized)) return BUY_AGAIN_NBA_LABEL;
+  if (/^refill(\s+(this\s+)?product)?$/.test(normalized)) {
+    return REFILL_NBA_LABEL;
   }
 
   // Exact match against the contextual questions for this selection. The
@@ -596,6 +636,16 @@ function nextId(prefix: string) {
   return `${prefix}-${messageIdCounter}`;
 }
 
+function revokeBlobUrl(url: string | null | undefined) {
+  if (url && url.startsWith("blob:")) URL.revokeObjectURL(url);
+}
+
+function revokeShopperImageUrls(messages: ChatMessage[]) {
+  for (const message of messages) {
+    if (message.kind === "shopper_text") revokeBlobUrl(message.imageUrl);
+  }
+}
+
 /**
  * Serialize the current conversation into a plain-text transcript suitable for
  * downloading. Each message is rendered from the shopper's or the assistant's
@@ -611,7 +661,13 @@ function buildTranscriptText(messages: ChatMessage[]): string {
   for (const message of messages) {
     switch (message.kind) {
       case "shopper_text":
-        lines.push(`Shopper: ${message.text}`);
+        if (message.imageUrl && message.text) {
+          lines.push(`Shopper: [photo] ${message.text}`);
+        } else if (message.imageUrl) {
+          lines.push("Shopper: [photo]");
+        } else {
+          lines.push(`Shopper: ${message.text}`);
+        }
         break;
       case "agent_simple":
         lines.push(
@@ -1169,7 +1225,7 @@ export function SidecarAssistant({
   const { products, heroProduct, getProductBySlug, getRelatedProducts, orderHistory } =
     useCatalog();
   const { currentRoute, currentProductSlug } = usePrototypeNavigation();
-  const { accordionRecommendations, contextIsland, contextPill, productSelection, productSelectionType, compareFeature, compareFeatureType, viewportMode, userTestingLock, selectedProductSlugs, setSelectedProductSlugs } =
+  const { accordionRecommendations, contextIsland, contextPill, productSelection, productSelectionType, compareFeature, compareFeatureType, imageSearch, viewportMode, userTestingLock, selectedProductSlugs, setSelectedProductSlugs } =
     useAgentMode();
   const demoTheme = useSyncExternalStore(
     (onStoreChange) => {
@@ -1221,6 +1277,10 @@ export function SidecarAssistant({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [welcomeRefreshCount, setWelcomeRefreshCount] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
+  const [attachedImageUrl, setAttachedImageUrl] = useState<string | null>(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   // The cart card and item whose quantity change is mid-flight, if any.
   const [updatingCart, setUpdatingCart] = useState<{
     cartId: string;
@@ -1433,6 +1493,13 @@ export function SidecarAssistant({
 
   const chatRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const attachMenuRef = useRef<HTMLDivElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const cameraVideoRef = useRef<HTMLVideoElement>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
+  const attachedImageUrlRef = useRef<string | null>(null);
+  const attachedImageNameRef = useRef<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const previousMessageIdsRef = useRef<string[]>([]);
   /** Set for a single commit whose scroll position is already being managed, so
@@ -3351,11 +3418,13 @@ export function SidecarAssistant({
   );
 
   const dispatchShopperMessage = useCallback(
-    (text: string) => {
+    (text: string, options?: { skipShopperBubble?: boolean }) => {
       const trimmed = text.trim();
       if (!trimmed) return;
 
-      appendMessage({ id: nextId("shopper"), kind: "shopper_text", text: trimmed });
+      if (!options?.skipShopperBubble) {
+        appendMessage({ id: nextId("shopper"), kind: "shopper_text", text: trimmed });
+      }
 
       const who = detectForWhom(trimmed);
       if (who) {
@@ -3769,8 +3838,9 @@ export function SidecarAssistant({
    *  - "Compare" renders a comparison table of the selected products, then
    *    collapses the tray. */
   const handleContextualPill = useCallback(
-    (label: string, contextSlug?: string) => {
+    (label: string, contextSlug?: string, options?: { skipShopperBubble?: boolean }) => {
       setTruncateComposerGhost(true);
+      const skipShopperBubble = Boolean(options?.skipShopperBubble);
       // Contextual follow-up rows carry the product they're about, so they keep
       // resolving correctly even if the live selection changed or cleared since
       // the row was shown. Tray pills omit `contextSlug` and use the current
@@ -3805,10 +3875,12 @@ export function SidecarAssistant({
           new Set<string>();
         answered.add(label);
         answeredFaqsBySlugRef.current.set(firstProduct.slug, answered);
-        appendMessage(
-          { id: nextId("shopper"), kind: "shopper_text", text: label },
-          { keepContext: true },
-        );
+        if (!skipShopperBubble) {
+          appendMessage(
+            { id: nextId("shopper"), kind: "shopper_text", text: label },
+            { keepContext: true },
+          );
+        }
         const loaderId = nextId("loader");
         appendMessage({ id: loaderId, kind: "agent_loader", variant: "answering" });
         scheduleResponse(() => {
@@ -3909,7 +3981,12 @@ export function SidecarAssistant({
         return;
       }
 
-      if (firstProduct && label === "Add to cart") {
+      if (
+        firstProduct &&
+        (label === "Add to cart" ||
+          label === BUY_AGAIN_NBA_LABEL ||
+          label === REFILL_NBA_LABEL)
+      ) {
         handleAddToCart(firstProduct.slug, 1);
         // Adding ends the contextual thread: clearing the selection closes the
         // tray and lets the cart-stage NBAs from handleAddToCart show.
@@ -3918,7 +3995,9 @@ export function SidecarAssistant({
       }
 
       if (firstProduct && label === "Show similar") {
-        appendMessage({ id: nextId("shopper"), kind: "shopper_text", text: label });
+        if (!skipShopperBubble) {
+          appendMessage({ id: nextId("shopper"), kind: "shopper_text", text: label });
+        }
         const loaderId = nextId("loader");
         appendMessage({ id: loaderId, kind: "agent_loader", variant: "answering" });
         scheduleResponse(() => {
@@ -3961,11 +4040,13 @@ export function SidecarAssistant({
       }
 
       if (firstProduct && label === "Compare") {
-        runCompareForProducts(selectedProducts, { appendShopperBubble: true });
+        runCompareForProducts(selectedProducts, {
+          appendShopperBubble: !skipShopperBubble,
+        });
         return;
       }
 
-      dispatchShopperMessage(label);
+      dispatchShopperMessage(label, { skipShopperBubble });
     },
     [
       selectedSlugs,
@@ -5292,12 +5373,145 @@ export function SidecarAssistant({
     inputRef.current?.blur();
   };
 
+  const runImageSearchTurn = (
+    image: { url: string; fileName: string | null },
+    caption: string,
+  ) => {
+    if (caption) {
+      const guardrail = classifyGuardrail(caption);
+      if (guardrail) {
+        const guardrailLoaderId = nextId("loader");
+        appendMessage({
+          id: guardrailLoaderId,
+          kind: "agent_loader",
+          variant: "answering",
+        });
+        scheduleResponse(() => {
+          removeMessage(guardrailLoaderId);
+          renderGuardrailResponse(guardrail);
+        }, GUARDRAIL_LATENCY_MS);
+        return;
+      }
+    }
+
+    const loaderId = nextId("loader");
+    appendMessage({
+      id: loaderId,
+      kind: "agent_loader",
+      variant: "answering",
+      steps: ["Looking at your photo", "Matching it to our catalog"],
+      stepIntervalMs: 900,
+    });
+
+    const fallbackSlug =
+      orderHistory[0]?.productSlugs[0] ?? heroProduct?.slug ?? null;
+
+    void identifyCatalogProductFromImage(image.url, products, {
+      fileName: image.fileName,
+      fallbackSlug,
+    }).then((product) => {
+      if (!messagesRef.current.some((message) => message.id === loaderId)) {
+        return;
+      }
+      removeMessage(loaderId);
+      if (!product) {
+        appendMessage({
+          id: nextId("agent"),
+          kind: "agent_simple",
+          body: buildImageUnmatchedBody(),
+        });
+        return;
+      }
+
+      establishConversationProduct([product.slug]);
+
+      if (!caption) {
+        appendMessage({
+          id: nextId("agent"),
+          kind: "agent_simple",
+          body: buildImageIdentifiedBody(product),
+        });
+        const [faq1, faq2] = buildContextualFaqs(product);
+        appendMessage({
+          id: nextId("nbas"),
+          kind: "agent_nbas",
+          contextual: true,
+          productSlug: product.slug,
+          regenerateButton: false,
+          nbas: buildNbaItems(
+            [BUY_AGAIN_NBA_LABEL, faq1, REFILL_NBA_LABEL, faq2],
+            "nba-image",
+          ),
+        });
+        setContextualThreadActive(true);
+        return;
+      }
+
+      const contextualLabel = resolveContextualComposerLabel(
+        caption,
+        [product.slug],
+        getProductBySlug,
+      );
+      if (contextualLabel) {
+        handleContextualPill(contextualLabel, product.slug, {
+          skipShopperBubble: true,
+        });
+        return;
+      }
+
+      const intent = classifyIntent(caption);
+      const asFaq =
+        (isProductQuestion(caption) && !isProductListingQuery(caption)) ||
+        (isIngredientPresenceQuestion(caption) &&
+          !isProductListingQuery(caption)) ||
+        intent.kind === "empty";
+      if (asFaq) {
+        handleContextualPill(caption, product.slug, { skipShopperBubble: true });
+        return;
+      }
+
+      dispatchShopperMessage(caption, { skipShopperBubble: true });
+    }).catch((error) => {
+      console.error("[SidecarAssistant] image search failed", error);
+      if (!messagesRef.current.some((message) => message.id === loaderId)) {
+        return;
+      }
+      removeMessage(loaderId);
+      appendMessage({
+        id: nextId("agent"),
+        kind: "agent_simple",
+        body: buildImageUnmatchedBody(),
+      });
+    });
+  };
+
   const submitComposer = () => {
     const value = inputValue.trim();
-    if (!value) return false;
+    const pendingImage =
+      imageSearch && attachedImageUrl
+        ? { url: attachedImageUrl, fileName: attachedImageNameRef.current }
+        : null;
+    if (!value && !pendingImage) return false;
     setInputValue("");
     setTruncateComposerGhost(false);
     setSentDraft(value);
+
+    if (pendingImage) {
+      attachedImageNameRef.current = null;
+      setAttachedImageUrl(null);
+      appendMessage({
+        id: nextId("shopper"),
+        kind: "shopper_text",
+        text: value,
+        imageUrl: pendingImage.url,
+      });
+      runImageSearchTurn(pendingImage, value);
+      setSelectedSlugs([]);
+      if (simulateMobileKeyboard) {
+        dismissSimulatedKeyboard();
+      }
+      return true;
+    }
 
     /* Product-scoped routing answers anything it can't parse with the
      * product's own overview, so guarded input has to skip it: with a serum
@@ -5526,7 +5740,16 @@ export function SidecarAssistant({
           case "shopper_text":
             return (
               <div key={message.id} className="sidecar-assistant__user-row">
-                <div className="sidecar-assistant__user-bubble">{message.text}</div>
+                <div className="sidecar-assistant__user-turn">
+                  {message.imageUrl ? (
+                    <div className="sidecar-assistant__user-image">
+                      <img src={message.imageUrl} alt="Attached photo" />
+                    </div>
+                  ) : null}
+                  {message.text ? (
+                    <div className="sidecar-assistant__user-bubble">{message.text}</div>
+                  ) : null}
+                </div>
               </div>
             );
           case "agent_loader":
@@ -5789,8 +6012,178 @@ export function SidecarAssistant({
     };
   }, [isMenuOpen]);
 
+  useEffect(() => {
+    if (!isAttachMenuOpen) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (
+        attachMenuRef.current &&
+        !attachMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsAttachMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsAttachMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isAttachMenuOpen]);
+
+  attachedImageUrlRef.current = attachedImageUrl;
+  useEffect(() => {
+    return () => {
+      revokeBlobUrl(attachedImageUrlRef.current);
+      revokeShopperImageUrls(messagesRef.current);
+      cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+    };
+  }, []);
+
+  const stopCamera = () => {
+    cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+    cameraStreamRef.current = null;
+    const video = cameraVideoRef.current;
+    if (video) video.srcObject = null;
+    setIsCameraOpen(false);
+    setCameraError(null);
+  };
+
+  useEffect(() => {
+    if (agentReplying) {
+      setIsAttachMenuOpen(false);
+      stopCamera();
+    }
+  }, [agentReplying]);
+
+  useEffect(() => {
+    if (imageSearch) return;
+    setIsAttachMenuOpen(false);
+    stopCamera();
+    attachedImageNameRef.current = null;
+    setAttachedImageUrl((prev) => {
+      revokeBlobUrl(prev);
+      return null;
+    });
+  }, [imageSearch]);
+
+  useEffect(() => {
+    const video = cameraVideoRef.current;
+    const stream = cameraStreamRef.current;
+    if (!isCameraOpen || !video || !stream) return;
+    video.srcObject = stream;
+    void video.play().catch(() => undefined);
+    return () => {
+      video.srcObject = null;
+    };
+  }, [isCameraOpen, cameraError]);
+
+  useEffect(() => {
+    if (!isCameraOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") stopCamera();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isCameraOpen]);
+
+  useBodyScrollLock(isCameraOpen);
+
+  const clearAttachedImage = () => {
+    attachedImageNameRef.current = null;
+    setAttachedImageUrl((prev) => {
+      revokeBlobUrl(prev);
+      return null;
+    });
+  };
+
+  const applyAttachedFile = (file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    const url = URL.createObjectURL(file);
+    attachedImageNameRef.current = file.name;
+    setAttachedImageUrl((prev) => {
+      revokeBlobUrl(prev);
+      return url;
+    });
+    setIsAttachMenuOpen(false);
+  };
+
+  const handleAttachFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    applyAttachedFile(file);
+  };
+
+  const openCamera = async () => {
+    setIsAttachMenuOpen(false);
+    setSimKeyboardOpen(false);
+    if (isRealMobileDevice()) {
+      cameraInputRef.current?.click();
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      cameraInputRef.current?.click();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: "user" } },
+        audio: false,
+      });
+      cameraStreamRef.current = stream;
+      setCameraError(null);
+      setIsCameraOpen(true);
+    } catch (error) {
+      const name = error instanceof DOMException ? error.name : "";
+      if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+        setCameraError("Allow camera access to take a photo.");
+        setIsCameraOpen(true);
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        });
+        cameraStreamRef.current = stream;
+        setCameraError(null);
+        setIsCameraOpen(true);
+      } catch {
+        cameraInputRef.current?.click();
+      }
+    }
+  };
+
+  const captureCameraPhoto = () => {
+    const video = cameraVideoRef.current;
+    if (!video || video.videoWidth < 1 || video.videoHeight < 1) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    context.drawImage(video, 0, 0);
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return;
+        applyAttachedFile(
+          new File([blob], "camera-photo.jpg", { type: "image/jpeg" }),
+        );
+        stopCamera();
+      },
+      "image/jpeg",
+      0.92,
+    );
+  };
+
   const handleClearChat = () => {
     setIsMenuOpen(false);
+    setIsAttachMenuOpen(false);
+    stopCamera();
+    clearAttachedImage();
     pendingResponses.current.forEach((entry) =>
       window.clearTimeout(entry.timeoutId),
     );
@@ -5812,6 +6205,7 @@ export function SidecarAssistant({
     setComposerContextCleared(false);
     setUpdatingCart(null);
     setSentDraft("");
+    revokeShopperImageUrls(messagesRef.current);
     // Emptying the list lets the welcome-seed effect re-run and restore the
     // greeting card + NBA row, matching a fresh session.
     setMessages([]);
@@ -6159,6 +6553,8 @@ export function SidecarAssistant({
             selectionChromeOpen
               ? " sidecar-assistant__input-shell--with-selection"
               : ""
+          }${attachedImageUrl && imageSearch ? " sidecar-assistant__input-shell--with-attachment" : ""}${
+            isAttachMenuOpen && imageSearch ? " sidecar-assistant__input-shell--attach-open" : ""
           }${composerMultiline ? " sidecar-assistant__input-shell--multiline" : ""}`}
         >
           {inChatProductSelection ? (
@@ -6181,7 +6577,92 @@ export function SidecarAssistant({
               </div>
             </div>
           ) : null}
+          {imageSearch && attachedImageUrl ? (
+            <div className="sidecar-assistant__attach-preview">
+              <div className="sidecar-assistant__attach-thumb">
+                <img src={attachedImageUrl} alt="Attached photo" />
+                <button
+                  type="button"
+                  className="sidecar-assistant__attach-remove"
+                  aria-label="Remove attached photo"
+                  onClick={clearAttachedImage}
+                >
+                  <CloseIcon width={12} height={12} />
+                </button>
+              </div>
+            </div>
+          ) : null}
           <div className="sidecar-assistant__input-shell-row">
+          {imageSearch ? (
+          <div className="sidecar-assistant__attach" ref={attachMenuRef}>
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="sidecar-assistant__attach-file"
+              aria-hidden="true"
+              tabIndex={-1}
+              onChange={handleAttachFile}
+            />
+            <input
+              ref={galleryInputRef}
+              type="file"
+              accept="image/*"
+              className="sidecar-assistant__attach-file"
+              aria-hidden="true"
+              tabIndex={-1}
+              onChange={handleAttachFile}
+            />
+            <button
+              type="button"
+              className="sidecar-assistant__attach-btn"
+              aria-label="Add photo"
+              aria-haspopup="menu"
+              aria-expanded={isAttachMenuOpen}
+              disabled={agentReplying}
+              onPointerDown={(event) => {
+                if (simulateMobileKeyboard) event.preventDefault();
+              }}
+              onClick={() => {
+                setIsMenuOpen(false);
+                setIsAttachMenuOpen((open) => !open);
+              }}
+            >
+              <ImagePlusIcon width={18} height={18} />
+            </button>
+            {isAttachMenuOpen ? (
+              <div
+                className="sidecar-assistant__menu-popover sidecar-assistant__menu-popover--attach"
+                role="menu"
+              >
+                <button
+                  type="button"
+                  className="sidecar-assistant__menu-item"
+                  role="menuitem"
+                  onClick={() => {
+                    void openCamera();
+                  }}
+                >
+                  <CameraIcon width={16} height={16} aria-hidden="true" />
+                  <span>Open camera</span>
+                </button>
+                <button
+                  type="button"
+                  className="sidecar-assistant__menu-item"
+                  role="menuitem"
+                  onClick={() => {
+                    galleryInputRef.current?.click();
+                    setIsAttachMenuOpen(false);
+                  }}
+                >
+                  <ImagesIcon width={16} height={16} aria-hidden="true" />
+                  <span>Upload from gallery</span>
+                </button>
+              </div>
+            ) : null}
+          </div>
+          ) : null}
           <div className="sidecar-assistant__input-field">
           {!composerDisabled && inputValue.length === 0 ? (
             <span className="sidecar-assistant__input-placeholder" aria-hidden="true">
@@ -6265,7 +6746,7 @@ export function SidecarAssistant({
               type="submit"
               className="sidecar-assistant__send"
               aria-label="Send message"
-              disabled={!inputValue.trim()}
+              disabled={!inputValue.trim() && !(imageSearch && attachedImageUrl)}
               onPointerDown={(event) => {
                 /* Keep focus on the input through the click so blur does not
                  * unmount the demo keyboard before submit lands. */
@@ -6302,6 +6783,54 @@ export function SidecarAssistant({
           onDismiss={dismissSimulatedKeyboard}
         />
       ) : null}
+      {isCameraOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className="sidecar-assistant__camera-overlay"
+              role="presentation"
+              onClick={stopCamera}
+            >
+              <div
+                className="sidecar-assistant__camera-dialog"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Camera"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  className="sidecar-assistant__camera-close"
+                  aria-label="Close camera"
+                  onClick={stopCamera}
+                >
+                  <CloseIcon width={18} height={18} />
+                </button>
+                {cameraError ? (
+                  <p className="sidecar-assistant__camera-error">{cameraError}</p>
+                ) : (
+                  <video
+                    ref={cameraVideoRef}
+                    className="sidecar-assistant__camera-video"
+                    autoPlay
+                    playsInline
+                    muted
+                  />
+                )}
+                {!cameraError ? (
+                  <div className="sidecar-assistant__camera-bar">
+                    <button
+                      type="button"
+                      className="sidecar-assistant__camera-shutter"
+                      aria-label="Take photo"
+                      onClick={captureCameraPhoto}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 
