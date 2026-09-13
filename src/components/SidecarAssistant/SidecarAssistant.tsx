@@ -5403,12 +5403,8 @@ export function SidecarAssistant({
       stepIntervalMs: 900,
     });
 
-    const fallbackSlug =
-      orderHistory[0]?.productSlugs[0] ?? heroProduct?.slug ?? null;
-
     void identifyCatalogProductFromImage(image.url, products, {
       fileName: image.fileName,
-      fallbackSlug,
     }).then((product) => {
       if (!messagesRef.current.some((message) => message.id === loaderId)) {
         return;

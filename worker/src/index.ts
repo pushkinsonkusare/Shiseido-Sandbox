@@ -28,8 +28,8 @@
  *   - Path allowlist (closed set; 404 anything else).
  *   - Header allowlist on the upstream request (we don't forward
  *     arbitrary headers from the browser).
- *   - 1 MiB body cap on JSON (Whisper audio is exempt — Whisper
- *     accepts up to ~25 MiB per request).
+ *   - 4 MiB body cap on JSON so vision (base64 stills) can pass;
+ *     Whisper audio is exempt and accepts up to ~25 MiB per request.
  *
  * Things this Worker does NOT do (yet):
  *   - Per-IP rate limiting (use Cloudflare's built-in rules or a
@@ -78,7 +78,7 @@ const CORS_ALLOWED_REQUEST_HEADERS = new Set([
   "authorization",
 ]);
 
-const JSON_BODY_LIMIT_BYTES = 1 * 1024 * 1024; // 1 MiB
+const JSON_BODY_LIMIT_BYTES = 4 * 1024 * 1024; // 4 MiB (vision stills)
 const AUDIO_BODY_LIMIT_BYTES = 26 * 1024 * 1024; // 26 MiB (Whisper hard-caps near 25)
 
 function parseOriginAllowlist(raw: string): Set<string> {

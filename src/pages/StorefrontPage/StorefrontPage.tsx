@@ -64,7 +64,7 @@ export default function StorefrontPage() {
         "*Cycle that leads to skin aging such as fine lines & wrinkles, started from dryness.",
         "** Consumer tested by 107 women.",
       ],
-      onShop: () => navigate(ROUTES.productListing, { series: ["ultimune"] }),
+      onShop: () => navigateToProduct("ultimune-power-infusing-serum"),
     },
     {
       id: "mineral-clear",

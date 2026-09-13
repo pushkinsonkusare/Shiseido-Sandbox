@@ -2573,7 +2573,7 @@
   {
     "id": "0768614228455",
     "slug": "shiseido-men-ultimune-power-infusing-serum",
-    "name": "Ultimune Power Infusing Serum",
+    "name": "Shiseido Men Ultimune Power Infusing Serum",
     "brand": "Shiseido",
     "collection": "Shiseido Men",
     "category": "Serums & Treatments",
@@ -2976,6 +2976,87 @@
       "shiseido_product_images/ultimate-sun/ultimate-sun-protector-clear-stick-spf-60-duo-66-value-SunscreenStickDuo_1.jpg"
     ],
     "pdpUrl": "https://www.shiseido.com/us/en/ultimate-sun-protector-clear-stick-spf-60-duo-66-value-SunscreenStickDuo.html"
+  },
+  {
+    "id": "9990000000232",
+    "slug": "ultimune-power-infusing-serum",
+    "name": "Ultimune Power Infusing Serum",
+    "brand": "Shiseido",
+    "collection": "Ultimune",
+    "category": "Serums & Treatments",
+    "productType": "Serum",
+    "routineCompleteness": "Booster/add-on (serum family; layers onto any routine)",
+    "price": 160,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "30mL",
+        "price": 160
+      },
+      {
+        "label": "50mL",
+        "price": 160
+      },
+      {
+        "label": "75mL",
+        "price": 160
+      },
+      {
+        "label": "120mL",
+        "price": 160
+      },
+      {
+        "label": "75mL Refill",
+        "price": 160
+      }
+    ],
+    "skinTypes": [
+      "Combination",
+      "Dry",
+      "Oily"
+    ],
+    "concerns": [
+      "Anti-Aging"
+    ],
+    "badges": [
+      "Best Seller",
+      "Refillable"
+    ],
+    "outOfStock": false,
+    "shortDescription": "Immune-focused serum; ImuGeneration Technology",
+    "overview": "A breakthrough face serum that slows the skin aging cycle.*¹\nInspired by over 30 years of skin immunity research. Clinical tests show this innovative serum helps prevent and visibly correct signs of aging,*² promoting a youthful, radiant appearance. 95% saw improved radiance and texture with less visible wrinkles in 1 week.*³\nThis potent formula is fueled by Exclusive Power Fermented Camellia+ technology, featuring the Camellia Flower, a dynamic plant that flourishes despite its harsh surrounding environment in the Goto Islands of Nagasaki, Japan.\nUtilizing the Camellia in its entirety – from its seeds, to its petals and leaves – this revolutionary serum harnesses the flower’s regenerative properties to penetrate deep*⁴ so skin looks rejuvenated. After extracting the Camellia Oil, the remaining leaves are carefully fermented through a proprietary bio-fermentation process, helping to deliver 14 powerful amino acids that help nourish and strengthen skin.\nThis advanced serum is packed with skincare benefits. Clinical tests show this serum helps prevent and visibly correct signs of aging*² including uneven skin tone, dullness, redness, pores, roughness, fine lines, wrinkles, smile lines, firmness, and elasticity for a smoother, vibrant complexion. The fast-absorbing formula strengthens skin’s barrier for a healthy, vibrant look. Tap into your ultimate beauty potential now, and over time.",
+    "keyBenefits": [
+      "Slows the skin aging cycle.*¹",
+      "95% saw improved radiance and texture with less visible wrinkles in 1 week.*³",
+      "Clinical tests show this serum helps prevent and visibly correct signs of aging including uneven skin tone, dullness, redness, pores, roughness, fine lines, wrinkles, smile lines, firmness, and elasticity.*²",
+      "Fresh, fast-absorbing texture.",
+      "For all skin types, including sensitive.",
+      "Paraben-free. Mineral oil-free.",
+      "Dermatologist-tested. Non-comedogenic.",
+      "Refill helps reduce plastic waste by 93% compared to a regular product."
+    ],
+    "howToUse": [
+      "Use twice daily, morning and evening.",
+      "Apply after cleanser and softener or essence, but before other serums or moisturizer.",
+      "Pump twice and smooth evenly over face and neck.",
+      "For Refill: Save the pump and cap from your original bottle. Insert the pump into the refill, then close cap.*",
+      "*Only compatible with latest packaging."
+    ],
+    "ingredients": "- Exclusive Power Fermented Camellia+ helps deliver 14 powerful amino acids, distilled through a proprietary Japanese bio-fermentation process with Ki-koji to penetrate deep*⁴ so skin looks rejuvenated.\n- Camellia Seed Extract supports collagen network to help improve elasticity.\n- Camellia Leaf Extract and Camellia Flower Extract help calm and support the skin barrier.\n- Camellia Seed Oil is known to increase moisturization.\n- Heart Leaf and Fermented Roselle Extracts help soothe and strengthen skin.\n- Reishi Mushroom and Iris Root Extracts support skin’s defense against external damaging factors to help maintain optimal skin condition.\n*⁴Outermost layer of the skin.\nINGREDIENTS: WATER(AQUA/EAU)･GLYCERIN･BUTYLENE GLYCOL･ALCOHOL DENAT.･DIMETHICONE･ DIGLYCERIN･PEG/PPG-17/4 DIMETHYL ETHER･PEG-8･ISODECYL NEOPENTANOATE･TREHALOSE･AMMONIUM ACRYLOYLDIMETHYLTAURATE/BEHENETH-25 METHACRYLATE CROSSPOLYMER･PEG-14M･TOCOPHERYL ACETATE･PEG/PPG-14/7 DIMETHYL ETHER･PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE･ROSA DAMASCENA FLOWER WATER･ECTOIN･XYLITOL･LAURYL BETAINE･ORIGANUM MAJORANA LEAF EXTRACT･HYDROXYPROLINE･CAMELLIA JAPONICA SEED OIL･CAMELLIA JAPONICA FLOWER EXTRACT･HOUTTUYNIA CORDATA EXTRACT･SODIUM CARBOXYMETHYL BETA-GLUCAN･CAMELLIA JAPONICA LEAF EXTRACT･CAMELLIA JAPONICA SEED EXTRACT･LACTOBACILLUS/HIBISCUS SABDARIFFA FLOWER FERMENT FILTRATE･IRIS FLORENTINA ROOT EXTRACT･GANODERMA LUCIDUM (MUSHROOM) STEM EXTRACT･TRIETHYLHEXANOIN･ACRYLATES/C10-30 ALKYL ACRYLATE CROSSPOLYMER･ALCOHOL･DISODIUM EDTA･POTASSIUM HYDROXIDE･SILICA･ISOCETETH-10･ LINALOOL･SODIUM METABISULFITE･CITRONELLOL･ASPERGILLUS FERMENT･BHT･SODIUM BICARBONATE･ TOCOPHEROL･PHENOXYETHANOL･CHLORPHENESIN･SODIUM BENZOATE･FRAGRANCE (PARFUM)･",
+    "primaryImage": "shiseido_product_images/ultimune/power-infusing-serum-9990000000232_1.jpg",
+    "gallery": [
+      "shiseido_product_images/ultimune/power-infusing-serum-9990000000232_1.jpg",
+      "shiseido_product_images/ultimune/power-infusing-serum-9990000000232_2.jpg",
+      "shiseido_product_images/ultimune/power-infusing-serum-9990000000232_3.jpg",
+      "shiseido_product_images/ultimune/power-infusing-serum-9990000000232_4.jpg",
+      "shiseido_product_images/ultimune/power-infusing-serum-9990000000232_5.jpg",
+      "shiseido_product_images/ultimune/power-infusing-serum-9990000000232_6.jpg",
+      "shiseido_product_images/ultimune/power-infusing-serum-9990000000232_7.jpg",
+      "shiseido_product_images/ultimune/power-infusing-serum-9990000000232_8.jpg",
+      "shiseido_product_images/ultimune/power-infusing-serum-9990000000232_9.jpg",
+      "shiseido_product_images/ultimune/power-infusing-serum-9990000000232_10.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.com/us/en/ultimune-power-infusing-serum-9990000000232.html"
   },
   {
     "id": "0195106533658",

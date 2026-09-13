@@ -68,6 +68,87 @@ function isMarketingHype(sentence: string): boolean {
 }
 
 /**
+ * Crawl leftover: a comma list of Title-Case chips
+ * ("Anti-Aging, Hydrating, Lightweight Serum, Peptides") rather than
+ * a shopper-facing sentence. Never return these as FAQ copy.
+ */
+function isTagStyleBenefit(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed || trimmed === ":" || /^n\/?a\b/i.test(trimmed)) return true;
+  if (/[.!?]/.test(trimmed)) return false;
+  const parts = trimmed
+    .split(/\s*,\s*/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (parts.length < 2 || trimmed.length >= 140) return false;
+  return parts.every(
+    (part) => part.length <= 40 && part.split(/\s+/).length <= 6,
+  );
+}
+
+/** Format / skin-type / ingredient chips that are not "what it targets". */
+const NON_CONCERN_TAG =
+  /\b(all skin types|normal to dry|normal to oily)\b|\b(lightweight|rich|silky|invisible|sheet mask|mineral-based)\b|\bspf\s*\d+\b|\b(hyaluronic acid|peptides?|niacinamide|retinol\w*)\b|\b(serum|cream|lotion|oil|foam|mask)\b/i;
+
+function concernTagsFromDump(text: string): string[] {
+  return text
+    .split(/\s*,\s*/)
+    .map((part) => part.trim())
+    .filter(
+      (part) =>
+        Boolean(part) &&
+        !NON_CONCERN_TAG.test(part) &&
+        part.split(/\s+/).length <= 4,
+    );
+}
+
+function ensureSentence(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return "";
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
+const TARGET_COPY_SIGNAL =
+  /\b(target\w*|improves?|reduces?|addresses?|helps?\b|visibly|wrinkle|fine lines?|sagging|firmness|dullness|dark (spots?|circles?)|pores?|hydrat\w*|brighten\w*|aging|ageing|signs of|concerns?)\b/i;
+
+/**
+ * Pull 1–2 overview sentences that actually say what the product is for.
+ * Skips slogans and scans bullets, not just the first line.
+ */
+function overviewTargetAnswer(product: CatalogProduct): string | null {
+  const raw = product.overview?.trim();
+  if (!raw || /^n\/?a\b/i.test(raw)) return null;
+  const sentences = raw
+    .split(/\n+/)
+    .map((line) => line.replace(/^[-•]\s*/, "").trim())
+    .filter((line) => line && !/^n\/?a\b/i.test(line))
+    .flatMap((line) =>
+      line
+        .split(/(?<=[.!?])\s+/)
+        .map((sentence) => sentence.trim())
+        .filter(Boolean),
+    )
+    .filter(
+      (sentence) =>
+        sentence.split(/\s+/).length >= 6 && !isMarketingHype(sentence),
+    );
+  const hits = sentences.filter((sentence) => TARGET_COPY_SIGNAL.test(sentence));
+  const picked = (hits.length > 0 ? hits : sentences).slice(0, 2);
+  if (picked.length === 0) return null;
+  return joinSentences(picked.map(ensureSentence));
+}
+
+function concernListAnswer(product: CatalogProduct): string | null {
+  const dump = [...product.keyBenefits, ...product.featureBlocks].find(
+    (block) => isTagStyleBenefit(block) && /,\s*/.test(block),
+  );
+  if (!dump) return null;
+  const concerns = concernTagsFromDump(dump);
+  if (concerns.length < 2) return null;
+  return `The ${product.title} targets ${joinNatural(concerns.map(lowerFirst))}.`;
+}
+
+/**
  * Pull the first substantive sentence from the product `overview`, used as a
  * grounded fallback in place of a bare `shortDescription`. Skips a leading
  * marketing-hype slogan when a real descriptive sentence follows. Returns
@@ -141,18 +222,7 @@ function componentTargetBlurb(
 
   const benefits = benefitBlocks(component);
   if (benefits.length > 0) {
-    const lead = benefits[0];
-    // Tag-style benefit rows ("Anti-Aging, Hydrating, Skin Strengthening")
-    // read better as a short lowercase list than as a fake sentence.
-    if (/,\s*/.test(lead) && lead.length < 120 && !/[.!?]$/.test(lead)) {
-      const tags = lead
-        .split(",")
-        .map((t) => t.trim().toLowerCase())
-        .filter(Boolean)
-        .slice(0, 4);
-      if (tags.length >= 2) return tags.join(", ");
-    }
-    return trimTrailingPunctuation(lead);
+    return trimTrailingPunctuation(benefits[0]);
   }
 
   const lead = overviewLead(component);
@@ -226,6 +296,7 @@ function benefitBlocks(product: CatalogProduct): string[] {
   return product.featureBlocks
     .map((block) => block.trim())
     .filter(Boolean)
+    .filter((block) => !isTagStyleBenefit(block))
     .filter(
       (block) =>
         !/^(paraben|mineral[-\s]?oil|fragrance[-\s]?free|alcohol[-\s]?free|allergy[-\s]?tested|irritation[-\s]?tested|dermatolog|ophthalmolog|non[-\s]?comedogenic|clinically|tested by|suitable for|good for|free of|refill|\d)/i.test(
@@ -240,7 +311,7 @@ function findFeatureBlockMatching(
 ): string | null {
   for (const block of product.featureBlocks) {
     const trimmed = block.trim();
-    if (!trimmed) continue;
+    if (!trimmed || isTagStyleBenefit(trimmed)) continue;
     if (patterns.some((p) => p.test(trimmed))) {
       return trimmed;
     }
@@ -397,11 +468,17 @@ function travelAnswer(product: CatalogProduct): string {
 }
 
 function resolutionAnswer(product: CatalogProduct): string {
-  // Answers "what does this target / what are the key benefits?",
-  // sourced from the Targets spec and featureBlocks.
+  // Answers "what does this target / what are the key benefits?".
+  // Prefer real concerns and prose copy — never the comma-chip dump
+  // some PDPs store in keyBenefits.
   const targets = specByLabel(product, [/targets?/i, /concerns?/i]);
   if (targets) {
-    return `The ${product.title} targets ${joinNatural(splitValues(specValue(targets)))}.`;
+    const values = splitValues(specValue(targets)).filter(
+      (value) => !NON_CONCERN_TAG.test(value),
+    );
+    if (values.length > 0) {
+      return `The ${product.title} targets ${joinNatural(values.map(lowerFirst))}.`;
+    }
   }
 
   // Thin bundle/combo pages: speak to each component individually.
@@ -410,9 +487,6 @@ function resolutionAnswer(product: CatalogProduct): string {
     if (composed) return composed;
   }
 
-  // Ground the answer in the product's real benefit bullets (keyBenefits)
-  // before any marketing overview copy. Lead with a benefit-worded block
-  // when one exists, otherwise summarise the top two benefit bullets.
   const block = findFeatureBlockMatching(product, [
     /\bbenefit\b/i,
     /\bhelps?\b/i,
@@ -429,14 +503,18 @@ function resolutionAnswer(product: CatalogProduct): string {
     /\bsmooth\w*/i,
   ]);
   if (block && !/^n\/?a\b/i.test(block)) {
-    return block;
+    return ensureSentence(block);
   }
-  const benefits = benefitBlocks(product).filter((b) => !/^n\/?a\b/i.test(b));
+  const benefits = benefitBlocks(product);
   if (benefits.length > 0) {
-    return joinSentences(
-      benefits.slice(0, 2).map((b) => (/[.!?]$/.test(b) ? b : `${b}.`)),
-    );
+    return joinSentences(benefits.slice(0, 2).map(ensureSentence));
   }
+
+  const fromOverview = overviewTargetAnswer(product);
+  if (fromOverview) return fromOverview;
+
+  const fromTags = concernListAnswer(product);
+  if (fromTags) return fromTags;
 
   const composedFallback = composeComponentTargetAnswer(product);
   if (composedFallback) return composedFallback;

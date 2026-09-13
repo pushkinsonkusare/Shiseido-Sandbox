@@ -557,15 +557,14 @@ function detectIsBundle(record: ShiseidoRecord): boolean {
 
 /**
  * Explicit title-fragment → slug aliases for the common "&"-style combos
- * where fuzzy matching is ambiguous (collection nickname in the title,
- * missing women's Ultimune SKU, etc.).
+ * where fuzzy matching is ambiguous (collection nickname in the title).
  */
 const BUNDLE_PART_ALIASES: Record<string, string> = {
   "benefiance eye cream": "benefiance-wrinkle-smoothing-eye-cream",
   "wrinkle smoothing eye cream": "benefiance-wrinkle-smoothing-eye-cream",
   eudermine: "eudermine-activating-essence",
   "eudermine activating essence": "eudermine-activating-essence",
-  "ultimune power infusing serum": "shiseido-men-ultimune-power-infusing-serum",
+  "ultimune power infusing serum": "ultimune-power-infusing-serum",
   "clarifying cleansing foam": "essentials-clarifying-cleansing-foam",
   "protector clear stick spf 60+": "shiseido-men-protector-clear-stick-spf-60",
   "ultimate sun protector clear stick spf 60+":
