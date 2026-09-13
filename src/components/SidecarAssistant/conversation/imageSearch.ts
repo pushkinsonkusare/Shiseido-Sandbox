@@ -38,12 +38,16 @@ export function buildImageUnmatchedBody(): string {
 }
 
 function compact(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  return value
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "");
 }
 
 function tokenize(value: string): string[] {
   return value
     .toLowerCase()
+    .replace(/&/g, " and ")
     .replace(/[^a-z0-9]+/g, " ")
     .split(/\s+/)
     .filter((token) => {
@@ -113,7 +117,10 @@ function scoreProductAgainstText(text: string, product: CatalogProduct): number 
 
   score += phraseBonus(queryCompact, product.title);
 
+  const seenTokens = new Set<string>();
   for (const token of tokenize(hay)) {
+    if (seenTokens.has(token)) continue;
+    seenTokens.add(token);
     if (queryTokens.has(token) || queryCompact.includes(token)) {
       score += token.length >= 6 ? 3 : token.length >= 4 ? 2 : 1;
     }
@@ -122,6 +129,8 @@ function scoreProductAgainstText(text: string, product: CatalogProduct): number 
   const spf = product.title.match(/spf\s*(\d+)/i);
   if (spf && new RegExp(`spf\\s*0*${spf[1]}\\b`, "i").test(text)) {
     score += 8;
+  } else if (spf && !/\bspf\b/i.test(text)) {
+    score -= 12;
   }
 
   const productId = product.id || product.sku;
@@ -177,6 +186,7 @@ export function matchProductFromVisibleText(
     !(secondTitle.length >= 10 && queryCompact.includes(secondTitle));
 
   if (uniqueTitleHit) return best.product;
+  if (best.score < 14) return undefined;
   if (second && second.score >= best.score - 3 && second.score >= 10) {
     return undefined;
   }
@@ -441,9 +451,11 @@ async function mapPool<T, R>(
 
 function isConfidentPackShot(best: PackScore, second: PackScore | undefined): boolean {
   const gap = second ? second.hamming - best.hamming : PACK_HASH_SIZE * PACK_HASH_SIZE;
-  if (best.hamming <= 3) return true;
-  if (best.hamming <= 12 && gap >= 10) return true;
-  if (best.hamming <= 55 && gap >= 28) return true;
+  /* Only treat near-duplicate catalog stills as a hash match. Similar
+   * jars (Vital Perfection cream vs day cream) sit ~20 bits apart, so
+   * a looser threshold picked the wrong sibling and skipped vision. */
+  if (best.hamming <= 3 && gap >= 4) return true;
+  if (best.hamming <= 3 && !second) return true;
   return false;
 }
 
@@ -501,12 +513,23 @@ function compressBitmapForVision(bitmap: ImageBitmap): string {
   return dataUrl;
 }
 
-function parseVisionPayload(raw: string): { slug: string | null; visibleText: string } {
+function parseVisionPayload(raw: string): {
+  slug: string | null;
+  visibleText: string;
+} {
   try {
-    const parsed = JSON.parse(raw) as { slug?: unknown; visibleText?: unknown };
+    const parsed = JSON.parse(raw) as {
+      slug?: unknown;
+      visibleText?: unknown;
+      packNotes?: unknown;
+    };
     const slug = typeof parsed.slug === "string" ? parsed.slug.trim() : "";
-    const visibleText =
-      typeof parsed.visibleText === "string" ? parsed.visibleText.trim() : "";
+    const visibleText = [
+      typeof parsed.visibleText === "string" ? parsed.visibleText.trim() : "",
+      typeof parsed.packNotes === "string" ? parsed.packNotes.trim() : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
     return {
       slug: slug && slug.toLowerCase() !== "null" ? slug : null,
       visibleText,
@@ -557,6 +580,50 @@ async function identifyWithVision(
 ): Promise<CatalogProduct | undefined> {
   const client = getOpenAIClient();
   if (!client) return undefined;
+
+  const requestOcr = (imageDataUrl: string) =>
+    client.chat.completions.create({
+      model: getOpenAIModel(),
+      temperature: 0,
+      max_tokens: 250,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content:
+            'Read the product packaging in the shopper photo. Return json {"visibleText": string, "packNotes": string}. visibleText is every printed word you can actually read (brand, collection, product name, SPF). packNotes is color and shape (red bottle, gold jar, white tube). If there is no product packaging, return {"visibleText":"","packNotes":""}. Do not invent a product name.',
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Transcribe the packaging and describe it. Return json.",
+            },
+            {
+              type: "image_url",
+              image_url: { url: imageDataUrl, detail: "high" },
+            },
+          ],
+        },
+      ],
+    });
+
+  let ocrDataUrl = dataUrl;
+  let completion;
+  try {
+    completion = await requestOcr(ocrDataUrl);
+  } catch (error) {
+    if (!isPayloadTooLarge(error)) throw error;
+    ocrDataUrl = bitmapToJpegDataUrl(bitmap, 320, 0.42);
+    completion = await requestOcr(ocrDataUrl);
+  }
+
+  const ocr = parseVisionPayload(completion.choices[0]?.message?.content?.trim() ?? "");
+  const fromOcr = resolveVisionMatch(ocr.slug, ocr.visibleText, products);
+  if (fromOcr) return fromOcr;
+  if (!ocr.visibleText) return undefined;
+
   const catalog = products
     .map((product) => {
       const collection = product.model || product.series || "";
@@ -567,46 +634,27 @@ async function identifyWithVision(
     })
     .join("\n");
 
-  const requestVision = (imageDataUrl: string, detail: "low" | "auto") =>
-    client.chat.completions.create({
-      model: getOpenAIModel(),
-      temperature: 0,
-      max_tokens: 300,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content:
-            'Identify which Shiseido catalog product appears in the shopper photo. Read every word on the packaging (collection, product name, SPF) and note bottle color. The iconic red Ultimune Power Infusing Serum (Ultimune collection) is not the black Shiseido Men Ultimune. Several Urban Environment sunscreens look similar — Oil-Control SPF 40 is not Fresh Moisture SPF 40. Return JSON {"visibleText": string, "slug": string|null}. visibleText must be the words you can actually read. Set slug to the matching catalog slug when you can identify the product. If the photo is a person, a room, a selfie, or the product is unclear, return {"visibleText":"","slug":null}. Never guess a popular or recently purchased SKU.',
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `Catalog (slug | title | collection):\n${catalog}`,
-            },
-            {
-              type: "image_url",
-              image_url: { url: imageDataUrl, detail },
-            },
-          ],
-        },
-      ],
-    });
-
-  let completion;
-  try {
-    completion = await requestVision(dataUrl, "auto");
-  } catch (error) {
-    if (!isPayloadTooLarge(error)) throw error;
-    const smaller = bitmapToJpegDataUrl(bitmap, 320, 0.42);
-    completion = await requestVision(smaller, "low");
-  }
-
-  const raw = completion.choices[0]?.message?.content?.trim() ?? "";
-  const { slug, visibleText } = parseVisionPayload(raw);
-  return resolveVisionMatch(slug, visibleText, products);
+  const catalogCompletion = await client.chat.completions.create({
+    model: getOpenAIModel(),
+    temperature: 0,
+    max_tokens: 200,
+    response_format: { type: "json_object" },
+    messages: [
+      {
+        role: "system",
+        content:
+          'Pick the matching catalog slug from packaging text. Red Ultimune Power Infusing Serum is not Shiseido Men Ultimune. Urban Environment Oil-Control SPF 40 is not Fresh-Moisture SPF 40. Return json {"slug": string|null}. If two rows still fit, return {"slug":null}. Never guess a recently purchased SKU.',
+      },
+      {
+        role: "user",
+        content: `Packaging: ${ocr.visibleText}\n\nCatalog (slug | title | collection):\n${catalog}`,
+      },
+    ],
+  });
+  const { slug } = parseVisionPayload(
+    catalogCompletion.choices[0]?.message?.content?.trim() ?? "",
+  );
+  return resolveVisionMatch(slug, ocr.visibleText, products);
 }
 
 /**

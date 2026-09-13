@@ -37,6 +37,25 @@ function buildBaseURL(): string | undefined {
   return `${PROXY_URL.replace(/\/+$/, "")}/v1`;
 }
 
+/**
+ * The OpenAI JS SDK attaches `x-stainless-*` headers. Those trigger a
+ * CORS preflight, and the GitHub Pages → Cloudflare Worker proxy used
+ * to reject them (`Failed to fetch` / "Connection error"). Image
+ * search then never reached the model. Strip them so the browser
+ * request stays on the worker's allowlist.
+ */
+function fetchWithoutStainlessHeaders(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  if (!init?.headers) return fetch(input, init);
+  const headers = new Headers(init.headers);
+  for (const key of [...headers.keys()]) {
+    if (key.toLowerCase().startsWith("x-stainless-")) headers.delete(key);
+  }
+  return fetch(input, { ...init, headers });
+}
+
 /** Lazily-instantiated SDK singleton. Returns `null` when neither
  *  `VITE_LLM_PROXY_URL` nor `VITE_OPENAI_API_KEY` is configured.
  *  Callers MUST handle the null case (silently fall back to the
@@ -49,6 +68,7 @@ export function getOpenAIClient(): OpenAI | null {
       baseURL: buildBaseURL(),
       // Required even in proxy mode: the SDK guards this flag.
       dangerouslyAllowBrowser: true,
+      fetch: fetchWithoutStainlessHeaders,
     });
   }
   return clientSingleton;

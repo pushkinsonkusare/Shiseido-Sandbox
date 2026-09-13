@@ -76,6 +76,18 @@ const FORWARDABLE_HEADERS = new Set([
 const CORS_ALLOWED_REQUEST_HEADERS = new Set([
   ...FORWARDABLE_HEADERS,
   "authorization",
+  /* OpenAI JS SDK (stainless) always sends these; omitting them
+   * fails the browser preflight and every chat/vision call from
+   * GitHub Pages dies with "Connection error". */
+  "x-stainless-lang",
+  "x-stainless-package-version",
+  "x-stainless-os",
+  "x-stainless-arch",
+  "x-stainless-runtime",
+  "x-stainless-runtime-version",
+  "x-stainless-retry-count",
+  "x-stainless-timeout",
+  "x-stainless-helper-method",
 ]);
 
 const JSON_BODY_LIMIT_BYTES = 4 * 1024 * 1024; // 4 MiB (vision stills)
@@ -90,7 +102,11 @@ function parseOriginAllowlist(raw: string): Set<string> {
   );
 }
 
-function buildCorsHeaders(origin: string, allowed: Set<string>): Record<string, string> {
+function buildCorsHeaders(
+  origin: string,
+  allowed: Set<string>,
+  requestHeaders?: string | null,
+): Record<string, string> {
   /* Echo the request Origin only when it's allowlisted. Browsers
    * reject responses where the echoed Origin doesn't match the
    * request, so a wildcard fallback would just produce confusing
@@ -99,7 +115,8 @@ function buildCorsHeaders(origin: string, allowed: Set<string>): Record<string, 
   return {
     "Access-Control-Allow-Origin": allowOrigin,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": [...CORS_ALLOWED_REQUEST_HEADERS].join(", "),
+    "Access-Control-Allow-Headers":
+      requestHeaders?.trim() || [...CORS_ALLOWED_REQUEST_HEADERS].join(", "),
     /* Short-ish preflight cache so any future change to the
      * allowlist propagates within minutes instead of staying
      * stuck for 24 hours on every browser that previously hit
@@ -129,7 +146,11 @@ export default {
     const url = new URL(request.url);
     const origin = request.headers.get("Origin") ?? "";
     const allowedOrigins = parseOriginAllowlist(env.ALLOWED_ORIGINS ?? "");
-    const corsHeaders = buildCorsHeaders(origin, allowedOrigins);
+    const corsHeaders = buildCorsHeaders(
+      origin,
+      allowedOrigins,
+      request.headers.get("Access-Control-Request-Headers"),
+    );
 
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: corsHeaders });
