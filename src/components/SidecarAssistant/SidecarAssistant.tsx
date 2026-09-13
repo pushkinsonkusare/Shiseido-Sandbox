@@ -6547,15 +6547,20 @@ export function SidecarAssistant({
             }`}
           >
             {contextProduct ? (
-              <div className="sidecar-assistant__context-island-product">
+              <>
                 <img
                   className="sidecar-assistant__context-island-thumb"
                   src={contextProduct.imageUrl}
                   alt={contextProduct.imageAlt}
                 />
-                <span className="sidecar-assistant__context-island-title">
-                  {contextProduct.title}
-                </span>
+                <div className="sidecar-assistant__context-island-copy">
+                  <span className="sidecar-assistant__context-island-title">
+                    {contextProduct.title}
+                  </span>
+                  <span className="sidecar-assistant__context-island-price">
+                    {contextProduct.priceFormatted}
+                  </span>
+                </div>
                 <button
                   type="button"
                   className="sidecar-assistant__context-island-add"
@@ -6564,7 +6569,7 @@ export function SidecarAssistant({
                 >
                   Add to cart
                 </button>
-              </div>
+              </>
             ) : null}
             {cartItemCount > 0 ? (
               <div className="sidecar-assistant__context-island-cart-group">

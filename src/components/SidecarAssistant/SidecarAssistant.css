@@ -300,30 +300,24 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   background: #8a1424;
 }
 
-/* Floats over the top of the chat rather than sitting in the header stack, so
-   the transcript scrolls underneath it. Inset on all sides with a shadow so it
-   reads as a raised island. */
+/* One floating product card: image, name, price, add. The transcript scrolls
+   underneath. Inset and centered; `width: fit-content` hugs the row. */
 .sidecar-assistant__context-island {
   position: absolute;
   top: 12px;
-  /* The insets are the band the island centers inside, not its width: it hugs
-     whatever it is showing, and `margin-inline: auto` centers the box between
-     its offsets. */
   left: 12px;
   right: 12px;
   width: fit-content;
+  max-width: calc(100% - 24px);
   margin-inline: auto;
   z-index: 6;
   display: flex;
   align-items: center;
-  gap: 12px;
-  /* Matches the 32px pill / cart button plus this padding and border, so the
-     island keeps a constant height whether it is showing the pill, the cart
-     group, or both. */
-  min-height: 50px;
-  padding: 8px;
+  gap: 10px;
+  min-height: 56px;
+  padding: 8px 8px 8px 8px;
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #ececec;
   border-radius: 4px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
@@ -334,35 +328,25 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   visibility: hidden;
 }
 
-.sidecar-assistant__context-island-product {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  flex: 1 1 auto;
-  max-width: 220px;
-  /* Matches the cart button so the two sit as equals in the island. */
-  height: 32px;
-  padding: 4px 6px 4px 4px;
-  background: #f7f7f7;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-}
-
 .sidecar-assistant__context-island-thumb {
   flex: 0 0 auto;
-  /* Fits inside the 32px pill without eating its 4px padding. */
-  width: 22px;
-  height: 22px;
+  width: 40px;
+  height: 40px;
   object-fit: cover;
-  /* Squared off to match the pill's own corners: a circle only meets the
-     padding at a tangent point, which reads as a wider gap on the left. */
   border-radius: 4px;
   background: #f2f2f2;
 }
 
-.sidecar-assistant__context-island-title {
+.sidecar-assistant__context-island-copy {
   flex: 1 1 auto;
+  min-width: 0;
+  max-width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidecar-assistant__context-island-title {
   min-width: 0;
   font-size: 12px;
   line-height: 16px;
@@ -372,15 +356,21 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   white-space: nowrap;
 }
 
+.sidecar-assistant__context-island-price {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  color: #17171b;
+}
+
 .sidecar-assistant__context-island-add {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  /* Same 22px as the thumb, so both clear the pill's 4px padding. */
-  height: 22px;
-  padding: 0 8px;
+  height: 32px;
+  padding: 0 12px;
   font-family: inherit;
   font-size: 12px;
   line-height: 16px;
@@ -703,10 +693,10 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
 }
 
-/* Clears the floating island (12px inset + 50px island + 12px gap) so the first
+/* Clears the floating island (12px inset + 56px island + 12px gap) so the first
    message does not start life hidden behind it. */
 .sidecar-assistant__chat--with-island {
-  padding-top: 74px;
+  padding-top: 80px;
 }
 
 /* Full-page immersive: hold the transcript to a readable column instead of
