@@ -1,8 +1,13 @@
 import type { CatalogProduct } from "../../../catalog/catalog";
 import { getOpenAIClient, getOpenAIModel, isLlmConfigured } from "../../../lib/openaiClient";
 
-const VISION_MAX_EDGE = 768;
-const VISION_TARGET_DATA_URL_CHARS = 550_000;
+const VISION_MAX_EDGE = 512;
+const VISION_TARGET_DATA_URL_CHARS = 280_000;
+const PACK_HASH_SIZE = 32;
+const PACK_SCAN_MAX_EDGE = 160;
+const PACK_WHITE_MIN = 248;
+const PACK_FETCH_CONCURRENCY = 10;
+const PACK_FETCH_TIMEOUT_MS = 8000;
 const GENERIC_FILE_STEM =
   /^(camera-?photo|image|img|photo|screenshot|untitled|download)(\s*\d+)?$/i;
 const STOP_WORDS = new Set([
@@ -222,6 +227,130 @@ export function matchProductFromFileName(
   return matchProductFromVisibleText(stem, products);
 }
 
+type PackFingerprint = {
+  hash: bigint;
+  coverage: number;
+};
+
+type PackScore = {
+  product: CatalogProduct;
+  hamming: number;
+};
+
+const packFingerprintCache = new Map<string, Promise<PackFingerprint | null>>();
+
+function popcount(value: bigint): number {
+  let bits = 0;
+  let x = value;
+  while (x) {
+    x &= x - 1n;
+    bits += 1;
+  }
+  return bits;
+}
+
+function hammingDistance(left: bigint, right: bigint): number {
+  return popcount(left ^ right);
+}
+
+function canvasContext(
+  width: number,
+  height: number,
+): { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D } | null {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return null;
+  return { canvas, context };
+}
+
+function fingerprintBitmap(bitmap: ImageBitmap): PackFingerprint | null {
+  const scale = Math.min(
+    1,
+    PACK_SCAN_MAX_EDGE / Math.max(bitmap.width, bitmap.height),
+  );
+  const width = Math.max(1, Math.round(bitmap.width * scale));
+  const height = Math.max(1, Math.round(bitmap.height * scale));
+  const scan = canvasContext(width, height);
+  if (!scan) return null;
+  scan.context.drawImage(bitmap, 0, 0, width, height);
+  let pixels: ImageData;
+  try {
+    pixels = scan.context.getImageData(0, 0, width, height);
+  } catch {
+    return null;
+  }
+
+  let minX = width;
+  let minY = height;
+  let maxX = 0;
+  let maxY = 0;
+  let foreground = 0;
+  const { data } = pixels;
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = (y * width + x) * 4;
+      const alpha = data[index + 3];
+      const red = data[index];
+      const green = data[index + 1];
+      const blue = data[index + 2];
+      if (
+        alpha < 8 ||
+        (red > PACK_WHITE_MIN && green > PACK_WHITE_MIN && blue > PACK_WHITE_MIN)
+      ) {
+        continue;
+      }
+      foreground += 1;
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    }
+  }
+
+  const coverage = foreground / (width * height);
+  if (coverage < 0.02 || maxX <= minX || maxY <= minY) return null;
+
+  const crop = canvasContext(PACK_HASH_SIZE, PACK_HASH_SIZE);
+  if (!crop) return null;
+  crop.context.drawImage(
+    scan.canvas,
+    minX,
+    minY,
+    maxX - minX + 1,
+    maxY - minY + 1,
+    0,
+    0,
+    PACK_HASH_SIZE,
+    PACK_HASH_SIZE,
+  );
+  let cropPixels: ImageData;
+  try {
+    cropPixels = crop.context.getImageData(0, 0, PACK_HASH_SIZE, PACK_HASH_SIZE);
+  } catch {
+    return null;
+  }
+
+  const gray: number[] = [];
+  let total = 0;
+  for (let i = 0; i < PACK_HASH_SIZE * PACK_HASH_SIZE; i += 1) {
+    const index = i * 4;
+    const value =
+      0.299 * cropPixels.data[index] +
+      0.587 * cropPixels.data[index + 1] +
+      0.114 * cropPixels.data[index + 2];
+    gray.push(value);
+    total += value;
+  }
+  const average = total / gray.length;
+  let hash = 0n;
+  for (let i = 0; i < gray.length; i += 1) {
+    if (gray[i] >= average) hash |= 1n << BigInt(i);
+  }
+  return { hash, coverage };
+}
+
 async function blobToBitmap(blob: Blob): Promise<ImageBitmap> {
   try {
     return await createImageBitmap(blob);
@@ -247,33 +376,127 @@ async function blobToBitmap(blob: Blob): Promise<ImageBitmap> {
   }
 }
 
-async function imageUrlToDataUrl(url: string): Promise<string> {
-  const blob = await fetch(url).then((response) => {
-    if (!response.ok) throw new Error("Could not read the photo.");
-    return response.blob();
-  });
-  const bitmap = await blobToBitmap(blob);
-  let maxEdge = VISION_MAX_EDGE;
-  let quality = 0.72;
-  let dataUrl = "";
+async function fetchImageBlob(url: string): Promise<Blob | null> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(
+    () => controller.abort(),
+    PACK_FETCH_TIMEOUT_MS,
+  );
   try {
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
-      const width = Math.max(1, Math.round(bitmap.width * scale));
-      const height = Math.max(1, Math.round(bitmap.height * scale));
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const context = canvas.getContext("2d");
-      if (!context) throw new Error("Could not read the photo.");
-      context.drawImage(bitmap, 0, 0, width, height);
-      dataUrl = canvas.toDataURL("image/jpeg", quality);
-      if (dataUrl.length <= VISION_TARGET_DATA_URL_CHARS) return dataUrl;
-      quality = Math.max(0.45, quality - 0.16);
-      maxEdge = Math.round(maxEdge * 0.75);
-    }
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) return null;
+    return await response.blob();
+  } catch {
+    return null;
   } finally {
-    bitmap.close();
+    window.clearTimeout(timer);
+  }
+}
+
+async function bitmapFromUrl(url: string): Promise<ImageBitmap | null> {
+  const blob = await fetchImageBlob(url);
+  if (!blob) return null;
+  try {
+    return await blobToBitmap(blob);
+  } catch {
+    return null;
+  }
+}
+
+function fingerprintFromUrl(url: string): Promise<PackFingerprint | null> {
+  const cached = packFingerprintCache.get(url);
+  if (cached) return cached;
+  const pending = (async () => {
+    const bitmap = await bitmapFromUrl(url);
+    if (!bitmap) return null;
+    try {
+      return fingerprintBitmap(bitmap);
+    } finally {
+      bitmap.close();
+    }
+  })();
+  packFingerprintCache.set(url, pending);
+  return pending;
+}
+
+async function mapPool<T, R>(
+  items: T[],
+  limit: number,
+  mapper: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0;
+  const workerCount = Math.max(1, Math.min(limit, items.length));
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (next < items.length) {
+        const index = next;
+        next += 1;
+        results[index] = await mapper(items[index]);
+      }
+    }),
+  );
+  return results;
+}
+
+function isConfidentPackShot(best: PackScore, second: PackScore | undefined): boolean {
+  const gap = second ? second.hamming - best.hamming : PACK_HASH_SIZE * PACK_HASH_SIZE;
+  if (best.hamming <= 3) return true;
+  if (best.hamming <= 12 && gap >= 10) return true;
+  if (best.hamming <= 55 && gap >= 28) return true;
+  return false;
+}
+
+async function matchProductFromPackShot(
+  shopper: PackFingerprint,
+  products: CatalogProduct[],
+): Promise<CatalogProduct | undefined> {
+  if (shopper.coverage < 0.02) return undefined;
+
+  const scored: PackScore[] = [];
+  await mapPool(products, PACK_FETCH_CONCURRENCY, async (product) => {
+    if (!product.imageUrl) return;
+    const fingerprint = await fingerprintFromUrl(product.imageUrl);
+    if (!fingerprint) return;
+    scored.push({
+      product,
+      hamming: hammingDistance(shopper.hash, fingerprint.hash),
+    });
+  });
+
+  scored.sort((left, right) => left.hamming - right.hamming);
+  const best = scored[0];
+  const second = scored[1];
+  if (!best || !isConfidentPackShot(best, second)) return undefined;
+  return best.product;
+}
+
+function bitmapToJpegDataUrl(
+  bitmap: ImageBitmap,
+  maxEdge: number,
+  quality: number,
+): string {
+  const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+  const width = Math.max(1, Math.round(bitmap.width * scale));
+  const height = Math.max(1, Math.round(bitmap.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Could not read the photo.");
+  context.drawImage(bitmap, 0, 0, width, height);
+  return canvas.toDataURL("image/jpeg", quality);
+}
+
+function compressBitmapForVision(bitmap: ImageBitmap): string {
+  let maxEdge = VISION_MAX_EDGE;
+  let quality = 0.62;
+  let dataUrl = bitmapToJpegDataUrl(bitmap, maxEdge, quality);
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (dataUrl.length <= VISION_TARGET_DATA_URL_CHARS) return dataUrl;
+    quality = Math.max(0.4, quality - 0.12);
+    maxEdge = Math.round(maxEdge * 0.75);
+    dataUrl = bitmapToJpegDataUrl(bitmap, maxEdge, quality);
   }
   return dataUrl;
 }
@@ -293,67 +516,105 @@ function parseVisionPayload(raw: string): { slug: string | null; visibleText: st
   }
 }
 
-async function identifyWithVision(
-  imageUrl: string,
+function isPayloadTooLarge(error: unknown): boolean {
+  const status = (error as { status?: number } | null)?.status;
+  const message = error instanceof Error ? error.message : String(error);
+  return status === 413 || /413|payload too large|request too large/i.test(message);
+}
+
+function resolveVisionMatch(
+  slug: string | null,
+  visibleText: string,
   products: CatalogProduct[],
-): Promise<CatalogProduct | undefined> {
-  const client = getOpenAIClient();
-  if (!client) return undefined;
-  const dataUrl = await imageUrlToDataUrl(imageUrl);
-  const catalog = products
-    .map((product) => {
-      const collection = product.model || product.series || "";
-      const pack = packagingHint(product);
-      return `${product.slug} | ${product.title} | ${product.category}${
-        collection ? ` | ${collection}` : ""
-      }${pack ? ` | ${pack}` : ""}`;
-    })
-    .join("\n");
-  const completion = await client.chat.completions.create({
-    model: getOpenAIModel(),
-    temperature: 0,
-    max_tokens: 300,
-    response_format: { type: "json_object" },
-    messages: [
-      {
-        role: "system",
-        content:
-          'Identify which Shiseido catalog product appears in the shopper photo. Read every word on the packaging (collection, product name, SPF) and note bottle color. The iconic red Ultimune Power Infusing Serum (Ultimune collection) is not the black Shiseido Men Ultimune. Several Urban Environment sunscreens look similar — Oil-Control SPF 40 is not Fresh Moisture SPF 40. Return JSON {"visibleText": string, "slug": string|null}. visibleText must be the words you can actually read. Set slug only when that text uniquely matches one catalog row. If the photo is a person, a room, a selfie, or the product is unclear, return {"visibleText":"","slug":null}. Never guess a popular or recently purchased SKU.',
-      },
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: `Catalog (slug | title | category | collection):\n${catalog}`,
-          },
-          {
-            type: "image_url",
-            image_url: { url: dataUrl, detail: "high" },
-          },
-        ],
-      },
-    ],
-  });
-  const raw = completion.choices[0]?.message?.content?.trim() ?? "";
-  const { slug, visibleText } = parseVisionPayload(raw);
+): CatalogProduct | undefined {
   const fromText = visibleText
     ? matchProductFromVisibleText(visibleText, products)
     : undefined;
   if (fromText) return fromText;
 
-  if (slug && visibleText) {
-    const bySlug = products.find((product) => product.slug === slug);
-    if (bySlug && scoreProductAgainstText(visibleText, bySlug) >= 8) {
-      return bySlug;
-    }
+  if (!slug) return undefined;
+  const bySlug = products.find((product) => product.slug === slug);
+  if (!bySlug) return undefined;
+
+  if (
+    isMensLine(bySlug) &&
+    /ultimune/i.test(visibleText) &&
+    !mentionsMensPackaging(visibleText)
+  ) {
+    return (
+      products.find((product) => product.slug === "ultimune-power-infusing-serum") ??
+      bySlug
+    );
   }
-  return undefined;
+
+  return bySlug;
+}
+
+async function identifyWithVision(
+  bitmap: ImageBitmap,
+  products: CatalogProduct[],
+  dataUrl: string,
+): Promise<CatalogProduct | undefined> {
+  const client = getOpenAIClient();
+  if (!client) return undefined;
+  const catalog = products
+    .map((product) => {
+      const collection = product.model || product.series || "";
+      const pack = packagingHint(product);
+      return `${product.slug} | ${product.title}${
+        collection ? ` | ${collection}` : ""
+      }${pack ? ` | ${pack}` : ""}`;
+    })
+    .join("\n");
+
+  const requestVision = (imageDataUrl: string, detail: "low" | "auto") =>
+    client.chat.completions.create({
+      model: getOpenAIModel(),
+      temperature: 0,
+      max_tokens: 300,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content:
+            'Identify which Shiseido catalog product appears in the shopper photo. Read every word on the packaging (collection, product name, SPF) and note bottle color. The iconic red Ultimune Power Infusing Serum (Ultimune collection) is not the black Shiseido Men Ultimune. Several Urban Environment sunscreens look similar — Oil-Control SPF 40 is not Fresh Moisture SPF 40. Return JSON {"visibleText": string, "slug": string|null}. visibleText must be the words you can actually read. Set slug to the matching catalog slug when you can identify the product. If the photo is a person, a room, a selfie, or the product is unclear, return {"visibleText":"","slug":null}. Never guess a popular or recently purchased SKU.',
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Catalog (slug | title | collection):\n${catalog}`,
+            },
+            {
+              type: "image_url",
+              image_url: { url: imageDataUrl, detail },
+            },
+          ],
+        },
+      ],
+    });
+
+  let completion;
+  try {
+    completion = await requestVision(dataUrl, "auto");
+  } catch (error) {
+    if (!isPayloadTooLarge(error)) throw error;
+    const smaller = bitmapToJpegDataUrl(bitmap, 320, 0.42);
+    completion = await requestVision(smaller, "low");
+  }
+
+  const raw = completion.choices[0]?.message?.content?.trim() ?? "";
+  const { slug, visibleText } = parseVisionPayload(raw);
+  return resolveVisionMatch(slug, visibleText, products);
 }
 
 /**
- * Resolve a shopper photo to a catalog SKU. Filename / catalog-id match
- * is instant; vision reads packaging when an LLM is configured.
+ * Resolve a shopper photo to a catalog SKU.
+ * Filename / catalog-id match is instant. White-background pack shots
+ * are matched locally against catalog images so GitHub Pages still
+ * works when the vision proxy rejects a large request. Vision reads
+ * packaging for camera photos when an LLM is configured.
  * Returns null when the photo cannot be matched — never a random
  * fallback SKU (that used to answer as the last order).
  */
@@ -365,12 +626,24 @@ export async function identifyCatalogProductFromImage(
   const fromName = matchProductFromFileName(options?.fileName, products);
   if (fromName) return fromName;
 
-  if (!isLlmConfigured()) return null;
+  const bitmap = await bitmapFromUrl(imageUrl);
+  if (!bitmap) return null;
 
   try {
-    return (await identifyWithVision(imageUrl, products)) ?? null;
+    const shopperPrint = fingerprintBitmap(bitmap);
+    if (shopperPrint) {
+      const fromPack = await matchProductFromPackShot(shopperPrint, products);
+      if (fromPack) return fromPack;
+    }
+
+    if (!isLlmConfigured()) return null;
+
+    const dataUrl = compressBitmapForVision(bitmap);
+    return (await identifyWithVision(bitmap, products, dataUrl)) ?? null;
   } catch (error) {
-    console.error("[imageSearch] vision identify failed", error);
+    console.error("[imageSearch] identify failed", error);
     return null;
+  } finally {
+    bitmap.close();
   }
 }
