@@ -260,6 +260,7 @@ const MAX_SELECTED_PRODUCTS = 3;
  * local answer. */
 const BUY_AGAIN_NBA_LABEL = "Buy again";
 const REFILL_NBA_LABEL = "Refill this product";
+const SHOW_THIS_PRODUCT_NBA_LABEL = "Show this product";
 
 const CONTEXTUAL_ACTION_LABELS = new Set([
   "Show similar",
@@ -267,6 +268,7 @@ const CONTEXTUAL_ACTION_LABELS = new Set([
   "Add to cart",
   BUY_AGAIN_NBA_LABEL,
   REFILL_NBA_LABEL,
+  SHOW_THIS_PRODUCT_NBA_LABEL,
 ]);
 
 /** Always-present FAQ pill for a single selected product. */
@@ -285,10 +287,24 @@ function normalizeComposerQuery(text: string): string {
     .replace(/\s+/g, " ");
 }
 
+/** Short “show / open / view this product” phrasing — in-chat PDP, not storefront. */
+function isShowProductRequest(text: string): boolean {
+  const normalized = normalizeComposerQuery(text);
+  if (!normalized) return false;
+  return (
+    /^(show|open|view|see)(\s+me)?(\s+(the|this|that))?\s+(product|item|pdp)(\s+page)?$/.test(
+      normalized,
+    ) ||
+    /^(show|open|view|see)(\s+me)?\s+(the|this|that)(\s+one)?$/.test(normalized) ||
+    /^(show|open)\s+it$/.test(normalized)
+  );
+}
+
 /**
- * When the selection tray is open, map typed composer text onto the same
- * contextual actions/FAQs the tray pills trigger. Returns the canonical pill
- * label, or null if the text should take the normal free-text path.
+ * Map typed composer text onto the same contextual actions/FAQs the tray and
+ * post-identification pills trigger. `selectedSlugs` may be the tray, a single
+ * conversation SKU, or the open page PDP. Returns the canonical pill label, or
+ * null if the text should take the normal free-text path.
  */
 function resolveContextualComposerLabel(
   text: string,
@@ -312,6 +328,9 @@ function resolveContextualComposerLabel(
   if (/^refill(\s+(this\s+)?product)?$/.test(normalized)) {
     return REFILL_NBA_LABEL;
   }
+  if (selectedSlugs.length === 1 && isShowProductRequest(text)) {
+    return SHOW_THIS_PRODUCT_NBA_LABEL;
+  }
 
   // Exact match against the contextual questions for this selection. The
   // ingredients question stays matchable even though the tray no longer offers
@@ -323,7 +342,13 @@ function resolveContextualComposerLabel(
     const product = getProductBySlug(selectedSlugs[0]);
     if (product) {
       const [faq1, faq2] = buildContextualFaqs(product);
-      labels.push("Show similar", faq1, faq2, INGREDIENTS_FAQ_LABEL);
+      labels.push(
+        SHOW_THIS_PRODUCT_NBA_LABEL,
+        "Show similar",
+        faq1,
+        faq2,
+        INGREDIENTS_FAQ_LABEL,
+      );
     }
   }
   return (
@@ -2039,22 +2064,33 @@ export function SidecarAssistant({
     [products],
   );
 
-  const handleProductSelect = useCallback(
-    (slug: string) => {
+  const presentInChatPdp = useCallback(
+    (
+      slug: string,
+      options?: {
+        shopperText?: string;
+        skipShopperBubble?: boolean;
+        keepContext?: boolean;
+      },
+    ) => {
       const product = getProductBySlug(slug);
       if (!product) return;
 
       establishConversationProduct([slug]);
-      appendMessage(
-        {
-          id: nextId("shopper"),
-          kind: "shopper_text",
-          text: `Tell me more about the ${product.title}`,
-        },
-        // Reading more about the product the open section is already about — the
-        // chip itself does this — stays inside that section.
-        { keepContext: slug === lastSeparatorSlugRef.current },
-      );
+      if (!options?.skipShopperBubble) {
+        appendMessage(
+          {
+            id: nextId("shopper"),
+            kind: "shopper_text",
+            text:
+              options?.shopperText ?? `Tell me more about the ${product.title}`,
+          },
+          {
+            keepContext:
+              options?.keepContext ?? slug === lastSeparatorSlugRef.current,
+          },
+        );
+      }
       const loaderId = nextId("loader");
       appendMessage({ id: loaderId, kind: "agent_loader", variant: "answering" });
 
@@ -2082,6 +2118,13 @@ export function SidecarAssistant({
       scheduleResponse,
       establishConversationProduct,
     ],
+  );
+
+  const handleProductSelect = useCallback(
+    (slug: string) => {
+      presentInChatPdp(slug);
+    },
+    [presentInChatPdp],
   );
 
   const renderPlpCard = useCallback(
@@ -3852,6 +3895,15 @@ export function SidecarAssistant({
         .filter((p): p is CatalogProduct => Boolean(p));
       const firstProduct = selectedProducts[0];
 
+      if (firstProduct && label === SHOW_THIS_PRODUCT_NBA_LABEL) {
+        presentInChatPdp(firstProduct.slug, {
+          shopperText: label,
+          skipShopperBubble,
+          keepContext: true,
+        });
+        return;
+      }
+
       // Any pill that isn't a dedicated action (Show similar / Compare) is a
       // product FAQ, answered locally from catalog data so it always returns a
       // single, product-grounded reply. Follow-ups move in-chat; the tray
@@ -4061,6 +4113,7 @@ export function SidecarAssistant({
       updateMessage,
       establishConversationProduct,
       runCompareForProducts,
+      presentInChatPdp,
     ],
   );
 
@@ -4545,6 +4598,10 @@ export function SidecarAssistant({
           /^show more like this/.test(normalized)
         ) {
           handleContextualPill("Show similar", slug);
+          return;
+        }
+        if (label === SHOW_THIS_PRODUCT_NBA_LABEL || isShowProductRequest(label)) {
+          handleContextualPill(SHOW_THIS_PRODUCT_NBA_LABEL, slug);
           return;
         }
         handleContextualPill(label, slug);
@@ -5427,7 +5484,7 @@ export function SidecarAssistant({
           kind: "agent_simple",
           body: buildImageIdentifiedBody(product),
         });
-        const [faq1, faq2] = buildContextualFaqs(product);
+        const [faq1] = buildContextualFaqs(product);
         appendMessage({
           id: nextId("nbas"),
           kind: "agent_nbas",
@@ -5435,7 +5492,12 @@ export function SidecarAssistant({
           productSlug: product.slug,
           regenerateButton: false,
           nbas: buildNbaItems(
-            [BUY_AGAIN_NBA_LABEL, faq1, REFILL_NBA_LABEL, faq2],
+            [
+              SHOW_THIS_PRODUCT_NBA_LABEL,
+              BUY_AGAIN_NBA_LABEL,
+              faq1,
+              REFILL_NBA_LABEL,
+            ],
             "nba-image",
           ),
         });
@@ -5538,15 +5600,30 @@ export function SidecarAssistant({
       return true;
     }
 
-    /* With a selection open, typed "compare" / "show similar" / FAQ copy
-     * should take the same path as the tray pills — not the generic probe. */
+    /* With a selection open — or a single conversation / page SKU — typed
+     * "compare" / "show similar" / "show this product" / FAQ copy should take
+     * the same path as the pills. After image ID, selectedSlugs is empty and
+     * conversationSlugs holds the match. */
+    const composerContextSlugs =
+      selectedSlugs.length > 0
+        ? selectedSlugs
+        : conversationSlugs.length === 1
+          ? conversationSlugs
+          : pageProductSlug && !composerContextCleared
+            ? [pageProductSlug]
+            : [];
     const contextualLabel = resolveContextualComposerLabel(
       value,
-      selectedSlugs,
+      composerContextSlugs,
       getProductBySlug,
     );
     if (contextualLabel) {
-      handleContextualPill(contextualLabel);
+      handleContextualPill(
+        contextualLabel,
+        composerContextSlugs.length === 1
+          ? composerContextSlugs[0]
+          : undefined,
+      );
       // Typed composer text — keep multiline ghost even if the contextual
       // path shared the pill handler.
       setTruncateComposerGhost(false);
@@ -5615,6 +5692,15 @@ export function SidecarAssistant({
       resolved.slugs[0] ??
       (selectedSlugs.length === 1 ? selectedSlugs[0] : null);
     if (singleSlug) {
+      if (isShowProductRequest(value)) {
+        handleContextualPill(SHOW_THIS_PRODUCT_NBA_LABEL, singleSlug);
+        setTruncateComposerGhost(false);
+        setSelectedSlugs([]);
+        if (simulateMobileKeyboard) {
+          dismissSimulatedKeyboard();
+        }
+        return true;
+      }
       const faqFromSelection =
         selectedSlugs.length === 1 && resolved.kind !== "explicit";
       /* Category words inside a product name ("eye cream", "serum") make
