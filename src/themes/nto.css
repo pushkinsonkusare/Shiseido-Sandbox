@@ -478,9 +478,11 @@ html[data-demo-theme="consumer-electronics"] .sidecar-assistant__input-shell .ag
 }
 
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__context-island {
-  border-color: #ececec;
-  border-radius: var(--nto-radius-card);
-  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.08);
+  border: none;
+  border-bottom: 1px solid #e0e0e0;
+  border-radius: 0;
+  box-shadow: none;
+  background: #f5f5f5;
 }
 
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__context-island-thumb {
@@ -498,8 +500,8 @@ html[data-demo-theme="consumer-electronics"] .sidecar-assistant__context-island-
   border-color: #c85f5b;
 }
 
-html[data-demo-theme="consumer-electronics"] .sidecar-assistant__context-separator-chip {
-  border-color: #ececec;
+html[data-demo-theme="consumer-electronics"] .sidecar-assistant__context-separator {
+  --sidecar-context-rule: #e0e0e0;
 }
 
 html[data-demo-theme="consumer-electronics"] .sidecar-assistant__fab {

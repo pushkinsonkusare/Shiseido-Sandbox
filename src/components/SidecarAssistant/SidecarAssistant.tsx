@@ -593,15 +593,6 @@ function tallDockAnchor(card: HTMLElement): HTMLElement {
   return precedingUserRow(card) ?? card;
 }
 
-/** How far into the chat viewport a context divider must scroll before the
- * island adopts its product. Clears the floating island (12px inset + its own
- * height) so a divider hands over as it slides behind the island. */
-const CONTEXT_SCROLL_ACTIVATION_PX = 70;
-/** Slack for "scrolled to the bottom", which lands fractionally short. */
-const CONTEXT_SCROLL_BOTTOM_TOLERANCE_PX = 2;
-/** How long a reading of "no divider above the line" has to hold before the
- * island drops its pill, so transient shifts do not flash it off and on. */
-const CONTEXT_SCROLL_BLANK_DELAY_MS = 300;
 /** How far from the end of the transcript counts as having left the latest
  * message. Generous enough that landing fractionally short of the end does not
  * leave the jump-to-latest button hanging around. */
@@ -1250,7 +1241,7 @@ export function SidecarAssistant({
   const { products, heroProduct, getProductBySlug, getRelatedProducts, orderHistory } =
     useCatalog();
   const { currentRoute, currentProductSlug } = usePrototypeNavigation();
-  const { accordionRecommendations, contextIsland, contextPill, productSelection, productSelectionType, compareFeature, compareFeatureType, imageSearch, viewportMode, userTestingLock, selectedProductSlugs, setSelectedProductSlugs } =
+  const { accordionRecommendations, contextIsland, contextPill, contextDividerPill, contextStickyPill, productSelection, productSelectionType, compareFeature, compareFeatureType, imageSearch, viewportMode, userTestingLock, selectedProductSlugs, setSelectedProductSlugs } =
     useAgentMode();
   const demoTheme = useSyncExternalStore(
     (onStoreChange) => {
@@ -1342,11 +1333,6 @@ export function SidecarAssistant({
     () => messages.some((message) => message.kind === "context_separator"),
     [messages],
   );
-  // Slug of the divider the shopper has most recently scrolled past. `null`
-  // means they are above the first one, where no product context exists yet.
-  const [scrolledContextSlug, setScrolledContextSlug] = useState<string | null>(
-    null,
-  );
   // True while there are messages below the fold, which the jump-to-latest
   // button both announces and offers to close the distance on.
   const [awayFromLatest, setAwayFromLatest] = useState(false);
@@ -1384,25 +1370,21 @@ export function SidecarAssistant({
     return undefined;
   }, [messages, getProductBySlug]);
   const contextProduct = useMemo(() => {
-    // A live selection is the strongest signal for the product in context.
+    // Chrome under Beauty Advisor — not a sticky section tracker. Selection
+    // wins, then the latest product the thread is about, then the open PDP.
+    // Scroll position is ignored so the bar does not mount, unmount, or swap
+    // as dividers pass, which used to shove the transcript on every crossing.
     if (selectedSlugs.length > 0) {
       return getProductBySlug(selectedSlugs[0]);
     }
-    // Once the transcript has dividers they define its product sections, so the
-    // island follows whichever section the shopper has scrolled into. Above the
-    // first divider there is no product context yet, so the pill drops.
-    if (hasContextSeparators) {
-      return scrolledContextSlug
-        ? getProductBySlug(scrolledContextSlug)
-        : undefined;
-    }
-    return threadContextProduct;
+    if (threadContextProduct) return threadContextProduct;
+    if (pageProductSlug) return getProductBySlug(pageProductSlug);
+    return undefined;
   }, [
     selectedSlugs,
     getProductBySlug,
-    hasContextSeparators,
-    scrolledContextSlug,
     threadContextProduct,
+    pageProductSlug,
   ]);
   const [composerContextCleared, setComposerContextCleared] = useState(false);
   const establishConversationProduct = useCallback((slugs: string[]) => {
@@ -1467,19 +1449,15 @@ export function SidecarAssistant({
       establishConversationProduct(selectedSlugs);
     }
   }, [selectedSlugs, establishConversationProduct]);
-  // Deliberately blind to scroll position. The island reserves space at the top
-  // of the transcript and that space sits inside the scroll container, so
-  // mounting it on a scroll-derived value would move the dividers the scroll
-  // reader measures and oscillate for as long as the shopper sat near one.
+  // Subheader under Beauty Advisor. Tied to conversation / page product, not
+  // to scroll, so it does not pop in and out as the transcript moves.
   const showContextIsland =
     contextIsland &&
     (cartItemCount > 0 ||
       selectedSlugs.length > 0 ||
       hasContextSeparators ||
-      Boolean(threadContextProduct));
-  // Above the first divider with an empty cart there is nothing worth showing,
-  // but unmounting would give the space back and restart the loop above, so the
-  // island stays in place and only turns invisible.
+      Boolean(threadContextProduct) ||
+      Boolean(pageProductSlug));
   const contextIslandEmpty = !contextProduct && cartItemCount === 0;
   // True once the shopper has asked a contextual FAQ for the current selection:
   // the follow-up pills then live in-chat, so the tray hides its own pill row.
@@ -5162,81 +5140,13 @@ export function SidecarAssistant({
     };
   }, [messages]);
 
-  // Context dividers split the transcript into product sections, so track which
-  // one the shopper has scrolled past and let the island mirror it like a sticky
-  // section header. Re-runs on `messages` to pick up newly appended dividers.
-  useEffect(() => {
-    const node = chatRef.current;
-    if (!node) return;
-    // Auto-scrolls and late-loading images shift the transcript for a few
-    // frames after a reply lands, which can park the first divider back below
-    // the activation line even though the shopper never scrolled there. Blank
-    // readings are therefore held briefly and only committed if they stick.
-    let pendingBlank: number | null = null;
-    const cancelPendingBlank = () => {
-      if (pendingBlank !== null) {
-        window.clearTimeout(pendingBlank);
-        pendingBlank = null;
-      }
-    };
-    const syncScrolledContext = (allowBlank = false) => {
-      const separators = Array.from(
-        node.querySelectorAll<HTMLElement>("[data-context-slug]"),
-      );
-      if (separators.length === 0) {
-        cancelPendingBlank();
-        setScrolledContextSlug(null);
-        return;
-      }
-      // At the bottom the newest section is what the shopper is looking at,
-      // even when it is too short to push its own divider up to the line.
-      if (
-        node.scrollHeight - node.clientHeight - node.scrollTop <=
-        CONTEXT_SCROLL_BOTTOM_TOLERANCE_PX
-      ) {
-        cancelPendingBlank();
-        setScrolledContextSlug(
-          separators[separators.length - 1].dataset.contextSlug ?? null,
-        );
-        return;
-      }
-      const threshold =
-        node.getBoundingClientRect().top + CONTEXT_SCROLL_ACTIVATION_PX;
-      let active: string | null = null;
-      // Dividers are in document order, so stop at the first one still below
-      // the activation line.
-      for (const separator of separators) {
-        if (separator.getBoundingClientRect().top > threshold) break;
-        active = separator.dataset.contextSlug ?? null;
-      }
-      if (active === null && !allowBlank) {
-        if (pendingBlank === null) {
-          pendingBlank = window.setTimeout(() => {
-            pendingBlank = null;
-            syncScrolledContext(true);
-          }, CONTEXT_SCROLL_BLANK_DELAY_MS);
-        }
-        return;
-      }
-      cancelPendingBlank();
-      setScrolledContextSlug(active);
-    };
-    const onScroll = () => syncScrolledContext();
-    syncScrolledContext();
-    node.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      cancelPendingBlank();
-      node.removeEventListener("scroll", onScroll);
-    };
-  }, [messages]);
-
   // Sticky pins every separator the shopper has scrolled past to the same line,
   // where they would pile up — each chip casting its own shadow — and would go
   // on labelling the transcript after it has left the product. So show only the
   // chip that actually covers what is on screen: the last section marker above
   // the dock line, and nothing at all when that marker is a section's end.
   useEffect(() => {
-    if (contextIsland) return;
+    if (!contextDividerPill || !contextStickyPill) return;
     const node = chatRef.current;
     if (!node) return;
     const syncStickyHeaders = () => {
@@ -5285,7 +5195,7 @@ export function SidecarAssistant({
         .querySelectorAll<HTMLElement>(".sidecar-assistant__context-separator")
         .forEach((separator) => delete separator.dataset.superseded);
     };
-  }, [contextIsland, messages]);
+  }, [contextDividerPill, contextStickyPill, messages]);
 
   // Tall cards are anchored by their top rather than scrolled to the end, so the
   // transcript is often left with messages below the fold. Track that so the
@@ -5981,6 +5891,7 @@ export function SidecarAssistant({
               />
             );
           case "context_separator": {
+            if (!contextDividerPill) return null;
             const product = getProductBySlug(message.productSlug);
             if (!product) return null;
             // Nothing to choose between means nothing to open the card for: the
@@ -6032,6 +5943,7 @@ export function SidecarAssistant({
             );
           }
           case "context_end":
+            if (!contextDividerPill) return null;
             return (
               <div
                 key={message.id}
@@ -6062,6 +5974,7 @@ export function SidecarAssistant({
       selectedSet,
       messages,
       accordionRecommendations,
+      contextDividerPill,
       productSelection,
       updatingCart,
     ],
@@ -6428,7 +6341,13 @@ export function SidecarAssistant({
 
   const panelBody = (
     <>
-      <header className="sidecar-assistant__header">
+      <header
+        className={`sidecar-assistant__header${
+          showContextIsland && !contextIslandEmpty
+            ? " sidecar-assistant__header--with-island"
+            : ""
+        }`}
+      >
         <div className="sidecar-assistant__header-title">
           <span className="sidecar-assistant__header-icon" aria-hidden="true">
             <SparkleIcon width={18} height={18} strokeWidth={1.5} />
@@ -6528,76 +6447,72 @@ export function SidecarAssistant({
           </button>
         </div>
       </header>
+      {showContextIsland && !contextIslandEmpty ? (
+        <div className="sidecar-assistant__context-island">
+          {contextProduct ? (
+            <>
+              <img
+                className="sidecar-assistant__context-island-thumb"
+                src={contextProduct.imageUrl}
+                alt={contextProduct.imageAlt}
+              />
+              <div className="sidecar-assistant__context-island-copy">
+                <span className="sidecar-assistant__context-island-title">
+                  {contextProduct.title}
+                </span>
+                <span className="sidecar-assistant__context-island-price">
+                  {contextProduct.priceFormatted}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="sidecar-assistant__context-island-add"
+                aria-label={`Add ${contextProduct.title} to cart`}
+                onClick={() => handleAddToCart(contextProduct.slug, 1)}
+              >
+                Add to cart
+              </button>
+            </>
+          ) : null}
+          {cartItemCount > 0 ? (
+            <div className="sidecar-assistant__context-island-cart-group">
+              <span className="sidecar-assistant__context-island-cart-summary">
+                {cartTotals.total ? (
+                  <span className="sidecar-assistant__context-island-cart-total">
+                    Total {cartTotals.total}
+                  </span>
+                ) : null}
+                <span className="sidecar-assistant__context-island-cart-count">
+                  {cartItemCount} item{cartItemCount === 1 ? "" : "s"}
+                </span>
+              </span>
+              <button
+                type="button"
+                className="sidecar-assistant__context-island-cart"
+                aria-label={`Cart: ${cartItemCount} item${cartItemCount === 1 ? "" : "s"}`}
+                onClick={showCartCard}
+              >
+                <ShoppingCartIcon width={20} height={20} />
+                <span className="sidecar-assistant__context-island-badge">
+                  {cartItemCount}
+                </span>
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="sidecar-assistant__chat-area">
         <div
           className={`sidecar-assistant__chat${
-            showContextIsland ? " sidecar-assistant__chat--with-island" : ""
-          }${contextIsland ? "" : " sidecar-assistant__chat--sticky-context"}`}
+            contextDividerPill && contextStickyPill
+              ? " sidecar-assistant__chat--sticky-context"
+              : ""
+          }`}
           ref={chatRef}
         >
           {renderedMessages}
         </div>
-        {showContextIsland ? (
-          <div
-            className={`sidecar-assistant__context-island${
-              contextIslandEmpty
-                ? " sidecar-assistant__context-island--empty"
-                : ""
-            }`}
-          >
-            {contextProduct ? (
-              <>
-                <img
-                  className="sidecar-assistant__context-island-thumb"
-                  src={contextProduct.imageUrl}
-                  alt={contextProduct.imageAlt}
-                />
-                <div className="sidecar-assistant__context-island-copy">
-                  <span className="sidecar-assistant__context-island-title">
-                    {contextProduct.title}
-                  </span>
-                  <span className="sidecar-assistant__context-island-price">
-                    {contextProduct.priceFormatted}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  className="sidecar-assistant__context-island-add"
-                  aria-label={`Add ${contextProduct.title} to cart`}
-                  onClick={() => handleAddToCart(contextProduct.slug, 1)}
-                >
-                  Add to cart
-                </button>
-              </>
-            ) : null}
-            {cartItemCount > 0 ? (
-              <div className="sidecar-assistant__context-island-cart-group">
-                <span className="sidecar-assistant__context-island-cart-summary">
-                  {cartTotals.total ? (
-                    <span className="sidecar-assistant__context-island-cart-total">
-                      Total {cartTotals.total}
-                    </span>
-                  ) : null}
-                  <span className="sidecar-assistant__context-island-cart-count">
-                    {cartItemCount} item{cartItemCount === 1 ? "" : "s"}
-                  </span>
-                </span>
-                <button
-                  type="button"
-                  className="sidecar-assistant__context-island-cart"
-                  aria-label={`Cart: ${cartItemCount} item${cartItemCount === 1 ? "" : "s"}`}
-                  onClick={showCartCard}
-                >
-                  <ShoppingCartIcon width={20} height={20} />
-                  <span className="sidecar-assistant__context-island-badge">
-                    {cartItemCount}
-                  </span>
-                </button>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
         {awayFromLatest ? (
           <button
             type="button"

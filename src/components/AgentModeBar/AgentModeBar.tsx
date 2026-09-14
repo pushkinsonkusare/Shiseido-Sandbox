@@ -38,6 +38,10 @@ export function AgentModeBar() {
     setContextIsland,
     contextPill,
     setContextPill,
+    contextDividerPill,
+    setContextDividerPill,
+    contextStickyPill,
+    setContextStickyPill,
     productSelection,
     setProductSelection,
     productSelectionType,
@@ -290,6 +294,40 @@ export function AgentModeBar() {
                   />
                   <span className="agent-mode-bar__feature-label">
                     Context pill
+                  </span>
+                </label>
+                <label className="agent-mode-bar__feature">
+                  <input
+                    type="checkbox"
+                    className="agent-mode-bar__feature-checkbox"
+                    checked={contextDividerPill}
+                    onChange={(event) =>
+                      setContextDividerPill(event.target.checked)
+                    }
+                  />
+                  <span className="agent-mode-bar__feature-label">
+                    Context divider pill
+                  </span>
+                </label>
+                <label
+                  className={
+                    "agent-mode-bar__feature" +
+                    (!contextDividerPill
+                      ? " agent-mode-bar__feature--disabled"
+                      : "")
+                  }
+                >
+                  <input
+                    type="checkbox"
+                    className="agent-mode-bar__feature-checkbox"
+                    checked={contextDividerPill && contextStickyPill}
+                    disabled={!contextDividerPill}
+                    onChange={(event) =>
+                      setContextStickyPill(event.target.checked)
+                    }
+                  />
+                  <span className="agent-mode-bar__feature-label">
+                    Sticky pill
                   </span>
                 </label>
                 <label className="agent-mode-bar__feature">

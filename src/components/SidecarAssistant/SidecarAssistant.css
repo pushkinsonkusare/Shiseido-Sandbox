@@ -137,8 +137,8 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   flex: 0 0 auto;
   /* Lifted above the chat area so the shadow falls on the transcript instead of
      being painted over by it: the chat area is also positioned and comes later
-     in the DOM, so it would otherwise win. The 7 clears the floating context
-     island's 6, which also keeps the menu popover above the island. */
+     in the DOM, so it would otherwise win. Also clears the menu popover above
+     the product subheader. */
   position: relative;
   z-index: 7;
   /* Wide, low-opacity falloff rather than a tight dark edge: at full-bleed
@@ -300,32 +300,30 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   background: #8a1424;
 }
 
-/* One floating product card: image, name, price, add. The transcript scrolls
-   underneath. Inset and centered; `width: fit-content` hugs the row. */
+/* Product subheader under Beauty Advisor — full width, not a floating card. */
 .sidecar-assistant__context-island {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  right: 12px;
-  width: fit-content;
-  max-width: calc(100% - 24px);
-  margin-inline: auto;
-  z-index: 6;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 56px;
-  padding: 8px 8px 8px 8px;
-  background: #ffffff;
-  border: 1px solid #ececec;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  height: 52px;
+  box-sizing: border-box;
+  padding: 8px 12px 8px 16px;
+  background: #f5f5f5;
+  border-bottom: 1px solid rgba(23, 23, 27, 0.07);
+  position: relative;
+  z-index: 6;
+  overflow: hidden;
+  box-shadow:
+    0 1px 1px -1px rgba(23, 23, 27, 0.03),
+    0 14px 30px -20px rgba(23, 23, 27, 0.1);
 }
 
-/* Hidden rather than unmounted so the space the chat reserves for it stays
-   reserved. See showContextIsland. */
-.sidecar-assistant__context-island--empty {
-  visibility: hidden;
+/* Header already sits on the subheader; drop its transcript shadow so the
+   chrome stack casts one edge onto the chat. */
+.sidecar-assistant__header--with-island {
+  box-shadow: none;
 }
 
 .sidecar-assistant__context-island-thumb {
@@ -340,7 +338,6 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
 .sidecar-assistant__context-island-copy {
   flex: 1 1 auto;
   min-width: 0;
-  max-width: 160px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -466,14 +463,29 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
 /* ---------- Context separator (context-island replacement) ---------- */
 
 .sidecar-assistant__context-separator {
+  --sidecar-context-rule: #e0e0e0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0px;
+  gap: 0;
+  /* Pull the rules out to the transcript edges so the pill sits in a
+     full-width partition rather than floating in empty space. */
+  width: calc(100% + 2 * var(--sidecar-chat-pad-inline, var(--sidecar-chat-pad)));
+  margin-inline: calc(-1 * var(--sidecar-chat-pad-inline, var(--sidecar-chat-pad)));
+  padding-block: 8px;
 }
 
-/* Sticky product headers, used whenever the Context island is off: the section
-   being read keeps its chip docked at the top of the transcript, and the next
+.sidecar-assistant__context-separator::before,
+.sidecar-assistant__context-separator::after {
+  content: "";
+  flex: 1 1 0;
+  min-width: 12px;
+  height: 0;
+  border-top: 1px solid var(--sidecar-context-rule);
+}
+
+/* Sticky product headers, used when Sticky pill is on: the section being
+   read keeps its chip docked at the top of the transcript, and the next
    section's chip lands over it on the way past. Later separators come later in
    the DOM at the same z-index, so the hand-off needs no script. */
 .sidecar-assistant__chat--sticky-context .sidecar-assistant__context-separator {
@@ -512,12 +524,14 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   /* One size for every product, so the chip reads as a fixed marker instead of
      breathing in and out with the length of the title. */
   width: var(--sidecar-context-chip-width);
-  max-width: 100%;
+  max-width: calc(100% - 48px);
   padding: 4px 6px 4px 4px;
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--sidecar-context-rule);
   border-radius: 999px;
   box-shadow: none;
+  position: relative;
+  z-index: 1;
   transition: border-color 150ms ease;
 }
 
@@ -686,6 +700,7 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  --sidecar-chat-pad-inline: var(--sidecar-chat-pad);
   padding: var(--sidecar-chat-pad);
   padding-bottom: 16px;
   background: rgba(250, 250, 250, 1);
@@ -693,25 +708,26 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
 }
 
-/* Clears the floating island (12px inset + 56px island + 12px gap) so the first
-   message does not start life hidden behind it. */
-.sidecar-assistant__chat--with-island {
-  padding-top: 80px;
-}
-
 /* Full-page immersive: hold the transcript to a readable column instead of
    stretching cards across the screen. Padding rather than a max-width so the
    scrollbar stays at the panel's edge. `--sxs-immersive-column` is 860px, the
    card width the panel produced before it went full-bleed. */
 .sxs-layout__panel--detached .sidecar-assistant__chat {
-  padding-inline: max(20px, calc((100% - var(--sxs-immersive-column)) / 2));
+  --sidecar-chat-pad-inline: max(
+    20px,
+    calc((100% - var(--sxs-immersive-column)) / 2)
+  );
+  padding-inline: var(--sidecar-chat-pad-inline);
 }
 
-/* The island and cart button float over the transcript, so they follow the same
-   column rather than drifting out into the empty margins. */
+/* Match the header's immersive insets so the product row stays in the column. */
 .sxs-layout__panel--detached .sidecar-assistant__context-island {
-  left: max(12px, calc((100% - var(--sxs-immersive-column)) / 2));
-  right: max(12px, calc((100% - var(--sxs-immersive-column)) / 2));
+  --sidecar-header-inset: max(
+    20px,
+    calc((100% - var(--sxs-immersive-column)) / 2)
+  );
+  padding-left: var(--sidecar-header-inset);
+  padding-right: calc(var(--sidecar-header-inset) - 4px);
 }
 
 /* Composer, disclaimer and selection tray line up with the cards above them.

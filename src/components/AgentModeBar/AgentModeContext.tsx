@@ -94,6 +94,8 @@ type UserTestingBootstrap = {
   mobileChrome: boolean;
   contextIsland: boolean;
   contextPill: boolean;
+  contextDividerPill: boolean;
+  contextStickyPill: boolean;
   productSelection: boolean;
   productSelectionType: ProductSelectionType;
   selectedProductSlugs: string[];
@@ -122,6 +124,12 @@ type AgentModeContextValue = {
   /** When true, the composer shows the "Asking about" product context pill. */
   contextPill: boolean;
   setContextPill: (enabled: boolean) => void;
+  /** When true, product section chips with partition lines appear in the transcript. */
+  contextDividerPill: boolean;
+  setContextDividerPill: (enabled: boolean) => void;
+  /** When true, those divider chips dock at the top of the transcript on scroll. */
+  contextStickyPill: boolean;
+  setContextStickyPill: (enabled: boolean) => void;
   /** When true, selected-product pills follow `productSelectionType`. */
   productSelection: boolean;
   setProductSelection: (enabled: boolean) => void;
@@ -174,6 +182,8 @@ const DEFAULT_VIEWPORT_MODE: DemoViewportMode = "desktop";
 const DEFAULT_ACCORDION_RECOMMENDATIONS = true;
 const DEFAULT_CONTEXT_ISLAND = false;
 const DEFAULT_CONTEXT_PILL = false;
+const DEFAULT_CONTEXT_DIVIDER_PILL = false;
+const DEFAULT_CONTEXT_STICKY_PILL = false;
 const DEFAULT_PRODUCT_SELECTION = true;
 const DEFAULT_PRODUCT_SELECTION_TYPE: ProductSelectionType = "in-chat";
 const DEFAULT_PDP_INLINE_WIDGET = true;
@@ -204,6 +214,8 @@ function unlockedBootstrap(): UserTestingBootstrap {
     mobileChrome: false,
     contextIsland: DEFAULT_CONTEXT_ISLAND,
     contextPill: DEFAULT_CONTEXT_PILL,
+    contextDividerPill: DEFAULT_CONTEXT_DIVIDER_PILL,
+    contextStickyPill: DEFAULT_CONTEXT_STICKY_PILL,
     productSelection: DEFAULT_PRODUCT_SELECTION,
     productSelectionType: DEFAULT_PRODUCT_SELECTION_TYPE,
     selectedProductSlugs: [],
@@ -286,6 +298,14 @@ function readUserTestingBootstrap(): UserTestingBootstrap {
       ),
     contextIsland: parseFlag(params.get("island"), DEFAULT_CONTEXT_ISLAND),
     contextPill: parseFlag(params.get("pill"), DEFAULT_CONTEXT_PILL),
+    contextDividerPill: parseFlag(
+      params.get("divider") ?? params.get("dividerPill"),
+      DEFAULT_CONTEXT_DIVIDER_PILL,
+    ),
+    contextStickyPill: parseFlag(
+      params.get("sticky") ?? params.get("stickyPill"),
+      DEFAULT_CONTEXT_STICKY_PILL,
+    ),
     productSelection: parseFlag(params.get("selection"), DEFAULT_PRODUCT_SELECTION),
     productSelectionType: selectionType,
     selectedProductSlugs,
@@ -342,6 +362,12 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
   const [contextPill, setContextPill] = useState<boolean>(
     UT_BOOTSTRAP.contextPill,
   );
+  const [contextDividerPill, setContextDividerPill] = useState<boolean>(
+    UT_BOOTSTRAP.contextDividerPill,
+  );
+  const [contextStickyPill, setContextStickyPill] = useState<boolean>(
+    UT_BOOTSTRAP.contextStickyPill,
+  );
   const [productSelection, setProductSelection] = useState<boolean>(
     UT_BOOTSTRAP.productSelection,
   );
@@ -380,6 +406,10 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       setContextIsland,
       contextPill,
       setContextPill,
+      contextDividerPill,
+      setContextDividerPill,
+      contextStickyPill,
+      setContextStickyPill,
       productSelection,
       setProductSelection,
       productSelectionType,
@@ -410,6 +440,8 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       accordionRecommendations,
       contextIsland,
       contextPill,
+      contextDividerPill,
+      contextStickyPill,
       productSelection,
       productSelectionType,
       selectedProductSlugs,
