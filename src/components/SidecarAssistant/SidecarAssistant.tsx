@@ -1580,6 +1580,29 @@ export function SidecarAssistant({
     return next;
   };
 
+  // Routine chips are scheduled for when the accordion finishes streaming.
+  // Opening a PDP (or anything else) while those steps are still landing
+  // must not let that delayed row replace the product FAQs under the card.
+  const routineFollowupStillCurrent = useCallback(() => {
+    const list = messagesRef.current;
+    let routineIndex = -1;
+    for (let i = list.length - 1; i >= 0; i -= 1) {
+      if (list[i].kind === "agent_routine") {
+        routineIndex = i;
+        break;
+      }
+    }
+    if (routineIndex < 0) return false;
+    return !list.slice(routineIndex + 1).some(
+      (message) =>
+        message.kind === "shopper_text" ||
+        message.kind === "agent_pdp" ||
+        message.kind === "agent_cart" ||
+        message.kind === "agent_plp" ||
+        message.kind === "agent_compare",
+    );
+  }, []);
+
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
@@ -2273,6 +2296,7 @@ export function SidecarAssistant({
           buildRoutineAcknowledgement(routine),
         sections,
         () => {
+          if (!routineFollowupStillCurrent()) return;
           const labels = buildRoutineFollowupNbas(
             routine,
             shopperProfileRef.current,
@@ -2294,6 +2318,7 @@ export function SidecarAssistant({
       appendMessage,
       handleProductSelect,
       products,
+      routineFollowupStillCurrent,
       streamRoutineCard,
     ],
   );
@@ -2926,10 +2951,17 @@ export function SidecarAssistant({
             break;
           }
           case "suggest_nbas":
-            // After a product listing, host buildPlpNbas owns follow-ups so
-            // the LLM cannot pivot to moisturizer / routine / gift chips.
+            // Host builders own follow-ups after a card so the LLM cannot
+            // pivot to moisturizer / routine / gift chips under a PDP or PLP.
             emitFollowUp(() => {
-              if (lastPlpSlugs) return;
+              if (
+                lastPlpSlugs ||
+                lastPdpProduct ||
+                lastCartProduct ||
+                lastRoutineForNbas
+              ) {
+                return;
+              }
               appendMessage(
                 buildNbasMessage(
                   takeWhoForLabels(
@@ -2947,7 +2979,15 @@ export function SidecarAssistant({
       }
 
       if (!rendered) return false;
-      if (sawSuggestNbas && !lastPlpSlugs) return true;
+      if (
+        sawSuggestNbas &&
+        !lastPlpSlugs &&
+        !lastPdpProduct &&
+        !lastCartProduct &&
+        !lastRoutineForNbas
+      ) {
+        return true;
+      }
 
       if (lastCartProduct) {
         const cartProduct = lastCartProduct;
@@ -2995,6 +3035,7 @@ export function SidecarAssistant({
       if (lastRoutineForNbas) {
         const routine = lastRoutineForNbas;
         emitFollowUp(() => {
+          if (!routineFollowupStillCurrent()) return;
           const labels = buildRoutineFollowupNbas(
             routine,
             shopperProfileRef.current,
@@ -3059,6 +3100,7 @@ export function SidecarAssistant({
       renderCartCard,
       renderPdpCard,
       renderPlpCard,
+      routineFollowupStillCurrent,
       runCheckoutFlow,
       streamRoutineCard,
     ],
