@@ -5,6 +5,7 @@ import "./AgentModeBar.css";
 import {
   AGENT_MODES,
   COMPARE_FEATURE_TYPES,
+  CONTEXT_TYPES,
   PRODUCT_SELECTION_TYPES,
   PDP_INLINE_WIDGET_POSITIONS,
   PDP_INLINE_WIDGET_TYPES,
@@ -34,10 +35,10 @@ export function AgentModeBar() {
     setMobileChrome,
     accordionRecommendations,
     setAccordionRecommendations,
-    contextIsland,
-    setContextIsland,
-    contextPill,
-    setContextPill,
+    contextEnabled,
+    setContextEnabled,
+    contextType,
+    setContextType,
     contextDividerPill,
     setContextDividerPill,
     contextStickyPill,
@@ -278,58 +279,76 @@ export function AgentModeBar() {
                   <input
                     type="checkbox"
                     className="agent-mode-bar__feature-checkbox"
-                    checked={contextIsland}
-                    onChange={(event) => setContextIsland(event.target.checked)}
-                  />
-                  <span className="agent-mode-bar__feature-label">
-                    Context island
-                  </span>
-                </label>
-                <label className="agent-mode-bar__feature">
-                  <input
-                    type="checkbox"
-                    className="agent-mode-bar__feature-checkbox"
-                    checked={contextPill}
-                    onChange={(event) => setContextPill(event.target.checked)}
-                  />
-                  <span className="agent-mode-bar__feature-label">
-                    Context pill
-                  </span>
-                </label>
-                <label className="agent-mode-bar__feature">
-                  <input
-                    type="checkbox"
-                    className="agent-mode-bar__feature-checkbox"
-                    checked={contextDividerPill}
+                    checked={contextEnabled}
                     onChange={(event) =>
-                      setContextDividerPill(event.target.checked)
+                      setContextEnabled(event.target.checked)
                     }
                   />
-                  <span className="agent-mode-bar__feature-label">
-                    Context divider pill
-                  </span>
+                  <span className="agent-mode-bar__feature-label">Context</span>
                 </label>
-                <label
-                  className={
-                    "agent-mode-bar__feature" +
-                    (!contextDividerPill
-                      ? " agent-mode-bar__feature--disabled"
-                      : "")
-                  }
-                >
-                  <input
-                    type="checkbox"
-                    className="agent-mode-bar__feature-checkbox"
-                    checked={contextDividerPill && contextStickyPill}
-                    disabled={!contextDividerPill}
-                    onChange={(event) =>
-                      setContextStickyPill(event.target.checked)
-                    }
-                  />
-                  <span className="agent-mode-bar__feature-label">
-                    Sticky pill
-                  </span>
-                </label>
+                {contextEnabled && (
+                  <div className="agent-mode-bar__sub-options">
+                    <div
+                      className="agent-mode-bar__sub-group"
+                      role="group"
+                      aria-label="Context type"
+                    >
+                      <span className="agent-mode-bar__sub-title">Type</span>
+                      <div className="agent-mode-bar__option-grid">
+                        {CONTEXT_TYPES.map(({ id, label }) => (
+                          <button
+                            key={id}
+                            type="button"
+                            className={
+                              "agent-mode-bar__option-button agent-mode-bar__option-button--sm" +
+                              (contextType === id
+                                ? " agent-mode-bar__option-button--active"
+                                : "")
+                            }
+                            aria-pressed={contextType === id}
+                            onClick={() => setContextType(id)}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <label className="agent-mode-bar__feature">
+                      <input
+                        type="checkbox"
+                        className="agent-mode-bar__feature-checkbox"
+                        checked={contextDividerPill}
+                        onChange={(event) =>
+                          setContextDividerPill(event.target.checked)
+                        }
+                      />
+                      <span className="agent-mode-bar__feature-label">
+                        Context divider pill
+                      </span>
+                    </label>
+                    <label
+                      className={
+                        "agent-mode-bar__feature" +
+                        (!contextDividerPill
+                          ? " agent-mode-bar__feature--disabled"
+                          : "")
+                      }
+                    >
+                      <input
+                        type="checkbox"
+                        className="agent-mode-bar__feature-checkbox"
+                        checked={contextDividerPill && contextStickyPill}
+                        disabled={!contextDividerPill}
+                        onChange={(event) =>
+                          setContextStickyPill(event.target.checked)
+                        }
+                      />
+                      <span className="agent-mode-bar__feature-label">
+                        Sticky pill
+                      </span>
+                    </label>
+                  </div>
+                )}
                 <label className="agent-mode-bar__feature">
                   <input
                     type="checkbox"

@@ -37,6 +37,14 @@ export const PDP_INLINE_WIDGET_POSITIONS: {
   { id: "right-rail", label: "Right rail" },
 ];
 
+/** How product context is shown in the sidecar while Context is on. */
+export type ContextType = "island" | "pill";
+
+export const CONTEXT_TYPES: { id: ContextType; label: string }[] = [
+  { id: "island", label: "Island" },
+  { id: "pill", label: "Pill" },
+];
+
 /** Where selected-product pills and their NBA chips sit in the sidecar. */
 export type ProductSelectionType = "drawer" | "in-chat";
 
@@ -92,8 +100,8 @@ type UserTestingBootstrap = {
   accordionRecommendations: boolean;
   viewportMode: DemoViewportMode;
   mobileChrome: boolean;
-  contextIsland: boolean;
-  contextPill: boolean;
+  contextEnabled: boolean;
+  contextType: ContextType;
   contextDividerPill: boolean;
   contextStickyPill: boolean;
   productSelection: boolean;
@@ -118,12 +126,16 @@ type AgentModeContextValue = {
   /** When true, routine category recommendations render as a single-open accordion. */
   accordionRecommendations: boolean;
   setAccordionRecommendations: (enabled: boolean) => void;
-  /** Context island feature toggle (behavior TBD). */
+  /** Parent Context feature. Off means no island, pill, or transcript dividers. */
+  contextEnabled: boolean;
+  setContextEnabled: (enabled: boolean) => void;
+  /** Island vs composer pill. Only one applies while Context is on; retained while off. */
+  contextType: ContextType;
+  setContextType: (type: ContextType) => void;
+  /** Derived: Context on and type is island. */
   contextIsland: boolean;
-  setContextIsland: (enabled: boolean) => void;
-  /** When true, the composer shows the "Asking about" product context pill. */
+  /** Derived: Context on and type is pill. */
   contextPill: boolean;
-  setContextPill: (enabled: boolean) => void;
   /** When true, product section chips with partition lines appear in the transcript. */
   contextDividerPill: boolean;
   setContextDividerPill: (enabled: boolean) => void;
@@ -180,8 +192,8 @@ const AgentModeContext = createContext<AgentModeContextValue | undefined>(undefi
 const DEFAULT_AGENT_MODE: AgentMode = "assistant-only";
 const DEFAULT_VIEWPORT_MODE: DemoViewportMode = "desktop";
 const DEFAULT_ACCORDION_RECOMMENDATIONS = true;
-const DEFAULT_CONTEXT_ISLAND = false;
-const DEFAULT_CONTEXT_PILL = false;
+const DEFAULT_CONTEXT_ENABLED = false;
+const DEFAULT_CONTEXT_TYPE: ContextType = "island";
 const DEFAULT_CONTEXT_DIVIDER_PILL = false;
 const DEFAULT_CONTEXT_STICKY_PILL = false;
 const DEFAULT_PRODUCT_SELECTION = true;
@@ -206,14 +218,19 @@ function parseFlag(raw: string | null, fallback: boolean): boolean {
   return fallback;
 }
 
+function resolveContextType(island: boolean, pill: boolean): ContextType {
+  if (pill && !island) return "pill";
+  return "island";
+}
+
 function unlockedBootstrap(): UserTestingBootstrap {
   return {
     userTestingLock: false,
     accordionRecommendations: DEFAULT_ACCORDION_RECOMMENDATIONS,
     viewportMode: DEFAULT_VIEWPORT_MODE,
     mobileChrome: false,
-    contextIsland: DEFAULT_CONTEXT_ISLAND,
-    contextPill: DEFAULT_CONTEXT_PILL,
+    contextEnabled: DEFAULT_CONTEXT_ENABLED,
+    contextType: DEFAULT_CONTEXT_TYPE,
     contextDividerPill: DEFAULT_CONTEXT_DIVIDER_PILL,
     contextStickyPill: DEFAULT_CONTEXT_STICKY_PILL,
     productSelection: DEFAULT_PRODUCT_SELECTION,
@@ -296,8 +313,15 @@ function readUserTestingBootstrap(): UserTestingBootstrap {
           params.get("mobile-chrome"),
         true,
       ),
-    contextIsland: parseFlag(params.get("island"), DEFAULT_CONTEXT_ISLAND),
-    contextPill: parseFlag(params.get("pill"), DEFAULT_CONTEXT_PILL),
+    contextEnabled:
+      parseFlag(params.get("context"), DEFAULT_CONTEXT_ENABLED) ||
+      parseFlag(params.get("island"), false) ||
+      parseFlag(params.get("pill"), false),
+    contextType: resolveContextType(
+      parseFlag(params.get("island"), false),
+      parseFlag(params.get("pill"), false) ||
+        (params.get("contextType") || "").trim().toLowerCase() === "pill",
+    ),
     contextDividerPill: parseFlag(
       params.get("divider") ?? params.get("dividerPill"),
       DEFAULT_CONTEXT_DIVIDER_PILL,
@@ -356,11 +380,11 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
   const [accordionRecommendations, setAccordionRecommendations] = useState<boolean>(
     UT_BOOTSTRAP.accordionRecommendations,
   );
-  const [contextIsland, setContextIsland] = useState<boolean>(
-    UT_BOOTSTRAP.contextIsland,
+  const [contextEnabled, setContextEnabled] = useState<boolean>(
+    UT_BOOTSTRAP.contextEnabled,
   );
-  const [contextPill, setContextPill] = useState<boolean>(
-    UT_BOOTSTRAP.contextPill,
+  const [contextType, setContextType] = useState<ContextType>(
+    UT_BOOTSTRAP.contextType,
   );
   const [contextDividerPill, setContextDividerPill] = useState<boolean>(
     UT_BOOTSTRAP.contextDividerPill,
@@ -402,13 +426,15 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       setMobileChrome,
       accordionRecommendations,
       setAccordionRecommendations,
-      contextIsland,
-      setContextIsland,
-      contextPill,
-      setContextPill,
-      contextDividerPill,
+      contextEnabled,
+      setContextEnabled,
+      contextType,
+      setContextType,
+      contextIsland: contextEnabled && contextType === "island",
+      contextPill: contextEnabled && contextType === "pill",
+      contextDividerPill: contextEnabled && contextDividerPill,
       setContextDividerPill,
-      contextStickyPill,
+      contextStickyPill: contextEnabled && contextStickyPill,
       setContextStickyPill,
       productSelection,
       setProductSelection,
@@ -438,8 +464,8 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       viewportMode,
       mobileChrome,
       accordionRecommendations,
-      contextIsland,
-      contextPill,
+      contextEnabled,
+      contextType,
       contextDividerPill,
       contextStickyPill,
       productSelection,
