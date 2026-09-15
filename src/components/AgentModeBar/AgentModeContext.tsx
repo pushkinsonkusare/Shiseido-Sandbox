@@ -82,7 +82,9 @@ export function readDemoScenario(): DemoScenario | null {
   if (
     raw === "clarifying-pdp" ||
     raw === "cleanser-pdp" ||
-    raw === "clarifying-foam"
+    raw === "clarifying-foam" ||
+    raw === "deep-cleansing-pdp" ||
+    raw === "deep-foam"
   ) {
     return "clarifying-pdp";
   }
@@ -91,9 +93,23 @@ export function readDemoScenario(): DemoScenario | null {
 
 export const DEMO_SCENARIO = readDemoScenario();
 
+const DEFAULT_CLARIFYING_PDP_SLUG = "essentials-clarifying-cleansing-foam";
+
+/** In-chat PDP for `?scenario=clarifying-pdp`. Override with `?inChat=slug`. */
+export function readClarifyingPdpScenarioSlug(): string {
+  if (typeof window === "undefined") return DEFAULT_CLARIFYING_PDP_SLUG;
+  const params = new URLSearchParams(window.location.search);
+  const inChat = (params.get("inChat") || params.get("agentPdp") || "").trim();
+  if (inChat) return inChat;
+  const scenario = (params.get("scenario") || "").trim().toLowerCase();
+  if (scenario === "deep-cleansing-pdp" || scenario === "deep-foam") {
+    return "essentials-deep-cleansing-foam";
+  }
+  return DEFAULT_CLARIFYING_PDP_SLUG;
+}
+
 /** Product opened in-chat for the clarifying-pdp scenario. */
-export const CLARIFYING_PDP_SCENARIO_SLUG =
-  "essentials-clarifying-cleansing-foam";
+export const CLARIFYING_PDP_SCENARIO_SLUG = readClarifyingPdpScenarioSlug();
 
 type UserTestingBootstrap = {
   userTestingLock: boolean;
