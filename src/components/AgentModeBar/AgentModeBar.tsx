@@ -323,7 +323,7 @@ export function AgentModeBar() {
                         }
                       />
                       <span className="agent-mode-bar__feature-label">
-                        Context divider pill
+                        Context divider
                       </span>
                     </label>
                     <label
@@ -344,7 +344,7 @@ export function AgentModeBar() {
                         }
                       />
                       <span className="agent-mode-bar__feature-label">
-                        Sticky pill
+                        Sticky divider
                       </span>
                     </label>
                   </div>
