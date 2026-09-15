@@ -167,6 +167,10 @@ export function AgentModeBar() {
             <div className="agent-mode-bar__modal-header">
               <h2 id="agent-mode-switcher-title" className="agent-mode-bar__modal-title">
                 UX Control Panel
+                <span className="agent-mode-bar__modal-title-sub">
+                  {" "}
+                  - Shopper Agent 2026 (Shiseido)
+                </span>
               </h2>
               <button
                 type="button"

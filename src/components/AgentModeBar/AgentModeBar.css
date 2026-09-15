@@ -92,6 +92,13 @@ html[data-demo-viewport="mobile"] .agent-mode-bar {
   color: rgba(255, 255, 255, 0.84);
 }
 
+.agent-mode-bar__modal-title-sub {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: var(--font-weight-regular);
+  color: rgba(255, 255, 255, 0.55);
+}
+
 .agent-mode-bar__modal-close {
   appearance: none;
   width: 28px;

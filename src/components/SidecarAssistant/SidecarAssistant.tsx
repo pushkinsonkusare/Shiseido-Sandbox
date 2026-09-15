@@ -6306,9 +6306,6 @@ export function SidecarAssistant({
       className="sidecar-assistant__asking-about"
       aria-label={`Asking about ${askingAboutProduct.title}`}
     >
-      <span className="sidecar-assistant__asking-about-pretext">
-        Asking about
-      </span>
       <span className="sidecar-assistant__selection-pill">
         <img
           className="sidecar-assistant__selection-pill-thumb"

@@ -41,8 +41,8 @@ export const PDP_INLINE_WIDGET_POSITIONS: {
 export type ContextType = "island" | "pill";
 
 export const CONTEXT_TYPES: { id: ContextType; label: string }[] = [
-  { id: "island", label: "Island" },
   { id: "pill", label: "Pill" },
+  { id: "island", label: "Island" },
 ];
 
 /** Where selected-product pills and their NBA chips sit in the sidecar. */
@@ -52,8 +52,8 @@ export const PRODUCT_SELECTION_TYPES: {
   id: ProductSelectionType;
   label: string;
 }[] = [
-  { id: "drawer", label: "Drawer" },
   { id: "in-chat", label: "In chat" },
+  { id: "drawer", label: "Drawer" },
 ];
 
 /** How the sidecar renders a multi-product compare turn. */
@@ -193,7 +193,7 @@ const DEFAULT_AGENT_MODE: AgentMode = "assistant-only";
 const DEFAULT_VIEWPORT_MODE: DemoViewportMode = "desktop";
 const DEFAULT_ACCORDION_RECOMMENDATIONS = true;
 const DEFAULT_CONTEXT_ENABLED = false;
-const DEFAULT_CONTEXT_TYPE: ContextType = "island";
+const DEFAULT_CONTEXT_TYPE: ContextType = "pill";
 const DEFAULT_CONTEXT_DIVIDER_PILL = false;
 const DEFAULT_CONTEXT_STICKY_PILL = false;
 const DEFAULT_PRODUCT_SELECTION = true;
@@ -219,8 +219,8 @@ function parseFlag(raw: string | null, fallback: boolean): boolean {
 }
 
 function resolveContextType(island: boolean, pill: boolean): ContextType {
-  if (pill && !island) return "pill";
-  return "island";
+  if (island && !pill) return "island";
+  return "pill";
 }
 
 function unlockedBootstrap(): UserTestingBootstrap {
