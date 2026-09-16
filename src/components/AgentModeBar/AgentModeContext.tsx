@@ -208,9 +208,9 @@ const AgentModeContext = createContext<AgentModeContextValue | undefined>(undefi
 const DEFAULT_AGENT_MODE: AgentMode = "assistant-only";
 const DEFAULT_VIEWPORT_MODE: DemoViewportMode = "desktop";
 const DEFAULT_ACCORDION_RECOMMENDATIONS = true;
-const DEFAULT_CONTEXT_ENABLED = false;
+const DEFAULT_CONTEXT_ENABLED = true;
 const DEFAULT_CONTEXT_TYPE: ContextType = "pill";
-const DEFAULT_CONTEXT_DIVIDER_PILL = false;
+const DEFAULT_CONTEXT_DIVIDER_PILL = true;
 const DEFAULT_CONTEXT_STICKY_PILL = false;
 const DEFAULT_PRODUCT_SELECTION = true;
 const DEFAULT_PRODUCT_SELECTION_TYPE: ProductSelectionType = "in-chat";
@@ -220,7 +220,7 @@ const DEFAULT_PDP_INLINE_WIDGET_POSITION: PdpInlineWidgetPosition =
   "left-under-image";
 const DEFAULT_COMPARE_FEATURE = true;
 const DEFAULT_COMPARE_FEATURE_TYPE: CompareFeatureType = "side-by-side-table";
-const DEFAULT_IMAGE_SEARCH = false;
+const DEFAULT_IMAGE_SEARCH = true;
 
 function parseFlag(raw: string | null, fallback: boolean): boolean {
   if (raw == null || raw.trim() === "") return fallback;
