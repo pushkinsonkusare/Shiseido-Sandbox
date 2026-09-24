@@ -183,24 +183,24 @@ const PLACEHOLDER_INPUT = "Ask me anything";
 const NUDGE_INTERVAL_MS = 90_000;
 const NUDGE_DURATION_MS = 2500;
 
-const RESPONSE_LATENCY_MS = 1200;
+const RESPONSE_LATENCY_MS = 500;
 /** A guardrail turn is a read of the message, not a search, so it answers
  * faster than any lookup: a long "searching" beat before "I can't help with
  * that" implies the store went looking. */
-const GUARDRAIL_LATENCY_MS = 700;
+const GUARDRAIL_LATENCY_MS = 300;
 /** An open-ended ask reads as real work, so the agent takes the time to narrate
  * it. A query that already carries filters is closer to a lookup. */
-const DISCOVERY_LATENCY_MS = 5000;
-const NARROW_LATENCY_MS = 3000;
+const DISCOVERY_LATENCY_MS = 2000;
+const NARROW_LATENCY_MS = 1200;
 /** Lining products up is a real look, not a lookup — same beat as discovery. */
-const COMPARE_LATENCY_MS = 5000;
+const COMPARE_LATENCY_MS = 2000;
 /** Cart edits go through the agent rather than straight into local state, so a
  * quantity change holds the card's totals until the round trip lands. */
-const CART_UPDATE_LATENCY_MS = 3000;
-const ROUTINE_STREAM_STEP_MS = 700;
+const CART_UPDATE_LATENCY_MS = 1200;
+const ROUTINE_STREAM_STEP_MS = 300;
 /** How long a product list card holds its intro before the row lands. Same beat
  * as a routine section, so the two cards read as the same agent writing. */
-const PLP_REVEAL_MS = 700;
+const PLP_REVEAL_MS = 300;
 const PLP_PAGE_SIZE = 5;
 const RECIPE_LEAD_COUNT = 24;
 
@@ -4931,7 +4931,7 @@ export function SidecarAssistant({
 
   const clarifyingPdpScenarioSeededRef = useRef(false);
 
-  // Seed the welcome card the first time the panel opens. A 5s connect
+  // Seed the welcome card the first time the panel opens. A connect
   // wait stands in for agent handshake unless a canned scenario or
   // `?connect=0` skips it.
   useEffect(() => {
@@ -5511,7 +5511,7 @@ export function SidecarAssistant({
       kind: "agent_loader",
       variant: "answering",
       steps: ["Looking at your photo", "Matching it to our catalog"],
-      stepIntervalMs: 900,
+      stepIntervalMs: 400,
     });
 
     void identifyCatalogProductFromImage(image.url, products, {

@@ -19,7 +19,7 @@ const VARIANT_LABELS: Record<LatencyLoaderVariant, string> = {
   removing: "Removing…",
 };
 
-const DEFAULT_STEP_INTERVAL_MS = 1200;
+const DEFAULT_STEP_INTERVAL_MS = 500;
 
 export type LatencyLoaderProps = {
   /** Pre-canned status message variants matching the Figma component. */

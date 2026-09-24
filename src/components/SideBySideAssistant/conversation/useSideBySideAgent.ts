@@ -97,7 +97,7 @@ function sanitizeSxsMessage(message: SxsMessage): SxsMessage {
   }
 }
 
-const RESPONSE_LATENCY_MS = 900;
+const RESPONSE_LATENCY_MS = 400;
 
 const GREETING_BODY =
   "I'm your Shiseido personal beauty advisor. I can help you build a routine, find products for your skin concerns, compare formulas, and put together the right regimen. What are you shopping for?";

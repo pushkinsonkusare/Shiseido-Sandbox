@@ -26,7 +26,7 @@ export type InlineAnswer = {
 };
 
 /** Total wait for the inline PDP thinking slot. */
-export const INLINE_THINKING_MS = 4000;
+export const INLINE_THINKING_MS = 1600;
 
 /**
  * The sidecar's off-domain and unintelligible copy ends on a colon because
