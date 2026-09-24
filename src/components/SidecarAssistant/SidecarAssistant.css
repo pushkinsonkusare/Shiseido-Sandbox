@@ -845,6 +845,19 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   margin-top: auto;
 }
 
+.sidecar-assistant__chat--connecting {
+  overflow: hidden;
+}
+
+.sidecar-assistant__chat--connecting > .advisor-connect {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.sidecar-assistant__chat--connecting > *:first-child {
+  margin-top: 0;
+}
+
 .sidecar-assistant__chat::-webkit-scrollbar {
   width: 6px;
 }

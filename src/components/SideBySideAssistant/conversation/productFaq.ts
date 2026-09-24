@@ -709,23 +709,335 @@ function aboutProductAnswer(product: CatalogProduct): string {
   return specsAnswer(product);
 }
 
+const REVIEWS_ASK =
+  /\b(reviews?|ratings?|what\s+do\s+(reviews?|people|shoppers|customers)\s+say|how\s+is\s+it\s+rated|stars?\b|what\s+do\s+people\s+think)\b/;
+
+function normalizeFaqPrompt(prompt: string): string {
+  return prompt
+    .toLowerCase()
+    .replace(/[“”"']/g, "")
+    .replace(/[.!?]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function isReviewsAsk(prompt: string): boolean {
+  return REVIEWS_ASK.test(normalizeFaqPrompt(prompt));
+}
+
+export type ReviewsSummary = {
+  rating: number | null;
+  reviewCount: number | null;
+  summary: string;
+  excerpt: string;
+  reviewer: string;
+};
+
+function hashSeed(seed: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i += 1) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function isJargonBenefit(text: string): boolean {
+  return (
+    /[™®]/.test(text) ||
+    /\b(proprietary|ifscc|trademark|technology|complex|awarded|actives?|formula|ophthalmolog|non-comedogenic|amino acid|molecule|i-shield)\b/i.test(
+      text,
+    )
+  );
+}
+
+function isChipWorthyBenefit(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed || /^n\/?a\b/i.test(trimmed) || isTagStyleBenefit(trimmed)) {
+    return false;
+  }
+  if (/^clinically tested by/i.test(trimmed)) return false;
+  if (/^free of\b/i.test(trimmed) || /^paraben/i.test(trimmed)) return false;
+  if (isJargonBenefit(trimmed)) return false;
+  return true;
+}
+
+function cleanBenefit(text: string): string {
+  return text
+    .trim()
+    .replace(/\*/g, "")
+    .replace(/[.]+$/, "")
+    .replace(/\s+/g, " ");
+}
+
+function narrativeBenefits(product: CatalogProduct): string[] {
+  const fromKeys = product.keyBenefits
+    .map(cleanBenefit)
+    .filter((block) => isChipWorthyBenefit(block));
+  if (fromKeys.length > 0) return fromKeys.slice(0, 3);
+  const fromFeatures = benefitBlocks(product)
+    .map(cleanBenefit)
+    .filter((block) => isChipWorthyBenefit(block));
+  if (fromFeatures.length > 0) return fromFeatures.slice(0, 3);
+  const lead = overviewLead(product);
+  return lead ? [cleanBenefit(lead)] : [];
+}
+
+function catalogTalkBlob(product: CatalogProduct): string {
+  return [
+    product.title,
+    product.shortDescription,
+    product.overview,
+    ...product.keyBenefits,
+    ...product.howToUse,
+    product.category,
+  ].join("\n");
+}
+
+function collectShopperNotes(product: CatalogProduct): string[] {
+  const blob = catalogTalkBlob(product);
+  const low = blob.toLowerCase();
+  const category = product.category.toLowerCase();
+  const notes: string[] = [];
+  const add = (clause: string) => {
+    if (notes.length >= 3) return;
+    if (!notes.includes(clause)) notes.push(clause);
+  };
+
+  if (
+    /sheer to clear|white cast|clear finish|goes on clear|blends? effortlessly|from sheer to clear/i.test(
+      blob,
+    )
+  ) {
+    add("it blends out clear, with no chalky leftover");
+  }
+
+  const feel: string[] = [];
+  if (/\bsoft(?:er)?\b/i.test(low)) feel.push("softer");
+  if (/\bsmooth/i.test(low)) feel.push("smoother");
+  if (
+    /hydrat|moistur|supple/i.test(low) &&
+    !/cleanser/i.test(category)
+  ) {
+    feel.push("more hydrated");
+  }
+  const feelClause =
+    feel.length >= 2
+      ? `their skin feels ${joinNatural(feel)}${
+          /\b\d+\s*weeks?\b/i.test(blob) ? " after a few weeks of use" : ""
+        }`
+      : feel.length === 1
+        ? `their skin feels ${feel[0]}`
+        : "";
+  if (feel.length >= 2 && feelClause) add(feelClause);
+
+  if (/lightweight|weightless|breathable/i.test(blob)) {
+    add("it feels light, not sticky");
+  }
+  if (/under makeup|primer|makeup application|wear alone or under makeup/i.test(blob)) {
+    add("it sits well under makeup");
+  }
+  if (feel.length === 1 && feelClause) add(feelClause);
+  if (/\bpore/i.test(low)) {
+    add("pores look a bit cleaner");
+  }
+  if (
+    /glow|radian|brighten|brightness|uneven skin tone/i.test(low) &&
+    !/cleanser/i.test(category)
+  ) {
+    add("skin looks a bit brighter");
+  }
+  if (
+    /sensitive|\bwithout irritation\b|\birritation-free\b|\bgentle enough\b|\bgentle on\b/i.test(
+      low,
+    )
+  ) {
+    add("it's gentle enough for sensitive skin");
+  }
+  if (/blemish|breakout/i.test(low)) {
+    add("it works for breakout-prone skin");
+  }
+  if (/\boil|sebum|mattif|shine/i.test(low) && !/oil-?free/i.test(low)) {
+    add("it helps keep shine in check");
+  }
+  if (
+    /fragrance-free|unscented/i.test(low) &&
+    !/\bfragrance\s*\(|\bparfum\b/i.test(product.ingredients || "")
+  ) {
+    add("there's no added scent");
+  }
+  if (/cleanser|foam|face wash/i.test(category) && notes.length < 2) {
+    add("it actually gets the day's oil off");
+  }
+  if (/sunscreen|sun care/i.test(category) && notes.length < 2) {
+    add("they actually wear it every day");
+  }
+  if (notes.length === 0) {
+    add("it does what they hoped it would");
+  }
+  return notes.slice(0, 3);
+}
+
+function reviewCons(product: CatalogProduct): string[] {
+  const chips: string[] = [];
+  const ingredients = product.ingredients || "";
+  const skinSpec = specByLabel(product, [/skin type/i]);
+  const skins = (
+    product.subtypes.length > 0
+      ? product.subtypes.map((token) => token.replace(/-/g, " "))
+      : skinSpec
+        ? splitValues(specValue(skinSpec))
+        : []
+  ).map((token) => token.toLowerCase());
+  const uniqueSkins = skins.filter(
+    (token) => token && !/all\s+skin/.test(token),
+  );
+  if (uniqueSkins.length === 1) {
+    const only = uniqueSkins[0];
+    if (/\boily\b/.test(only)) chips.push("drying");
+    else if (/\bdry\b/.test(only)) chips.push("rich");
+  }
+  if (/\bfragrance\b|\bparfum\b/i.test(ingredients)) {
+    chips.push("scented");
+  }
+  if (/\bmenthol\b/i.test(ingredients)) {
+    chips.push("tingle");
+  }
+  const typeSpec = specByLabel(product, [/^type$/i]);
+  const typeBlob = `${product.title} ${product.category} ${product.shortDescription} ${typeSpec ?? ""}`;
+  if (chips.length < 2 && /\bfoam/i.test(typeBlob)) {
+    chips.push("tight");
+  }
+  return chips.slice(0, 2);
+}
+
+function reviewDownside(product: CatalogProduct, cons: string[]): string {
+  const con = cons[0];
+  if (con === "scented") {
+    return "It's scented, which not everyone wants.";
+  }
+  if (con === "drying") {
+    return "It can feel drying if your skin runs dry.";
+  }
+  if (con === "rich") {
+    return "It can feel a bit rich on oilier skin.";
+  }
+  if (con === "tight") {
+    return "The foam can feel tight after rinsing.";
+  }
+  if (con === "tingle") {
+    return "The cooling tingle is not for everyone.";
+  }
+  if (typeof product.price === "number" && product.price >= 120) {
+    return "It's a splurge, so some shoppers weigh the price against how often they use it.";
+  }
+  return "";
+}
+
+function reviewSummaryCopy(product: CatalogProduct, cons: string[]): string {
+  const notes = collectShopperNotes(product);
+  const sentences: string[] = [];
+  if (notes[0]) {
+    sentences.push(`Shoppers say ${notes[0]}.`);
+  }
+  if (notes[1] && notes[2]) {
+    sentences.push(
+      `Many also like that ${notes[1]}, and love that ${notes[2]}.`,
+    );
+  } else if (notes[1]) {
+    sentences.push(`Many also like that ${notes[1]}.`);
+  }
+  const positive = sentences.join(" ");
+  const downside = reviewDownside(product, cons);
+  if (positive && downside) {
+    return `${positive}\n\nThe biggest downside? ${downside}`;
+  }
+  return positive || downside;
+}
+
+function reviewExcerpt(product: CatalogProduct, firstBenefit: string): string {
+  const n = hashSeed(product.slug) % 3;
+  if (/pore/i.test(firstBenefit)) {
+    return [
+      "It actually gets into my pores. My T-zone looks smoother.",
+      "My pores look cleaner after a week of using this.",
+      "Leaves my T-zone clean without that stripped feeling.",
+    ][n];
+  }
+  if (/hydrat|moistur/i.test(firstBenefit)) {
+    return [
+      "My skin drinks this up. Not greasy at all.",
+      "Finally feels hydrated without sitting on top of my skin.",
+      "The moisture lasts. I don't have to reapply at lunch.",
+    ][n];
+  }
+  if (
+    /spf|sun|bright/i.test(firstBenefit) ||
+    /sunscreen|sun\s*care/i.test(product.category)
+  ) {
+    return [
+      "Wears well under makeup. No white cast on me.",
+      "I forget I have sunscreen on, which is the point.",
+      "Light enough for every day. I actually use it.",
+    ][n];
+  }
+  return [
+    "This is the one I keep reaching for.",
+    "Does what it claims. I'd repurchase.",
+    "Solid everyday option. No complaints from me.",
+  ][n];
+}
+
+const REVIEWER_NAMES = [
+  "Maya K.",
+  "Priya S.",
+  "Elena R.",
+  "Jordan M.",
+  "Aiko T.",
+  "Samira L.",
+  "Nina P.",
+  "Chris W.",
+  "Leah C.",
+  "Omar H.",
+];
+
+function reviewReviewer(product: CatalogProduct): string {
+  return REVIEWER_NAMES[hashSeed(`${product.slug}-reviewer`) % REVIEWER_NAMES.length];
+}
+
+export function buildReviewsSummary(product: CatalogProduct): ReviewsSummary {
+  const rating = typeof product.rating === "number" ? product.rating : null;
+  const reviewCount =
+    typeof product.reviewCount === "number" ? product.reviewCount : null;
+  const firstBenefit = narrativeBenefits(product)[0] ?? "";
+  const cons = reviewCons(product).slice(0, 1);
+  return {
+    rating,
+    reviewCount,
+    summary: reviewSummaryCopy(product, cons),
+    excerpt: reviewExcerpt(product, firstBenefit),
+    reviewer: reviewReviewer(product),
+  };
+}
+
 function reviewsAnswer(product: CatalogProduct): string {
-  const rating = product.rating;
-  const count = product.reviewCount;
-  if (typeof rating === "number" && typeof count === "number") {
-    const score = rating.toFixed(1);
-    const reviews = count.toLocaleString();
-    if (rating >= 4.6) {
-      return `Shoppers love the ${product.title} — it's rated ${score} out of 5 from ${reviews} reviews, one of the stronger scores in this lineup.`;
-    }
-    if (rating >= 4.0) {
-      return `The ${product.title} is rated ${score} out of 5 from ${reviews} reviews. Overall feedback is solid.`;
-    }
-    return `The ${product.title} is rated ${score} out of 5 from ${reviews} reviews. Want me to compare it with a higher-rated alternative?`;
+  const summary = buildReviewsSummary(product);
+  const parts: string[] = [];
+  if (summary.rating != null && summary.reviewCount != null) {
+    parts.push(
+      `Rated ${summary.rating.toFixed(1)} out of 5 from ${summary.reviewCount.toLocaleString()} reviews.`,
+    );
+  } else if (summary.rating != null) {
+    parts.push(`Rated ${summary.rating.toFixed(1)} out of 5.`);
   }
-  if (typeof rating === "number") {
-    return `The ${product.title} is rated ${rating.toFixed(1)} out of 5.`;
+  if (summary.summary) {
+    parts.push(summary.summary.replace(/\n+/g, " "));
   }
+  if (summary.excerpt) {
+    const by = summary.reviewer ? ` ${summary.reviewer}` : "";
+    parts.push(`"${summary.excerpt}"${by}`);
+  }
+  if (parts.length > 0) return joinSentences(parts);
   return `I don't have detailed review quotes on hand for the ${product.title}, but I can compare it with similar options or open the full product page.`;
 }
 
@@ -1252,11 +1564,7 @@ export function resolveProductFaq(
   }
 
   // --- Reviews / ratings ---
-  if (
-    /\b(reviews?|ratings?|what\s+do\s+(reviews?|people|shoppers|customers)\s+say|how\s+is\s+it\s+rated|stars?\b|what\s+do\s+people\s+think)\b/.test(
-      q,
-    )
-  ) {
+  if (isReviewsAsk(q)) {
     return reviewsAnswer(product);
   }
 

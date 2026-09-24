@@ -38,6 +38,8 @@ import {
   AgentPDPCard,
   AgentPLPCard,
   AgentRoutineCard,
+  AdvisorConnectLoader,
+  AgentReviewsSummary,
   AgentSimpleUtterance,
   LatencyLoader,
   type AgentNBA,
@@ -57,6 +59,7 @@ import {
   POLICY_BODIES,
   PROBING_FALLBACK_BODY,
   TRACK_ORDER_BODY,
+  ADVISOR_CONNECT_MS,
   WELCOME_BODY,
   WELCOME_TITLE,
   buildStageNbas,
@@ -140,7 +143,9 @@ import type { AskAssistantEventDetail } from "../../pages/ProductDetailPage/PdpN
 import { ROUTES, usePrototypeNavigation } from "../../prototypeRoutes";
 import {
   agentOfferedIngredientList,
+  buildReviewsSummary,
   isAffirmativeIngredientOfferAccept,
+  isReviewsAsk,
   resolveProductFaq,
 } from "../SideBySideAssistant/conversation/productFaq";
 import {
@@ -371,6 +376,16 @@ function sanitizeAgentMessage(message: ChatMessage): ChatMessage {
         title: message.title ? stripEmDashes(message.title) : message.title,
         body: stripEmDashes(message.body),
       };
+    case "agent_reviews":
+      return {
+        ...message,
+        summary: message.summary
+          .split("\n")
+          .map((line) => stripEmDashes(line))
+          .join("\n"),
+        excerpt: stripEmDashes(message.excerpt),
+        reviewer: stripEmDashes(message.reviewer),
+      };
     case "agent_plp":
       return { ...message, intro: stripEmDashes(message.intro) };
     case "agent_routine":
@@ -516,8 +531,8 @@ function buildContextualFollowupLabels(
   product: CatalogProduct,
   answered: ReadonlySet<string>,
 ): string[] {
-  const remaining = buildContextualFaqPool(product).filter(
-    (label) => !answered.has(label),
+  const remaining = [...buildContextualFaqPool(product), REVIEWS_FAQ_LABEL].filter(
+    (label, index, all) => all.indexOf(label) === index && !answered.has(label),
   );
   return [...remaining.slice(0, 3), "Add to cart", "Show similar"];
 }
@@ -606,6 +621,7 @@ const JUMP_TO_LATEST_SHOW_DELAY_MS = 250;
  * never be the last thing in the transcript without suggestions under them. */
 const NEEDS_FOLLOW_UP_ROW = new Set<ChatMessage["kind"]>([
   "agent_simple",
+  "agent_reviews",
   "agent_plp",
   "agent_routine",
   "agent_pdp",
@@ -690,6 +706,24 @@ function buildTranscriptText(messages: ChatMessage[]): string {
           `Assistant: ${message.title ? `${message.title}: ` : ""}${message.body}`,
         );
         break;
+      case "agent_reviews": {
+        const ratingBit =
+          message.rating != null && message.reviewCount != null
+            ? `${message.rating.toFixed(1)} out of 5 · ${message.reviewCount.toLocaleString()} reviews`
+            : message.rating != null
+              ? `${message.rating.toFixed(1)} out of 5`
+              : "";
+        const quote = message.excerpt
+          ? `"${message.excerpt}"${message.reviewer ? ` ${message.reviewer}` : ""}`
+          : "";
+        const bits = [
+          ratingBit,
+          message.summary.replace(/\n+/g, " "),
+          quote,
+        ].filter(Boolean);
+        lines.push(`Assistant: ${bits.join(" ")}`);
+        break;
+      }
       case "agent_plp":
         lines.push(`Assistant: ${message.intro}`);
         for (const product of message.products) {
@@ -1241,7 +1275,7 @@ export function SidecarAssistant({
   const { products, heroProduct, getProductBySlug, getRelatedProducts, orderHistory } =
     useCatalog();
   const { currentRoute, currentProductSlug } = usePrototypeNavigation();
-  const { accordionRecommendations, contextIsland, contextPill, contextDividerPill, contextStickyPill, productSelection, productSelectionType, compareFeature, compareFeatureType, imageSearch, viewportMode, userTestingLock, selectedProductSlugs, setSelectedProductSlugs } =
+  const { accordionRecommendations, contextIsland, contextPill, contextDividerPill, contextStickyPill, productSelection, productSelectionType, compareFeature, compareFeatureType, imageSearch, advisorConnect, viewportMode, userTestingLock, selectedProductSlugs, setSelectedProductSlugs } =
     useAgentMode();
   const demoTheme = useSyncExternalStore(
     (onStoreChange) => {
@@ -1434,6 +1468,10 @@ export function SidecarAssistant({
   useEffect(() => {
     selectedSlugsRef.current = selectedSlugs;
   }, [selectedSlugs]);
+  const conversationSlugsRef = useRef<string[]>([]);
+  useEffect(() => {
+    conversationSlugsRef.current = conversationSlugs;
+  }, [conversationSlugs]);
   /* Whatever the shopper touched last owns the context, and opening a product is
    * itself an interaction, so it takes the context back from the conversation.
    * An open selection is the exception: it is a forced context and survives
@@ -1561,6 +1599,13 @@ export function SidecarAssistant({
     (
       products: CatalogProduct[],
       options?: { appendShopperBubble?: boolean },
+    ) => void
+  >(() => {});
+  const handleContextualPillRef = useRef<
+    (
+      label: string,
+      contextSlug?: string,
+      options?: { skipShopperBubble?: boolean },
     ) => void
   >(() => {});
 
@@ -2051,10 +2096,15 @@ export function SidecarAssistant({
   const buildPdpStageContext = useCallback(
     (product: CatalogProduct) => {
       const answered = answeredFaqsBySlugRef.current.get(product.slug);
+      const pool = buildContextualFaqPool(product).filter(
+        (label) => label !== REVIEWS_FAQ_LABEL,
+      );
       const faqLabels = [
-        ...buildContextualFaqPool(product),
+        pool[0],
+        pool[1],
         REVIEWS_FAQ_LABEL,
-      ].filter((label) => !answered?.has(label));
+        ...pool.slice(2),
+      ].filter((label): label is string => Boolean(label) && !answered?.has(label));
       return {
         stage: "pdp" as const,
         product,
@@ -3598,6 +3648,23 @@ export function SidecarAssistant({
         }
       }
 
+      if (isReviewsAsk(trimmed) && !isProductListingQuery(trimmed)) {
+        const selected = selectedSlugsRef.current;
+        const conversation = conversationSlugsRef.current;
+        const slug =
+          selected.length === 1
+            ? selected[0]
+            : conversation.length === 1
+              ? conversation[0]
+              : null;
+        if (slug) {
+          handleContextualPillRef.current(trimmed, slug, {
+            skipShopperBubble: true,
+          });
+          return;
+        }
+      }
+
       const searchPlan = buildSearchLoaderPlan(trimmed);
       const loaderId = nextId("loader");
       appendMessage({
@@ -3629,13 +3696,15 @@ export function SidecarAssistant({
       // must stay on the host accordion. The LLM often returns a single PLP
       // or a 1-row recipe on first turn, which looks broken until refresh.
       const useRoutineRules = detectRoutineIntent(trimmed).isRoutine;
+      const useReviewsRules = isReviewsAsk(trimmed);
 
       const agent = agentRef.current;
       if (
         agent &&
         !useIngredientRules &&
         !useSpfStepUpRules &&
-        !useRoutineRules
+        !useRoutineRules &&
+        !useReviewsRules
       ) {
         agent
           .respond(trimmed, (line) => {
@@ -3974,11 +4043,24 @@ export function SidecarAssistant({
             : acceptIngredientOffer
               ? resolveProductFaq(firstProduct, faqPrompt)
               : (presence?.body ?? resolveProductFaq(firstProduct, faqPrompt));
-          appendMessage({
-            id: nextId("agent"),
-            kind: "agent_simple",
-            body,
-          });
+          if (isReviewsAsk(faqPrompt) && !ageAsk && !presence) {
+            const summary = buildReviewsSummary(firstProduct);
+            appendMessage({
+              id: nextId("agent"),
+              kind: "agent_reviews",
+              rating: summary.rating,
+              reviewCount: summary.reviewCount,
+              summary: summary.summary,
+              excerpt: summary.excerpt,
+              reviewer: summary.reviewer,
+            });
+          } else {
+            appendMessage({
+              id: nextId("agent"),
+              kind: "agent_simple",
+              body,
+            });
+          }
 
           if (agentOfferedIngredientList(body)) {
             pendingIngredientListOfferRef.current = true;
@@ -4136,6 +4218,8 @@ export function SidecarAssistant({
       presentInChatPdp,
     ],
   );
+
+  handleContextualPillRef.current = handleContextualPill;
 
   /** "Ask me anything" (the PDP `open` pill) carries no actual question, so it
    * opens a product-scoped thread instead of answering: the same divider +
@@ -4847,10 +4931,14 @@ export function SidecarAssistant({
 
   const clarifyingPdpScenarioSeededRef = useRef(false);
 
-  // Seed the welcome card the first time the panel opens.
+  // Seed the welcome card the first time the panel opens. A 5s connect
+  // wait stands in for agent handshake unless a canned scenario or
+  // `?connect=0` skips it.
   useEffect(() => {
     if (!isOpen) return;
     if (messages.length > 0) return;
+
+    const seedWelcome = () => {
     // UserTesting lock: one study chip only — testers click/type to reveal A/B.
     // Scenario seed: welcome only (or full clarifying-pdp thread below).
     const scenarioSeed = DEMO_SCENARIO != null;
@@ -4958,10 +5046,20 @@ export function SidecarAssistant({
         }
       });
     }
+    };
+
+    if (DEMO_SCENARIO != null || !advisorConnect) {
+      seedWelcome();
+      return;
+    }
+
+    const timer = window.setTimeout(seedWelcome, ADVISOR_CONNECT_MS);
+    return () => window.clearTimeout(timer);
   }, [
     isOpen,
     messages.length,
     userTestingLock,
+    advisorConnect,
     getProductBySlug,
     buildPdpStageContext,
   ]);
@@ -5313,6 +5411,9 @@ export function SidecarAssistant({
   // with it after every send.
   // A card still writing itself is the agent talking, even though its loader is
   // already gone, so the composer stays held until the content lands.
+  const skipAdvisorConnect = DEMO_SCENARIO != null || !advisorConnect;
+  const advisorConnecting =
+    isOpen && messages.length === 0 && !skipAdvisorConnect;
   const agentReplying = useMemo(
     () =>
       messages.some(
@@ -5323,7 +5424,8 @@ export function SidecarAssistant({
       ),
     [messages],
   );
-  const composerDisabled = agentReplying && !simulateMobileKeyboard;
+  const composerDisabled =
+    (agentReplying || advisorConnecting) && !simulateMobileKeyboard;
   // Chip taps never type into the field, so the in-flight prompt is the
   // shopper bubble that just went in — not `inputValue`, which was cleared.
   const processingPrompt = useMemo(() => {
@@ -5474,6 +5576,7 @@ export function SidecarAssistant({
         (isProductQuestion(caption) && !isProductListingQuery(caption)) ||
         (isIngredientPresenceQuestion(caption) &&
           !isProductListingQuery(caption)) ||
+        (isReviewsAsk(caption) && !isProductListingQuery(caption)) ||
         intent.kind === "empty";
       if (asFaq) {
         handleContextualPill(caption, product.slug, { skipShopperBubble: true });
@@ -5496,6 +5599,7 @@ export function SidecarAssistant({
   };
 
   const submitComposer = () => {
+    if (advisorConnecting) return false;
     const value = inputValue.trim();
     const pendingImage =
       imageSearch && attachedImageUrl
@@ -5665,10 +5769,13 @@ export function SidecarAssistant({
         !isProductListingQuery(value);
       const faqFromPresence =
         isIngredientPresenceQuestion(value) && !isProductListingQuery(value);
+      const faqFromReviews =
+        isReviewsAsk(value) && !isProductListingQuery(value);
       if (
         faqFromSelection ||
         faqFromExplicit ||
         faqFromPresence ||
+        faqFromReviews ||
         intent.kind === "empty"
       ) {
         handleContextualPill(value, singleSlug);
@@ -5769,6 +5876,17 @@ export function SidecarAssistant({
                 imageUrl={message.imageUrl}
                 imageAlt={message.imageAlt ?? ""}
                 showBrandLogo={message.showBrandLogo}
+              />
+            );
+          case "agent_reviews":
+            return (
+              <AgentReviewsSummary
+                key={message.id}
+                rating={message.rating}
+                reviewCount={message.reviewCount}
+                summary={message.summary}
+                excerpt={message.excerpt}
+                reviewer={message.reviewer}
               />
             );
           case "shopper_text":
@@ -6547,10 +6665,11 @@ export function SidecarAssistant({
             contextDividerPill && contextStickyPill
               ? " sidecar-assistant__chat--sticky-context"
               : ""
-          }`}
+          }${advisorConnecting ? " sidecar-assistant__chat--connecting" : ""}`}
           ref={chatRef}
         >
           {renderedMessages}
+          {advisorConnecting ? <AdvisorConnectLoader /> : null}
         </div>
         {awayFromLatest ? (
           <button
@@ -6661,7 +6780,7 @@ export function SidecarAssistant({
               aria-label="Add photo"
               aria-haspopup="menu"
               aria-expanded={isAttachMenuOpen}
-              disabled={agentReplying}
+              disabled={agentReplying || advisorConnecting}
               onPointerDown={(event) => {
                 if (simulateMobileKeyboard) event.preventDefault();
               }}
@@ -6787,7 +6906,10 @@ export function SidecarAssistant({
               type="submit"
               className="sidecar-assistant__send"
               aria-label="Send message"
-              disabled={!inputValue.trim() && !(imageSearch && attachedImageUrl)}
+              disabled={
+                advisorConnecting ||
+                (!inputValue.trim() && !(imageSearch && attachedImageUrl))
+              }
               onPointerDown={(event) => {
                 /* Keep focus on the input through the click so blur does not
                  * unmount the demo keyboard before submit lands. */

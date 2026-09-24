@@ -20,6 +20,7 @@ import type { NbaLane, NbaStage } from "./flow";
 
 export type ChatMessage =
   | AgentSimpleMessage
+  | AgentReviewsMessage
   | ShopperTextMessage
   | AgentLoaderMessage
   | AgentPlpMessage
@@ -57,6 +58,16 @@ export type AgentSimpleMessage = {
   imageUrl?: string;
   imageAlt?: string;
   showBrandLogo?: boolean;
+};
+
+export type AgentReviewsMessage = {
+  id: string;
+  kind: "agent_reviews";
+  rating: number | null;
+  reviewCount: number | null;
+  summary: string;
+  excerpt: string;
+  reviewer: string;
 };
 
 export type ShopperTextMessage = {

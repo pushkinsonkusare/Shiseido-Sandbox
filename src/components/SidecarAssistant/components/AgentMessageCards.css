@@ -62,6 +62,80 @@
   color: var(--agentic-foreground);
 }
 
+/* ---------- Reviews summary ---------- */
+
+.agent-reviews {
+  gap: 12px;
+}
+
+.agent-reviews__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--font-weight-regular);
+  line-height: 16px;
+  color: var(--agentic-body, #545454);
+}
+
+.agent-reviews__rating {
+  font-weight: var(--font-weight-semibold);
+  color: var(--agentic-foreground);
+}
+
+.agent-reviews__star {
+  flex: 0 0 auto;
+  color: var(--agentic-star);
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+.agent-reviews__count {
+  color: var(--agentic-muted-foreground);
+}
+
+.agent-reviews__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.agent-reviews__summary {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--font-weight-regular);
+  line-height: 20px;
+  color: var(--agentic-body, #545454);
+}
+
+.agent-reviews__quote {
+  margin: 0;
+}
+
+.agent-reviews__excerpt,
+.agent-reviews__reviewer {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 14px;
+  font-weight: var(--font-weight-regular);
+  line-height: 20px;
+}
+
+.agent-reviews__excerpt {
+  font-style: italic;
+  color: var(--agentic-body, #545454);
+}
+
+.agent-reviews__reviewer {
+  font-style: normal;
+  color: var(--agentic-muted-foreground);
+  white-space: nowrap;
+}
+
 /* ---------- Buttons (small DS) ---------- */
 
 .agent-msg__btn {

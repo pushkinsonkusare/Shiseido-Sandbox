@@ -13,6 +13,11 @@ export {
 } from "./AgentSimpleUtterance";
 
 export {
+  AgentReviewsSummary,
+  type AgentReviewsSummaryProps,
+} from "./AgentReviewsSummary";
+
+export {
   AgentProductCard,
   AgentShowMoreCard,
   type AgentProductSwatch,
@@ -83,3 +88,8 @@ export {
   type LatencyLoaderVariant,
   type LatencyLoaderProps,
 } from "./LatencyLoader";
+
+export {
+  AdvisorConnectLoader,
+  type AdvisorConnectLoaderProps,
+} from "./AdvisorConnectLoader";

@@ -186,9 +186,10 @@ a.prototype-brand-link.figma-plp__brand-mark {
 
 .figma-plp__main {
   display: grid;
-  grid-template-columns: var(--plp-filter-width) 1fr;
+  grid-template-columns: var(--plp-filter-width) minmax(0, 1fr);
   gap: var(--plp-section-gap);
   align-items: start;
+  min-width: 0;
 }
 
 .figma-plp__filters {
@@ -412,16 +413,18 @@ a.prototype-brand-link.figma-plp__brand-mark {
 }
 
 .figma-plp__grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: var(--plp-grid-gap-y) var(--plp-grid-gap-x);
   align-content: flex-start;
   align-items: stretch;
   margin-top: 32px;
+  min-width: 0;
+  width: 100%;
 }
 
 .figma-plp__empty {
-  flex: 1;
+  grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -449,8 +452,7 @@ a.prototype-brand-link.figma-plp__brand-mark {
 }
 
 .figma-plp__card-wrap {
-  width: 260px;
-  flex: 0 0 260px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
@@ -530,7 +532,7 @@ a.prototype-brand-link.figma-plp__brand-mark {
   }
 
   .figma-plp__grid {
-    justify-content: center;
+    justify-content: stretch;
   }
 
   .figma-plp__quick-links {
@@ -629,12 +631,11 @@ a.prototype-brand-link.figma-plp__brand-mark {
   }
 
   .figma-plp__grid {
-    justify-content: stretch;
+    grid-template-columns: 1fr;
   }
 
   .figma-plp__card-wrap {
     width: 100%;
-    flex: 1 1 100%;
   }
 
   .figma-plp__footer {
@@ -754,12 +755,11 @@ html[data-demo-viewport="mobile"] .figma-plp__price-field {
 }
 
 html[data-demo-viewport="mobile"] .figma-plp__grid {
-  justify-content: stretch;
+  grid-template-columns: 1fr;
 }
 
 html[data-demo-viewport="mobile"] .figma-plp__card-wrap {
   width: 100%;
-  flex: 1 1 100%;
 }
 
 html[data-demo-viewport="mobile"] .figma-plp__footer {

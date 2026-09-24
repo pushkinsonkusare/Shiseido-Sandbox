@@ -129,6 +129,7 @@ type UserTestingBootstrap = {
   compareFeature: boolean;
   compareFeatureType: CompareFeatureType;
   imageSearch: boolean;
+  advisorConnect: boolean;
 };
 
 type AgentModeContextValue = {
@@ -186,6 +187,9 @@ type AgentModeContextValue = {
   /** When true, the composer shows the + control for camera / gallery search. */
   imageSearch: boolean;
   setImageSearch: (enabled: boolean) => void;
+  /** When true, the sidecar waits on a connect screen before the welcome card. */
+  advisorConnect: boolean;
+  setAdvisorConnect: (enabled: boolean) => void;
   /**
    * False while the PDP widget answers inline, which is the point of that
    * mode: it shows what the storefront looks like for a customer who never
@@ -221,6 +225,7 @@ const DEFAULT_PDP_INLINE_WIDGET_POSITION: PdpInlineWidgetPosition =
 const DEFAULT_COMPARE_FEATURE = true;
 const DEFAULT_COMPARE_FEATURE_TYPE: CompareFeatureType = "side-by-side-table";
 const DEFAULT_IMAGE_SEARCH = true;
+const DEFAULT_ADVISOR_CONNECT = false;
 
 function parseFlag(raw: string | null, fallback: boolean): boolean {
   if (raw == null || raw.trim() === "") return fallback;
@@ -258,6 +263,7 @@ function unlockedBootstrap(): UserTestingBootstrap {
     compareFeature: DEFAULT_COMPARE_FEATURE,
     compareFeatureType: DEFAULT_COMPARE_FEATURE_TYPE,
     imageSearch: DEFAULT_IMAGE_SEARCH,
+    advisorConnect: DEFAULT_ADVISOR_CONNECT,
   };
 }
 
@@ -358,6 +364,7 @@ function readUserTestingBootstrap(): UserTestingBootstrap {
       params.get("imagesearch") ?? params.get("imageSearch"),
       DEFAULT_IMAGE_SEARCH,
     ),
+    advisorConnect: parseFlag(params.get("connect"), DEFAULT_ADVISOR_CONNECT),
   };
 }
 
@@ -431,6 +438,9 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
   const [imageSearch, setImageSearch] = useState<boolean>(
     UT_BOOTSTRAP.imageSearch,
   );
+  const [advisorConnect, setAdvisorConnect] = useState<boolean>(
+    UT_BOOTSTRAP.advisorConnect,
+  );
 
   const value = useMemo(
     () => ({
@@ -470,6 +480,8 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       setCompareFeatureType,
       imageSearch,
       setImageSearch,
+      advisorConnect,
+      setAdvisorConnect,
       sidecarAvailable:
         DEMO_SCENARIO != null ||
         !(pdpInlineWidget && pdpInlineWidgetType === "inline-answer"),
@@ -493,6 +505,7 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       compareFeature,
       compareFeatureType,
       imageSearch,
+      advisorConnect,
     ],
   );
 

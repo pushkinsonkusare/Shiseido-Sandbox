@@ -2435,6 +2435,18 @@ export const WELCOME_TITLE = "Hello!";
 export const WELCOME_BODY =
   "I'm your Shiseido personal beauty advisor. I can help you build a routine, find the right products for your skin, answer skincare questions, and track your orders. How can I help you today?";
 
+/** Demo delay before the welcome card, standing in for agent connect. */
+export const ADVISOR_CONNECT_MS = 5000;
+/** How long each connect subline holds before the next one. */
+export const ADVISOR_CONNECT_STEP_MS = 1250;
+export const ADVISOR_CONNECT_TITLE = "Loading your Beauty Advisor";
+export const ADVISOR_CONNECT_STEPS = [
+  "Build a routine for your skin",
+  "Find the right products faster",
+  "Ask skincare questions anytime",
+  "Track and manage your orders",
+] as const;
+
 export const WELCOME_NBAS = buildWelcomeNbas(0);
 
 export const PROBING_FALLBACK_BODY =

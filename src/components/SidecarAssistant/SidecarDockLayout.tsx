@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { SparkleIcon } from "../icons/StorefrontIcons";
 import {
@@ -20,6 +29,14 @@ type Props = {
 // Stagger the FAB so it doesn't pop in over the closing panel. Matches the
 // keyframe / transition durations in SideBySideLayout.css.
 const FAB_REVEAL_DELAY_MS = 280;
+
+const PANEL_WIDTH_MIN = 420;
+const PANEL_WIDTH_MAX = 630;
+const PANEL_WIDTH_STEP = 16;
+
+function clampPanelWidth(width: number): number {
+  return Math.min(PANEL_WIDTH_MAX, Math.max(PANEL_WIDTH_MIN, Math.round(width)));
+}
 
 function shouldOpenPanelFromUrl(): boolean {
   if (typeof window === "undefined") return false;
@@ -93,10 +110,45 @@ export function SidecarDockLayout({ children }: Props) {
   const panelRef = useRef<HTMLElement | null>(null);
   const swipeStartXRef = useRef<number | null>(null);
   const swipeStartYRef = useRef<number | null>(null);
+  const [panelWidthPx, setPanelWidthPx] = useState(PANEL_WIDTH_MIN);
+  const [resizing, setResizing] = useState(false);
+  const resizeDragRef = useRef<{ startX: number; startWidth: number } | null>(
+    null,
+  );
 
   const openPanel = () => setPanelOpen(true);
   const closePanel = () => setPanelOpen(false);
   const toggleDetach = () => setDetached((value) => !value);
+
+  const beginResize = useCallback(
+    (event: ReactPointerEvent<HTMLElement>) => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      resizeDragRef.current = {
+        startX: event.clientX,
+        startWidth: panelWidthPx,
+      };
+      setResizing(true);
+    },
+    [panelWidthPx],
+  );
+
+  const onResizeKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLElement>) => {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        setResizing(true);
+        setPanelWidthPx((width) => clampPanelWidth(width + PANEL_WIDTH_STEP));
+        return;
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        setResizing(true);
+        setPanelWidthPx((width) => clampPanelWidth(width - PANEL_WIDTH_STEP));
+      }
+    },
+    [],
+  );
 
   // Re-dock whenever the panel closes or we drop into mobile, so the modal
   // state never lingers when the docked shell isn't visible.
@@ -201,6 +253,46 @@ export function SidecarDockLayout({ children }: Props) {
     if (panelOpen) resetSwipeTransform();
   }, [panelOpen]);
 
+  useEffect(() => {
+    if (!resizing) return;
+
+    if (!resizeDragRef.current) {
+      let cancelled = false;
+      const id = window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          if (!cancelled) setResizing(false);
+        });
+      });
+      return () => {
+        cancelled = true;
+        window.cancelAnimationFrame(id);
+      };
+    }
+
+    const onMove = (event: PointerEvent) => {
+      const drag = resizeDragRef.current;
+      if (!drag) return;
+      setPanelWidthPx(
+        clampPanelWidth(drag.startWidth + (drag.startX - event.clientX)),
+      );
+    };
+    const onUp = () => {
+      resizeDragRef.current = null;
+      setResizing(false);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    const root = document.documentElement;
+    root.classList.add("sxs-resizing");
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      root.classList.remove("sxs-resizing");
+    };
+  }, [resizing]);
+
   const panel = panelMounted && sidecarAvailable ? (
     <aside
       ref={panelRef}
@@ -259,6 +351,22 @@ export function SidecarDockLayout({ children }: Props) {
         window.setTimeout(() => resetSwipeTransform(), 190);
       }}
     >
+      {panelOpen && !isMobileViewport && !isDetached ? (
+        <div
+          className="sxs-layout__resize"
+          role="separator"
+          aria-orientation="vertical"
+          aria-valuemin={PANEL_WIDTH_MIN}
+          aria-valuemax={PANEL_WIDTH_MAX}
+          aria-valuenow={panelWidthPx}
+          aria-label="Resize Beauty Advisor"
+          tabIndex={0}
+          onPointerDown={beginResize}
+          onKeyDown={onResizeKeyDown}
+        >
+          <span className="sxs-layout__resize-pill" aria-hidden="true" />
+        </div>
+      ) : null}
       <SidecarAssistant
         docked
         open={panelOpen}
@@ -285,7 +393,13 @@ export function SidecarDockLayout({ children }: Props) {
         className={
           (panelOpen ? "sxs-layout" : "sxs-layout sxs-layout--panel-collapsed") +
           (isMobileViewport ? " sxs-layout--mobile" : "") +
-          (isDetached ? " sxs-layout--detached" : "")
+          (isDetached ? " sxs-layout--detached" : "") +
+          (resizing ? " sxs-layout--resizing" : "")
+        }
+        style={
+          {
+            "--sxs-panel-width": `${panelWidthPx}px`,
+          } as CSSProperties
         }
       >
         <div className="sxs-layout__main">{children}</div>
