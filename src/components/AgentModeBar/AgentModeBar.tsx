@@ -5,6 +5,7 @@ import "./AgentModeBar.css";
 import {
   AGENT_MODES,
   COMPARE_FEATURE_TYPES,
+  ADVISOR_CONNECT_TYPES,
   CONTEXT_TYPES,
   PRODUCT_SELECTION_TYPES,
   PDP_INLINE_WIDGET_POSITIONS,
@@ -61,6 +62,8 @@ export function AgentModeBar() {
     setImageSearch,
     advisorConnect,
     setAdvisorConnect,
+    advisorConnectType,
+    setAdvisorConnectType,
     userTestingLock,
   } = useAgentMode();
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
@@ -526,6 +529,35 @@ export function AgentModeBar() {
                     Advisor connect
                   </span>
                 </label>
+                {advisorConnect && (
+                  <div className="agent-mode-bar__sub-options">
+                    <div
+                      className="agent-mode-bar__sub-group"
+                      role="group"
+                      aria-label="Advisor connect type"
+                    >
+                      <span className="agent-mode-bar__sub-title">Type</span>
+                      <div className="agent-mode-bar__option-grid">
+                        {ADVISOR_CONNECT_TYPES.map(({ id, label }) => (
+                          <button
+                            key={id}
+                            type="button"
+                            className={
+                              "agent-mode-bar__option-button agent-mode-bar__option-button--sm" +
+                              (advisorConnectType === id
+                                ? " agent-mode-bar__option-button--active"
+                                : "")
+                            }
+                            aria-pressed={advisorConnectType === id}
+                            onClick={() => setAdvisorConnectType(id)}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

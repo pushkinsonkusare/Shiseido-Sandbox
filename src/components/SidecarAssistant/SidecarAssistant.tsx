@@ -60,6 +60,7 @@ import {
   PROBING_FALLBACK_BODY,
   TRACK_ORDER_BODY,
   ADVISOR_CONNECT_MS,
+  ADVISOR_CONNECT_SHIMMER_MS,
   WELCOME_BODY,
   WELCOME_TITLE,
   buildStageNbas,
@@ -1275,7 +1276,7 @@ export function SidecarAssistant({
   const { products, heroProduct, getProductBySlug, getRelatedProducts, orderHistory } =
     useCatalog();
   const { currentRoute, currentProductSlug } = usePrototypeNavigation();
-  const { accordionRecommendations, contextIsland, contextPill, contextDividerPill, contextStickyPill, productSelection, productSelectionType, compareFeature, compareFeatureType, imageSearch, advisorConnect, viewportMode, userTestingLock, selectedProductSlugs, setSelectedProductSlugs } =
+  const { accordionRecommendations, contextIsland, contextPill, contextDividerPill, contextStickyPill, productSelection, productSelectionType, compareFeature, compareFeatureType, imageSearch, advisorConnect, advisorConnectType, viewportMode, userTestingLock, selectedProductSlugs, setSelectedProductSlugs } =
     useAgentMode();
   const demoTheme = useSyncExternalStore(
     (onStoreChange) => {
@@ -5053,13 +5054,19 @@ export function SidecarAssistant({
       return;
     }
 
-    const timer = window.setTimeout(seedWelcome, ADVISOR_CONNECT_MS);
+    const timer = window.setTimeout(
+      seedWelcome,
+      advisorConnectType === "skeleton-shimmer"
+        ? ADVISOR_CONNECT_SHIMMER_MS
+        : ADVISOR_CONNECT_MS,
+    );
     return () => window.clearTimeout(timer);
   }, [
     isOpen,
     messages.length,
     userTestingLock,
     advisorConnect,
+    advisorConnectType,
     getProductBySlug,
     buildPdpStageContext,
   ]);
@@ -6669,7 +6676,9 @@ export function SidecarAssistant({
           ref={chatRef}
         >
           {renderedMessages}
-          {advisorConnecting ? <AdvisorConnectLoader /> : null}
+          {advisorConnecting ? (
+            <AdvisorConnectLoader variant={advisorConnectType} />
+          ) : null}
         </div>
         {awayFromLatest ? (
           <button

@@ -67,6 +67,17 @@ export const COMPARE_FEATURE_TYPES: {
   { id: "product-summaries", label: "Product summaries" },
 ];
 
+/** What the advisor connect screen shows while it loads. */
+export type AdvisorConnectType = "rotating-statements" | "skeleton-shimmer";
+
+export const ADVISOR_CONNECT_TYPES: {
+  id: AdvisorConnectType;
+  label: string;
+}[] = [
+  { id: "rotating-statements", label: "Rotating statements" },
+  { id: "skeleton-shimmer", label: "Skeleton shimmer" },
+];
+
 /** Single welcome NBA shown under UserTesting lock (`?ut=`). */
 export const UT_WELCOME_NBA_LABEL = "Skincare for oily skin";
 
@@ -130,6 +141,7 @@ type UserTestingBootstrap = {
   compareFeatureType: CompareFeatureType;
   imageSearch: boolean;
   advisorConnect: boolean;
+  advisorConnectType: AdvisorConnectType;
 };
 
 type AgentModeContextValue = {
@@ -190,6 +202,9 @@ type AgentModeContextValue = {
   /** When true, the sidecar waits on a connect screen before the welcome card. */
   advisorConnect: boolean;
   setAdvisorConnect: (enabled: boolean) => void;
+  /** Sub-option of Advisor connect; retained while the parent checkbox is off. */
+  advisorConnectType: AdvisorConnectType;
+  setAdvisorConnectType: (type: AdvisorConnectType) => void;
   /**
    * False while the PDP widget answers inline, which is the point of that
    * mode: it shows what the storefront looks like for a customer who never
@@ -225,7 +240,20 @@ const DEFAULT_PDP_INLINE_WIDGET_POSITION: PdpInlineWidgetPosition =
 const DEFAULT_COMPARE_FEATURE = true;
 const DEFAULT_COMPARE_FEATURE_TYPE: CompareFeatureType = "side-by-side-table";
 const DEFAULT_IMAGE_SEARCH = true;
-const DEFAULT_ADVISOR_CONNECT = false;
+const DEFAULT_ADVISOR_CONNECT = true;
+const DEFAULT_ADVISOR_CONNECT_TYPE: AdvisorConnectType = "rotating-statements";
+
+function readAdvisorConnectType(params: URLSearchParams): AdvisorConnectType {
+  const raw = (params.get("connectType") || "").trim().toLowerCase();
+  if (
+    raw === "shimmer" ||
+    raw === "skeleton" ||
+    raw === "skeleton-shimmer"
+  ) {
+    return "skeleton-shimmer";
+  }
+  return DEFAULT_ADVISOR_CONNECT_TYPE;
+}
 
 function parseFlag(raw: string | null, fallback: boolean): boolean {
   if (raw == null || raw.trim() === "") return fallback;
@@ -264,6 +292,7 @@ function unlockedBootstrap(): UserTestingBootstrap {
     compareFeatureType: DEFAULT_COMPARE_FEATURE_TYPE,
     imageSearch: DEFAULT_IMAGE_SEARCH,
     advisorConnect: DEFAULT_ADVISOR_CONNECT,
+    advisorConnectType: DEFAULT_ADVISOR_CONNECT_TYPE,
   };
 }
 
@@ -365,6 +394,7 @@ function readUserTestingBootstrap(): UserTestingBootstrap {
       DEFAULT_IMAGE_SEARCH,
     ),
     advisorConnect: parseFlag(params.get("connect"), DEFAULT_ADVISOR_CONNECT),
+    advisorConnectType: readAdvisorConnectType(params),
   };
 }
 
@@ -441,6 +471,8 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
   const [advisorConnect, setAdvisorConnect] = useState<boolean>(
     UT_BOOTSTRAP.advisorConnect,
   );
+  const [advisorConnectType, setAdvisorConnectType] =
+    useState<AdvisorConnectType>(UT_BOOTSTRAP.advisorConnectType);
 
   const value = useMemo(
     () => ({
@@ -482,6 +514,8 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       setImageSearch,
       advisorConnect,
       setAdvisorConnect,
+      advisorConnectType,
+      setAdvisorConnectType,
       sidecarAvailable:
         DEMO_SCENARIO != null ||
         !(pdpInlineWidget && pdpInlineWidgetType === "inline-answer"),
@@ -506,6 +540,7 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       compareFeatureType,
       imageSearch,
       advisorConnect,
+      advisorConnectType,
     ],
   );
 

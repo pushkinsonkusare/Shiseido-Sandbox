@@ -13,45 +13,36 @@
   text-align: center;
 }
 
-.advisor-connect__wave {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 16px;
-  margin-bottom: 6px;
+.advisor-connect__sparkles {
+  width: 128px;
+  height: 121px;
+  margin-bottom: 18px;
+  flex: 0 0 auto;
+  background-image: url("./advisor-connect-sparkles.png");
+  background-repeat: no-repeat;
+  background-size: 1024px 121px;
+  animation: advisor-connect-sparkle-play 800ms steps(8) infinite;
 }
 
-.advisor-connect__dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--agentic-foreground, #17171b);
-  animation: advisor-connect-wave 1s ease-in-out infinite;
-}
-
-.advisor-connect__dot:nth-child(2) {
-  animation-delay: 0.15s;
-}
-
-.advisor-connect__dot:nth-child(3) {
-  animation-delay: 0.3s;
-}
-
-@keyframes advisor-connect-wave {
-  0%,
-  60%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.28;
+@keyframes advisor-connect-sparkle-play {
+  from {
+    background-position: 0 0;
   }
-  30% {
-    transform: translateY(-6px);
-    opacity: 1;
+  to {
+    background-position: -1024px 0;
   }
 }
 
 .advisor-connect__title {
+  margin: 0;
+  max-width: 260px;
+  font-size: 14px;
+  font-weight: var(--font-weight-regular);
+  line-height: 20px;
+  color: var(--agentic-body, #545454);
+}
+
+.advisor-connect__subline {
   margin: 0;
   max-width: 280px;
   font-size: 16px;
@@ -59,15 +50,6 @@
   line-height: 24px;
   letter-spacing: 0.01em;
   color: var(--agentic-foreground, #17171b);
-}
-
-.advisor-connect__subline {
-  margin: 0;
-  max-width: 260px;
-  font-size: 14px;
-  font-weight: var(--font-weight-regular);
-  line-height: 20px;
-  color: var(--agentic-body, #545454);
   animation: advisor-connect-subline-in 200ms ease;
 }
 
@@ -80,13 +62,155 @@
   }
 }
 
+.advisor-connect--skeleton {
+  justify-content: flex-end;
+  align-items: stretch;
+  gap: 16px;
+  padding: 0;
+  text-align: left;
+}
+
+.advisor-connect__trace {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.advisor-connect__card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 24px;
+  padding-bottom: 20px;
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: var(--nto-radius-card, 12px);
+  box-shadow: 0 1px 6px rgba(16, 24, 40, 0.04);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.advisor-connect__hero {
+  height: 300px;
+}
+
+.advisor-connect__logo {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  z-index: 1;
+  width: 105px;
+  height: 16px;
+  border-radius: 4px;
+  background: #d5d5da;
+}
+
+.advisor-connect__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 20px;
+}
+
+.advisor-connect__line {
+  height: 14px;
+  width: 100%;
+  border-radius: 4px;
+}
+
+.advisor-connect__line--title {
+  width: 64px;
+  height: 16px;
+  margin-bottom: 8px;
+}
+
+.advisor-connect__line--short {
+  width: 62%;
+}
+
+.advisor-connect__pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.advisor-connect__pill,
+.advisor-connect__regen {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #e0e0e0;
+  border-radius: var(--nto-radius-pill, 999px);
+  background: #f5f5f5;
+  box-shadow: 0 1px 4px rgba(16, 24, 40, 0.06);
+  box-sizing: border-box;
+}
+
+.advisor-connect__pill {
+  height: 38px;
+  padding: 0 16px;
+}
+
+.advisor-connect__pill-label {
+  height: 10px;
+  border-radius: 999px;
+}
+
+.advisor-connect__regen {
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
+.advisor-connect__regen-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+}
+
+.advisor-connect__bone {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background: #e6e6ea;
+}
+
+.advisor-connect__bone::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 34%,
+    rgba(255, 255, 255, 0.45) 46%,
+    rgba(255, 255, 255, 0.72) 50%,
+    rgba(255, 255, 255, 0.45) 54%,
+    rgba(255, 255, 255, 0) 66%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: translateX(-120%);
+  animation: advisor-connect-shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes advisor-connect-shimmer {
+  100% {
+    transform: translateX(120%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .advisor-connect__dot {
+  .advisor-connect__sparkles {
     animation: none;
-    opacity: 0.55;
   }
 
   .advisor-connect__subline {
+    animation: none;
+  }
+
+  .advisor-connect__bone::after {
     animation: none;
   }
 }
