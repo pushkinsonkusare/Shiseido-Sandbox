@@ -79,15 +79,11 @@ type Props = {
 /**
  * "Ask Assistant" NBA module rendered on the PDP (Figma node 33250:50536).
  *
- * Surfaces five contextual pills covering product FAQs, bundling/upsell, and
- * hygiene questions. Clicking any pill fires `agentic:ask-assistant`, which
- * opens the active assistant (Sidecar or SxS) and dispatches the prompt as
- * a shopper turn. The refresh icon cycles through curated alternative sets.
- *
- * In `inline-answer` mode the widget answers on the page instead: a composer
- * plus one query-and-answer slot that a new question replaces, so there is
- * never a thread to scroll, and the pill set narrows to questions the widget
- * can answer as text.
+ * Surfaces the same question pills and composer in both modes. Clicking a
+ * pill or sending the composer fires `agentic:ask-assistant` in
+ * `agent-redirect`, which opens the active assistant. In `inline-answer` the
+ * same controls answer inside the widget, one question at a time, and the
+ * pill set stays the questions the widget can answer as text.
  */
 export function PdpNbaPanel({
   product,
@@ -130,8 +126,8 @@ export function PdpNbaPanel({
   const isRoundedTheme = demoTheme === "consumer-electronics";
 
   const pills = useMemo(
-    () => buildPdpNbaPills(product, catalog, setIndex, { questionsOnly: inline }),
-    [product, catalog, setIndex, inline],
+    () => buildPdpNbaPills(product, catalog, setIndex, { questionsOnly: true }),
+    [product, catalog, setIndex],
   );
 
   // Reset the rotation whenever the shopper navigates between PDPs so they
@@ -254,12 +250,20 @@ export function PdpNbaPanel({
   }, []);
 
   const handleSubmit = useCallback(() => {
-    if (status === "thinking") return;
     const value = draft.trim();
     if (!value) return;
+    if (inline) {
+      if (status === "thinking") return;
+      setDraft("");
+      askInline(value, "composer");
+      return;
+    }
     setDraft("");
-    askInline(value, "composer");
-  }, [draft, askInline, status]);
+    dispatchAskAssistant({
+      prompt: value,
+      productSlug: product.slug,
+    });
+  }, [draft, askInline, status, inline, product.slug]);
 
   // The composer wraps a long question instead of scrolling it out of sight,
   // so its height follows its content. Reset first: `scrollHeight` only grows
@@ -299,50 +303,48 @@ export function PdpNbaPanel({
         </span>
       </header>
 
-      {inline ? (
-        <form
-          className={
-            "pdp-nba__composer" +
-            (composerMultiline ? " pdp-nba__composer--multiline" : "")
-          }
-          onSubmit={(event) => {
+      <form
+        className={
+          "pdp-nba__composer" +
+          (composerMultiline ? " pdp-nba__composer--multiline" : "")
+        }
+        onSubmit={(event) => {
+          event.preventDefault();
+          handleSubmit();
+        }}
+      >
+        <textarea
+          ref={inputRef}
+          className="pdp-nba__composer-input"
+          rows={1}
+          placeholder={`Ask me anything about ${product.title}`}
+          value={draft}
+          aria-label={`Ask a question about the ${product.title}`}
+          disabled={busy}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (busy) return;
+            if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+            // Shift+Enter is the only way to a second line by hand; the
+            // field wraps a long question on its own.
+            if (event.shiftKey) return;
             event.preventDefault();
             handleSubmit();
           }}
+        />
+        <button
+          type="submit"
+          className="pdp-nba__composer-send"
+          aria-label="Send question"
+          disabled={busy || !draft.trim()}
         >
-          <textarea
-            ref={inputRef}
-            className="pdp-nba__composer-input"
-            rows={1}
-            placeholder={`Ask me anything about ${product.title}`}
-            value={draft}
-            aria-label={`Ask a question about the ${product.title}`}
-            disabled={busy}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (busy) return;
-              if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
-              // Shift+Enter is the only way to a second line by hand; the
-              // field wraps a long question on its own.
-              if (event.shiftKey) return;
-              event.preventDefault();
-              handleSubmit();
-            }}
-          />
-          <button
-            type="submit"
-            className="pdp-nba__composer-send"
-            aria-label="Send question"
-            disabled={busy || !draft.trim()}
-          >
-            {isRoundedTheme ? (
-              <ArrowRightIcon width={16} height={16} />
-            ) : (
-              <SendHorizontalIcon width={20} height={20} />
-            )}
-          </button>
-        </form>
-      ) : null}
+          {isRoundedTheme ? (
+            <ArrowRightIcon width={16} height={16} />
+          ) : (
+            <SendHorizontalIcon width={20} height={20} />
+          )}
+        </button>
+      </form>
 
       {inline && query ? (
         <div className="pdp-nba__slot" data-component="pdp-inline-slot">

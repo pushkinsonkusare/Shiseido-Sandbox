@@ -1045,7 +1045,7 @@ html[data-demo-theme="consumer-electronics"] .figma-pdp__gallery-arrow {
   border-radius: var(--nto-radius-btn);
 }
 
-html[data-demo-theme="consumer-electronics"] .pdp-nba[data-answer-mode="inline"] {
+html[data-demo-theme="consumer-electronics"] .pdp-nba {
   background: #fcfcfc;
   border: 1px solid #e0e0e0;
   border-radius: var(--nto-radius-card);

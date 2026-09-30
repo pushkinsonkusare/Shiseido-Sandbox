@@ -446,6 +446,52 @@
   color: var(--agentic-body, #545454);
 }
 
+.agent-routine__aside {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.agent-routine__peek {
+  display: flex;
+  align-items: center;
+}
+
+.agent-routine__peek-thumb,
+.agent-routine__peek-more {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  box-sizing: border-box;
+  border: 2px solid #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px #e4e4e4;
+}
+
+.agent-routine__peek-thumb {
+  object-fit: contain;
+  background: #ffffff;
+}
+
+.agent-routine__peek-thumb + .agent-routine__peek-thumb,
+.agent-routine__peek-more {
+  margin-left: -10px;
+}
+
+.agent-routine__peek-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: #17171b;
+}
+
 /* Placeholders for content a card is still writing. Shared by the routine
    section and the product list row, and sized to the real thing so a card
    doesn't lurch when what they stand in for arrives. Shares the cart totals
@@ -575,6 +621,96 @@
   background: #ffffff;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   transform: translateY(-50%);
+}
+
+/* Suggestions → List: one card, rows divided by a hairline. Image stays left.
+   Outer inset matches the intro (20px). The theme's 4px carousel inset and
+   its track padding are for carousel shadow clearance, so list has to outrank them. */
+html[data-demo-theme="consumer-electronics"] .agent-plp__card .agent-plp__carousel--list,
+html[data-demo-theme="consumer-electronics"] .agent-routine__card .agent-plp__carousel--list,
+.agent-plp__carousel--list {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.agent-plp__carousel--list .agent-plp__track,
+html[data-demo-theme="consumer-electronics"] .agent-plp__carousel--list .agent-plp__track {
+  flex-direction: column;
+  overflow: hidden;
+  scroll-snap-type: none;
+  padding: 0;
+  scroll-padding-left: 0;
+  gap: 0;
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: var(--nto-radius-card, 12px);
+  box-shadow: 0 1px 6px rgba(16, 24, 40, 0.04);
+}
+
+.agent-plp__carousel--list .agent-product-card,
+html[data-demo-theme="consumer-electronics"] .agent-plp__carousel--list .agent-product-card {
+  width: 100%;
+  height: auto;
+  min-height: 120px;
+  flex-direction: row;
+  align-items: stretch;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.agent-plp__carousel--list .agent-product-card + .agent-product-card,
+html[data-demo-theme="consumer-electronics"] .agent-plp__carousel--list .agent-product-card + .agent-product-card {
+  border-top: 1px solid #ececec;
+}
+
+.agent-plp__carousel--list .agent-product-card:hover,
+html[data-demo-theme="consumer-electronics"] .agent-plp__carousel--list .agent-product-card:hover {
+  border-color: #ececec;
+  box-shadow: none;
+  background: #f7f7f8;
+}
+
+.agent-plp__carousel--list .agent-product-card__gallery {
+  width: 96px;
+  flex: 0 0 96px;
+  aspect-ratio: auto;
+  align-self: stretch;
+  min-height: 96px;
+  justify-content: flex-start;
+  padding: 8px 4px 8px 0;
+}
+
+.agent-plp__carousel--list .agent-product-card__gallery img {
+  object-position: left center;
+}
+
+.agent-plp__carousel--list .agent-product-card__store-btn {
+  left: 4px;
+  top: 4px;
+}
+
+.agent-plp__carousel--list .agent-product-card__content {
+  padding: 14px 16px;
+  justify-content: center;
+  min-width: 0;
+}
+
+.agent-plp__carousel--list .agent-product-card--show-more {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 0;
+  height: auto;
+  padding: 16px 20px;
+  text-align: left;
+  gap: 12px;
+}
+
+.agent-plp__carousel--list .agent-product-card__show-more-title,
+.agent-plp__carousel--list .agent-product-card__show-more-body {
+  margin: 0;
 }
 
 .agent-plp__nav:disabled:active {

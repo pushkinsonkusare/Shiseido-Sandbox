@@ -1,7 +1,10 @@
 import { useState } from "react";
 import "./ProductCard.css";
 import { ArrowRightIcon, BuildingIcon, CheckIcon, HeartIcon } from "../icons/StorefrontIcons";
-import { useAgentMode } from "../AgentModeBar/AgentModeContext";
+import {
+  MAX_SELECTED_PRODUCTS,
+  useAgentMode,
+} from "../AgentModeBar/AgentModeContext";
 
 export type ProductCardProps = {
   /** Catalog slug; required to select the product into the assistant. */
@@ -55,6 +58,8 @@ export function ProductCard({
   const { productSelection, selectedProductSlugs, setSelectedProductSlugs } =
     useAgentMode();
   const selected = Boolean(slug && selectedProductSlugs.includes(slug));
+  const selectionLimitReached =
+    !selected && selectedProductSlugs.length >= MAX_SELECTED_PRODUCTS;
   const visibleSwatches = swatches.slice(0, 4);
   const extraSwatches = Math.max(0, swatches.length - visibleSwatches.length);
 
@@ -67,9 +72,15 @@ export function ProductCard({
   const selectInAssistant = (event: React.MouseEvent) => {
     event.stopPropagation();
     event.preventDefault();
-    if (!slug || !productSelection) return;
+    if (!slug || !productSelection || selectionLimitReached) return;
     const willSelect = !selected;
-    setSelectedProductSlugs(willSelect ? [slug] : []);
+    setSelectedProductSlugs((current) =>
+      current.includes(slug)
+        ? current.filter((existing) => existing !== slug)
+        : current.length >= MAX_SELECTED_PRODUCTS
+          ? current
+          : [...current, slug],
+    );
     if (willSelect) {
       document.dispatchEvent(new CustomEvent("agentic:open-assistant"));
     }
@@ -107,10 +118,20 @@ export function ProductCard({
               type="button"
               className={
                 "figma-product-card__hover-checkbox" +
-                (selected ? " figma-product-card__hover-checkbox--selected" : "")
+                (selected ? " figma-product-card__hover-checkbox--selected" : "") +
+                (selectionLimitReached
+                  ? " figma-product-card__hover-checkbox--disabled"
+                  : "")
               }
-              aria-label={selected ? "Deselect product" : "Select product"}
+              aria-label={
+                selected
+                  ? "Deselect product"
+                  : selectionLimitReached
+                    ? `You can select up to ${MAX_SELECTED_PRODUCTS} products`
+                    : "Select product"
+              }
               aria-pressed={selected}
+              disabled={selectionLimitReached}
               onClick={selectInAssistant}
               onKeyDown={(event) => event.stopPropagation()}
             >

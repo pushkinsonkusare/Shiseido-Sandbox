@@ -27,6 +27,8 @@ export type AgentPLPCardProps = {
   /** True while the products are still being pulled together: holds a
    *  placeholder row where the carousel will be. */
   streaming?: boolean;
+  /** Stack products in a vertical list instead of a horizontal carousel. */
+  layout?: "carousel" | "list";
   /** Optional class name appended to the root element. */
   className?: string;
 };
@@ -45,6 +47,7 @@ export function AgentPLPCard({
   onAddToCart,
   selectionLimitReached,
   streaming = false,
+  layout = "carousel",
   className,
 }: AgentPLPCardProps) {
   const rootClass = "agent-plp__card" + (className ? " " + className : "");
@@ -76,6 +79,7 @@ export function AgentPLPCard({
           onToggleSelect={onToggleSelect}
           onAddToCart={onAddToCart}
           selectionLimitReached={selectionLimitReached}
+          layout={layout}
         />
       )}
     </article>

@@ -36,6 +36,8 @@ export type AgentRoutineCardProps = {
   onAddToCart?: (id: string) => void;
   /** When true, unselected cards' checkboxes are disabled (selection cap hit). */
   selectionLimitReached?: boolean;
+  /** Stack each step's products in a vertical list instead of a carousel. */
+  layout?: "carousel" | "list";
   /**
    * When true (default), sections behave as a single-open accordion. When
    * false, every section is expanded and headers are static (no toggle).
@@ -66,6 +68,7 @@ export function AgentRoutineCard({
   onToggleSelect,
   onAddToCart,
   selectionLimitReached,
+  layout = "carousel",
   accordion = true,
   streaming = false,
   onOpenSectionChange,
@@ -120,12 +123,31 @@ export function AgentRoutineCard({
                         : (section.cue ?? section.description)}
                     </p>
                   </div>
-                  <span className="agent-routine__chevron" aria-hidden="true">
-                    {isOpen ? (
-                      <ChevronUpIcon width={18} height={18} />
-                    ) : (
-                      <ChevronDownIcon width={18} height={18} />
-                    )}
+                  <span className="agent-routine__aside">
+                    {!isOpen && section.products.length > 0 ? (
+                      <span className="agent-routine__peek" aria-hidden="true">
+                        {section.products.slice(0, 1).map((product) => (
+                          <img
+                            key={product.id}
+                            className="agent-routine__peek-thumb"
+                            src={product.imageUrl}
+                            alt=""
+                          />
+                        ))}
+                        {section.products.length > 1 ? (
+                          <span className="agent-routine__peek-more">
+                            +{section.products.length - 1}
+                          </span>
+                        ) : null}
+                      </span>
+                    ) : null}
+                    <span className="agent-routine__chevron" aria-hidden="true">
+                      {isOpen ? (
+                        <ChevronUpIcon width={18} height={18} />
+                      ) : (
+                        <ChevronDownIcon width={18} height={18} />
+                      )}
+                    </span>
                   </span>
                 </button>
               ) : (
@@ -146,6 +168,7 @@ export function AgentRoutineCard({
                 onToggleSelect={onToggleSelect}
                 onAddToCart={onAddToCart}
                 selectionLimitReached={selectionLimitReached}
+                layout={layout}
               />
             ) : null}
           </section>

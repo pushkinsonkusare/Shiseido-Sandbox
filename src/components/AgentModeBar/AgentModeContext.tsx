@@ -14,6 +14,9 @@ export const AGENT_MODES: { id: AgentMode; label: string }[] = [
 
 export type DemoViewportMode = "desktop" | "mobile";
 
+/** Maximum number of products a shopper can select at once. */
+export const MAX_SELECTED_PRODUCTS = 3;
+
 /** How the PDP inline widget responds to a shopper question: answer in place,
  *  or hand the conversation over to the assistant panel. */
 export type PdpInlineWidgetType = "inline-answer" | "agent-redirect";
@@ -54,6 +57,14 @@ export const PRODUCT_SELECTION_TYPES: {
 }[] = [
   { id: "in-chat", label: "In chat" },
   { id: "drawer", label: "Drawer" },
+];
+
+/** How suggestion chips are laid out while Suggestions is on. */
+export type SuggestionsType = "carousel" | "list";
+
+export const SUGGESTIONS_TYPES: { id: SuggestionsType; label: string }[] = [
+  { id: "carousel", label: "Carousel" },
+  { id: "list", label: "List" },
 ];
 
 /** How the sidecar renders a multi-product compare turn. */
@@ -133,6 +144,8 @@ type UserTestingBootstrap = {
   contextStickyPill: boolean;
   productSelection: boolean;
   productSelectionType: ProductSelectionType;
+  suggestions: boolean;
+  suggestionsType: SuggestionsType;
   selectedProductSlugs: string[];
   pdpInlineWidget: boolean;
   pdpInlineWidgetType: PdpInlineWidgetType;
@@ -181,6 +194,12 @@ type AgentModeContextValue = {
    *  box, NBAs below it. Retained while the parent checkbox is off. */
   productSelectionType: ProductSelectionType;
   setProductSelectionType: (type: ProductSelectionType) => void;
+  /** When true, suggestion chips follow `suggestionsType`. */
+  suggestions: boolean;
+  setSuggestions: (enabled: boolean) => void;
+  /** Carousel vs list. Retained while the parent checkbox is off. */
+  suggestionsType: SuggestionsType;
+  setSuggestionsType: (type: SuggestionsType) => void;
   /** PDP inline widget feature toggle (behavior TBD). */
   pdpInlineWidget: boolean;
   setPdpInlineWidget: (enabled: boolean) => void;
@@ -233,6 +252,8 @@ const DEFAULT_CONTEXT_DIVIDER_PILL = true;
 const DEFAULT_CONTEXT_STICKY_PILL = false;
 const DEFAULT_PRODUCT_SELECTION = true;
 const DEFAULT_PRODUCT_SELECTION_TYPE: ProductSelectionType = "in-chat";
+const DEFAULT_SUGGESTIONS = true;
+const DEFAULT_SUGGESTIONS_TYPE: SuggestionsType = "carousel";
 const DEFAULT_PDP_INLINE_WIDGET = true;
 const DEFAULT_PDP_INLINE_WIDGET_TYPE: PdpInlineWidgetType = "agent-redirect";
 const DEFAULT_PDP_INLINE_WIDGET_POSITION: PdpInlineWidgetPosition =
@@ -284,6 +305,8 @@ function unlockedBootstrap(): UserTestingBootstrap {
     contextStickyPill: DEFAULT_CONTEXT_STICKY_PILL,
     productSelection: DEFAULT_PRODUCT_SELECTION,
     productSelectionType: DEFAULT_PRODUCT_SELECTION_TYPE,
+    suggestions: DEFAULT_SUGGESTIONS,
+    suggestionsType: DEFAULT_SUGGESTIONS_TYPE,
     selectedProductSlugs: [],
     pdpInlineWidget: DEFAULT_PDP_INLINE_WIDGET,
     pdpInlineWidgetType: DEFAULT_PDP_INLINE_WIDGET_TYPE,
@@ -383,6 +406,11 @@ function readUserTestingBootstrap(): UserTestingBootstrap {
     ),
     productSelection: parseFlag(params.get("selection"), DEFAULT_PRODUCT_SELECTION),
     productSelectionType: selectionType,
+    suggestions: parseFlag(params.get("suggestions"), DEFAULT_SUGGESTIONS),
+    suggestionsType:
+      (params.get("suggestionsType") || "").trim().toLowerCase() === "list"
+        ? "list"
+        : DEFAULT_SUGGESTIONS_TYPE,
     selectedProductSlugs,
     pdpInlineWidget: parseFlag(params.get("pdp"), DEFAULT_PDP_INLINE_WIDGET),
     pdpInlineWidgetType: pdpType,
@@ -450,6 +478,12 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
   );
   const [productSelectionType, setProductSelectionType] =
     useState<ProductSelectionType>(UT_BOOTSTRAP.productSelectionType);
+  const [suggestions, setSuggestions] = useState<boolean>(
+    UT_BOOTSTRAP.suggestions,
+  );
+  const [suggestionsType, setSuggestionsType] = useState<SuggestionsType>(
+    UT_BOOTSTRAP.suggestionsType,
+  );
   const [selectedProductSlugs, setSelectedProductSlugs] = useState<string[]>(
     UT_BOOTSTRAP.selectedProductSlugs,
   );
@@ -498,6 +532,10 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       setProductSelection,
       productSelectionType,
       setProductSelectionType,
+      suggestions,
+      setSuggestions,
+      suggestionsType,
+      setSuggestionsType,
       selectedProductSlugs,
       setSelectedProductSlugs,
       pdpInlineWidget,
@@ -532,6 +570,8 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       contextStickyPill,
       productSelection,
       productSelectionType,
+      suggestions,
+      suggestionsType,
       selectedProductSlugs,
       pdpInlineWidget,
       pdpInlineWidgetType,

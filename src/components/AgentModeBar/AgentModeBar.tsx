@@ -8,6 +8,7 @@ import {
   ADVISOR_CONNECT_TYPES,
   CONTEXT_TYPES,
   PRODUCT_SELECTION_TYPES,
+  SUGGESTIONS_TYPES,
   PDP_INLINE_WIDGET_POSITIONS,
   PDP_INLINE_WIDGET_TYPES,
   useAgentMode,
@@ -48,6 +49,10 @@ export function AgentModeBar() {
     setProductSelection,
     productSelectionType,
     setProductSelectionType,
+    suggestions,
+    setSuggestions,
+    suggestionsType,
+    setSuggestionsType,
     pdpInlineWidget,
     setPdpInlineWidget,
     pdpInlineWidgetType,
@@ -392,6 +397,46 @@ export function AgentModeBar() {
                             }
                             aria-pressed={productSelectionType === id}
                             onClick={() => setProductSelectionType(id)}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <label className="agent-mode-bar__feature">
+                  <input
+                    type="checkbox"
+                    className="agent-mode-bar__feature-checkbox"
+                    checked={suggestions}
+                    onChange={(event) => setSuggestions(event.target.checked)}
+                  />
+                  <span className="agent-mode-bar__feature-label">
+                    Suggestions
+                  </span>
+                </label>
+                {suggestions && (
+                  <div className="agent-mode-bar__sub-options">
+                    <div
+                      className="agent-mode-bar__sub-group"
+                      role="group"
+                      aria-label="Suggestions type"
+                    >
+                      <span className="agent-mode-bar__sub-title">Type</span>
+                      <div className="agent-mode-bar__option-grid">
+                        {SUGGESTIONS_TYPES.map(({ id, label }) => (
+                          <button
+                            key={id}
+                            type="button"
+                            className={
+                              "agent-mode-bar__option-button agent-mode-bar__option-button--sm" +
+                              (suggestionsType === id
+                                ? " agent-mode-bar__option-button--active"
+                                : "")
+                            }
+                            aria-pressed={suggestionsType === id}
+                            onClick={() => setSuggestionsType(id)}
                           >
                             {label}
                           </button>

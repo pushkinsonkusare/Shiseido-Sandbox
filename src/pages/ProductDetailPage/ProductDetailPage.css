@@ -359,6 +359,10 @@ html[data-demo-viewport="mobile"] .figma-pdp__page-inner {
   gap: var(--pdp-space-md);
   margin: var(--pdp-space-xl) 0;
   width: 100%;
+  padding: var(--pdp-space-md);
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  box-sizing: border-box;
 }
 
 .pdp-nba__header {
@@ -508,21 +512,10 @@ html[data-demo-viewport="mobile"] .figma-pdp__page-inner {
   outline-offset: 2px;
 }
 
-/* ---------- inline-answer mode ---------- */
-/* One query-and-answer slot plus a composer, so the widget answers on the page
- * instead of handing the question to the assistant panel. Same square, bordered
- * language as the pills above. */
-
-/* Answering in place makes the widget a place rather than a pill rail, so it
- * gets a container of its own: a tinted panel that holds the header, the
- * conversation slot, the composer and the pills together and separates them
- * from the product page around it. */
-.pdp-nba[data-answer-mode="inline"] {
-  padding: var(--pdp-space-md);
-  background: #fafafa;
-  border: 1px solid #e5e5e5;
-  box-sizing: border-box;
-}
+/* ---------- inline answer slot ---------- */
+/* One query-and-answer slot, shown only when the widget answers on the page.
+ * Redirect uses the same header, composer, and pills, and sends the question
+ * to the assistant panel instead. */
 
 /* Spacing follows the assistant transcript: 16px between the question and the
  * answer, the same as the gap between two messages in the panel. */

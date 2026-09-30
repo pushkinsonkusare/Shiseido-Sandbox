@@ -10,7 +10,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useCatalog } from "../../catalog/CatalogContext";
-import { useAgentMode, UT_WELCOME_NBA_LABEL, DEMO_SCENARIO, CLARIFYING_PDP_SCENARIO_SLUG } from "../AgentModeBar/AgentModeContext";
+import { useAgentMode, UT_WELCOME_NBA_LABEL, DEMO_SCENARIO, CLARIFYING_PDP_SCENARIO_SLUG, MAX_SELECTED_PRODUCTS } from "../AgentModeBar/AgentModeContext";
 import {
   ArrowDownIcon,
   ArrowRightIcon,
@@ -257,9 +257,6 @@ function isRealMobileDevice(): boolean {
   if (/iPad/.test(ua)) return true;
   return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
 }
-
-/** Maximum number of products a shopper can select at once. */
-const MAX_SELECTED_PRODUCTS = 3;
 
 /** Contextual pills that are NOT product FAQs: they trigger dedicated flows
  * (related-products carousel / comparison table / add-to-cart) rather than a
@@ -1276,7 +1273,7 @@ export function SidecarAssistant({
   const { products, heroProduct, getProductBySlug, getRelatedProducts, orderHistory } =
     useCatalog();
   const { currentRoute, currentProductSlug } = usePrototypeNavigation();
-  const { accordionRecommendations, contextIsland, contextPill, contextDividerPill, contextStickyPill, productSelection, productSelectionType, compareFeature, compareFeatureType, imageSearch, advisorConnect, advisorConnectType, viewportMode, userTestingLock, selectedProductSlugs, setSelectedProductSlugs } =
+  const { accordionRecommendations, contextIsland, contextPill, contextDividerPill, contextStickyPill, productSelection, productSelectionType, suggestions, suggestionsType, compareFeature, compareFeatureType, imageSearch, advisorConnect, advisorConnectType, viewportMode, userTestingLock, selectedProductSlugs, setSelectedProductSlugs } =
     useAgentMode();
   const demoTheme = useSyncExternalStore(
     (onStoreChange) => {
@@ -2409,6 +2406,7 @@ export function SidecarAssistant({
   const handleToggleSelect = useCallback(
     (slug: string) => {
       if (!productSelection) return;
+      const removing = selectedSlugsRef.current.includes(slug);
       setSelectedSlugs((current) =>
         current.includes(slug)
           ? current.filter((existing) => existing !== slug)
@@ -2416,6 +2414,13 @@ export function SidecarAssistant({
             ? current
             : [...current, slug],
       );
+      /* The checkbox is what put this product in the composer. Unchecking it
+       * has to drop that "asking about" context, same as the pill's remove. */
+      if (removing) {
+        setConversationSlugs((current) =>
+          current.filter((existing) => existing !== slug),
+        );
+      }
     },
     [productSelection],
   );
@@ -5865,6 +5870,8 @@ export function SidecarAssistant({
 
   const renderedMessages = useMemo(
     () => {
+      const suggestionLayout =
+        suggestions && suggestionsType === "list" ? "list" : "carousel";
       let latestRoutineId: string | null = null;
       for (let i = messages.length - 1; i >= 0; i -= 1) {
         if (messages[i].kind === "agent_routine") {
@@ -5934,6 +5941,7 @@ export function SidecarAssistant({
                 onAddToCart={(slug) => handleAddToCart(slug, 1)}
                 selectionLimitReached={selectedSet.size >= MAX_SELECTED_PRODUCTS}
                 streaming={message.streaming}
+                layout={suggestionLayout}
               />
             );
           case "agent_routine":
@@ -5949,6 +5957,7 @@ export function SidecarAssistant({
                 onToggleSelect={productSelection ? handleToggleSelect : undefined}
                 onAddToCart={(slug) => handleAddToCart(slug, 1)}
                 selectionLimitReached={selectedSet.size >= MAX_SELECTED_PRODUCTS}
+                layout={suggestionLayout}
                 accordion={accordionRecommendations}
                 streaming={message.streaming}
                 onOpenSectionChange={
@@ -6143,6 +6152,8 @@ export function SidecarAssistant({
       accordionRecommendations,
       contextDividerPill,
       productSelection,
+      suggestions,
+      suggestionsType,
       updatingCart,
     ],
   );

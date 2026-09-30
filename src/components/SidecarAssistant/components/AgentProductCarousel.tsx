@@ -28,6 +28,8 @@ export type AgentProductCarouselProps = {
   onAddToCart?: (id: string) => void;
   /** When true, unselected cards' checkboxes are disabled (selection cap hit). */
   selectionLimitReached?: boolean;
+  /** Stack products in a vertical list instead of a horizontal carousel. */
+  layout?: "carousel" | "list";
   /** Optional class name appended to the carousel root. */
   className?: string;
 };
@@ -48,6 +50,7 @@ export function AgentProductCarousel({
   onToggleSelect,
   onAddToCart,
   selectionLimitReached,
+  layout = "carousel",
   className,
 }: AgentProductCarouselProps) {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -87,10 +90,15 @@ export function AgentProductCarousel({
     };
   }, [updateEdges, products]);
 
-  const rootClass = "agent-plp__carousel" + (className ? " " + className : "");
+  const rootClass =
+    "agent-plp__carousel" +
+    (layout === "list" ? " agent-plp__carousel--list" : "") +
+    (className ? ` ${className}` : "");
 
   return (
     <div className={rootClass}>
+      {layout === "carousel" ? (
+        <>
       <button
         type="button"
         className="agent-plp__nav agent-plp__nav--prev"
@@ -108,7 +116,9 @@ export function AgentProductCarousel({
         disabled={atEnd}
       >
         <ArrowRightIcon width={18} height={18} />
-      </button>
+        </button>
+        </>
+      ) : null}
 
       <div className="agent-plp__track" ref={trackRef}>
         {products.map((product) => (
