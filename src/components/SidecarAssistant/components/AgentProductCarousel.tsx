@@ -56,6 +56,7 @@ export function AgentProductCarousel({
   const trackRef = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const updateEdges = useCallback(() => {
     const node = trackRef.current;
@@ -63,20 +64,43 @@ export function AgentProductCarousel({
     const maxScroll = node.scrollWidth - node.clientWidth;
     setAtStart(node.scrollLeft <= 1);
     setAtEnd(node.scrollLeft >= maxScroll - 1);
+    const firstCard = node.children[0] as HTMLElement | undefined;
+    const cardWidth = firstCard?.getBoundingClientRect().width ?? 0;
+    const gap = parseFloat(getComputedStyle(node).columnGap) || FALLBACK_GAP;
+    const step = cardWidth + gap;
+    if (step <= 0) return;
+    const index = Math.round(node.scrollLeft / step);
+    const last = Math.max(0, node.children.length - 1);
+    setActiveIndex(Math.min(last, Math.max(0, index)));
   }, []);
+
+  const scrollStep = () => {
+    const node = trackRef.current;
+    if (!node) return 0;
+    const firstCard = node.children[0] as HTMLElement | undefined;
+    const cardWidth = firstCard?.getBoundingClientRect().width ?? node.clientWidth;
+    const gap = parseFloat(getComputedStyle(node).columnGap) || FALLBACK_GAP;
+    return cardWidth + gap;
+  };
 
   const scroll = (direction: "left" | "right") => {
     const node = trackRef.current;
     if (!node) return;
-    const firstCard = node.children[0] as HTMLElement | undefined;
-    const cardWidth = firstCard?.getBoundingClientRect().width ?? node.clientWidth;
-    const gap = parseFloat(getComputedStyle(node).columnGap) || FALLBACK_GAP;
-    const step = cardWidth + gap;
+    const step = scrollStep();
     node.scrollBy({
       left: direction === "left" ? -step : step,
       behavior: "smooth",
     });
   };
+
+  const scrollToIndex = (index: number) => {
+    const node = trackRef.current;
+    if (!node) return;
+    node.scrollTo({ left: index * scrollStep(), behavior: "smooth" });
+  };
+
+  const dotCount =
+    products.length + (showMoreCard ? 1 : 0);
 
   useEffect(() => {
     updateEdges();
@@ -148,6 +172,23 @@ export function AgentProductCarousel({
         ))}
         {showMoreCard ? <AgentShowMoreCard onSelect={onShowMore} /> : null}
       </div>
+      {layout === "carousel" && dotCount > 1 ? (
+        <div className="agent-plp__dots" role="group" aria-label="Carousel position">
+          {Array.from({ length: dotCount }, (_, index) => (
+            <button
+              key={index}
+              type="button"
+              className={
+                "agent-plp__dot" +
+                (index === activeIndex ? " agent-plp__dot--active" : "")
+              }
+              aria-label={`Item ${index + 1} of ${dotCount}`}
+              aria-current={index === activeIndex ? "true" : undefined}
+              onClick={() => scrollToIndex(index)}
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

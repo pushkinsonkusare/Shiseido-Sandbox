@@ -302,7 +302,7 @@
   border-color: rgba(236, 236, 236, 1);
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
   padding: 20px 0;
   font-family: var(--font-family-base);
   overflow: hidden;
@@ -723,6 +723,36 @@ html[data-demo-theme="consumer-electronics"] .agent-plp__carousel--list .agent-p
 
 .agent-plp__nav--next {
   right: 8px;
+}
+
+.agent-plp__dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  padding-right: 20px;
+}
+
+.agent-plp__dot {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: #d4d4d4;
+  cursor: pointer;
+}
+
+.agent-plp__dot--active {
+  width: 16px;
+  background: #17171b;
+}
+
+.agent-plp__dot:focus-visible {
+  outline: 2px solid #17171b;
+  outline-offset: 2px;
 }
 
 /* ---------- Compare card (comparison table) ---------- */
