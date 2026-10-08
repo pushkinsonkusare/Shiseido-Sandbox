@@ -2578,14 +2578,38 @@ html[data-demo-theme="consumer-electronics"] .agent-plp__carousel--list .agent-p
 /* Same three states as the composer shell — medium grey at rest, near-black on
    focus, light grey when it can't be typed in — so the two text fields in the
    panel don't answer to different rules. */
+.agent-summary__promo-field {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+}
+
+.agent-summary__promo-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  color: rgba(23, 23, 27, 0.45);
+  pointer-events: none;
+}
+
+.agent-summary__promo-field:has(.agent-summary__promo-input:disabled)
+  .agent-summary__promo-icon {
+  color: rgba(23, 23, 27, 0.26);
+}
+
 .agent-summary__promo-input {
   appearance: none;
   flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
   height: 36px;
   background: var(--agentic-input-bg);
   border: 1px solid #a3a3a3;
-  padding: 8px 12px;
+  padding: 8px 12px 8px 36px;
   font-family: inherit;
   font-size: 14px;
   line-height: 20px;

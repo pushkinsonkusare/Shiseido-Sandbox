@@ -749,9 +749,13 @@ html[data-demo-theme="consumer-electronics"] .agent-summary__promo-input {
   background: #ffffff;
   height: 40px;
   min-height: 40px;
-  padding: 8px 16px;
+  padding: 8px 16px 8px 40px;
   outline: none;
   transition: border-color 120ms ease;
+}
+
+html[data-demo-theme="consumer-electronics"] .agent-summary__promo-icon {
+  left: 14px;
 }
 
 html[data-demo-theme="consumer-electronics"] .agent-summary__promo-input:hover:not(:focus):not(:disabled) {

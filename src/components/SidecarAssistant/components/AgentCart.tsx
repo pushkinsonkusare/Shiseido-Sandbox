@@ -367,15 +367,22 @@ export function AgentCart({
           </div>
 
           <form className="agent-summary__promo" onSubmit={handlePromoSubmit}>
-            <input
-              type="text"
-              className="agent-summary__promo-input"
-              placeholder="Enter coupon code"
-              value={promoCode}
-              onChange={(event) => setPromoCode(event.target.value)}
-              aria-label="Coupon code"
-              disabled={updating}
-            />
+            <div className="agent-summary__promo-field">
+              <TagIcon
+                className="agent-summary__promo-icon"
+                width={16}
+                height={16}
+              />
+              <input
+                type="text"
+                className="agent-summary__promo-input"
+                placeholder="Enter coupon code"
+                value={promoCode}
+                onChange={(event) => setPromoCode(event.target.value)}
+                aria-label="Coupon code"
+                disabled={updating}
+              />
+            </div>
             <button
               type="submit"
               className="agent-summary__promo-submit"
