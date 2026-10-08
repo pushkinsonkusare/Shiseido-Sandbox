@@ -146,6 +146,7 @@ type UserTestingBootstrap = {
   productSelectionType: ProductSelectionType;
   suggestions: boolean;
   suggestionsType: SuggestionsType;
+  colourPicker: boolean;
   selectedProductSlugs: string[];
   pdpInlineWidget: boolean;
   pdpInlineWidgetType: PdpInlineWidgetType;
@@ -200,6 +201,9 @@ type AgentModeContextValue = {
   /** Carousel vs list. Retained while the parent checkbox is off. */
   suggestionsType: SuggestionsType;
   setSuggestionsType: (type: SuggestionsType) => void;
+  /** Simulated colour swatches on the in-chat product card. */
+  colourPicker: boolean;
+  setColourPicker: (enabled: boolean) => void;
   /** PDP inline widget feature toggle (behavior TBD). */
   pdpInlineWidget: boolean;
   setPdpInlineWidget: (enabled: boolean) => void;
@@ -254,6 +258,7 @@ const DEFAULT_PRODUCT_SELECTION = true;
 const DEFAULT_PRODUCT_SELECTION_TYPE: ProductSelectionType = "in-chat";
 const DEFAULT_SUGGESTIONS = true;
 const DEFAULT_SUGGESTIONS_TYPE: SuggestionsType = "carousel";
+const DEFAULT_COLOUR_PICKER = true;
 const DEFAULT_PDP_INLINE_WIDGET = true;
 const DEFAULT_PDP_INLINE_WIDGET_TYPE: PdpInlineWidgetType = "agent-redirect";
 const DEFAULT_PDP_INLINE_WIDGET_POSITION: PdpInlineWidgetPosition =
@@ -307,6 +312,7 @@ function unlockedBootstrap(): UserTestingBootstrap {
     productSelectionType: DEFAULT_PRODUCT_SELECTION_TYPE,
     suggestions: DEFAULT_SUGGESTIONS,
     suggestionsType: DEFAULT_SUGGESTIONS_TYPE,
+    colourPicker: DEFAULT_COLOUR_PICKER,
     selectedProductSlugs: [],
     pdpInlineWidget: DEFAULT_PDP_INLINE_WIDGET,
     pdpInlineWidgetType: DEFAULT_PDP_INLINE_WIDGET_TYPE,
@@ -411,6 +417,10 @@ function readUserTestingBootstrap(): UserTestingBootstrap {
       (params.get("suggestionsType") || "").trim().toLowerCase() === "list"
         ? "list"
         : DEFAULT_SUGGESTIONS_TYPE,
+    colourPicker: parseFlag(
+      params.get("colourPicker") ?? params.get("colorPicker"),
+      DEFAULT_COLOUR_PICKER,
+    ),
     selectedProductSlugs,
     pdpInlineWidget: parseFlag(params.get("pdp"), DEFAULT_PDP_INLINE_WIDGET),
     pdpInlineWidgetType: pdpType,
@@ -484,6 +494,9 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
   const [suggestionsType, setSuggestionsType] = useState<SuggestionsType>(
     UT_BOOTSTRAP.suggestionsType,
   );
+  const [colourPicker, setColourPicker] = useState<boolean>(
+    UT_BOOTSTRAP.colourPicker,
+  );
   const [selectedProductSlugs, setSelectedProductSlugs] = useState<string[]>(
     UT_BOOTSTRAP.selectedProductSlugs,
   );
@@ -536,6 +549,8 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       setSuggestions,
       suggestionsType,
       setSuggestionsType,
+      colourPicker,
+      setColourPicker,
       selectedProductSlugs,
       setSelectedProductSlugs,
       pdpInlineWidget,
@@ -572,6 +587,7 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       productSelectionType,
       suggestions,
       suggestionsType,
+      colourPicker,
       selectedProductSlugs,
       pdpInlineWidget,
       pdpInlineWidgetType,

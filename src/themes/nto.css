@@ -560,15 +560,15 @@ html[data-demo-theme="consumer-electronics"] .agent-pdp__option {
 }
 
 html[data-demo-theme="consumer-electronics"] .agent-pdp__option--selected {
-  background: #db6c68;
+  background: #3a3a3a;
   color: #ffffff;
-  border-color: #db6c68;
+  border-color: #3a3a3a;
 }
 
 html[data-demo-theme="consumer-electronics"] .agent-pdp__option--selected:hover:not(:disabled),
 html[data-demo-theme="consumer-electronics"] .agent-pdp__option--selected:active:not(:disabled) {
-  background: #c85f5b;
-  border-color: #c85f5b;
+  background: #2a2a2a;
+  border-color: #2a2a2a;
 }
 
 html[data-demo-theme="consumer-electronics"] .agent-summary__box-icon {

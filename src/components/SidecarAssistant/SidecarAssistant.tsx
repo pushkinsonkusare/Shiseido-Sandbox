@@ -1273,7 +1273,7 @@ export function SidecarAssistant({
   const { products, heroProduct, getProductBySlug, getRelatedProducts, orderHistory } =
     useCatalog();
   const { currentRoute, currentProductSlug } = usePrototypeNavigation();
-  const { accordionRecommendations, contextIsland, contextPill, contextDividerPill, contextStickyPill, productSelection, productSelectionType, suggestions, suggestionsType, compareFeature, compareFeatureType, imageSearch, advisorConnect, advisorConnectType, viewportMode, userTestingLock, selectedProductSlugs, setSelectedProductSlugs } =
+  const { accordionRecommendations, contextIsland, contextPill, contextDividerPill, contextStickyPill, productSelection, productSelectionType, suggestions, suggestionsType, colourPicker, compareFeature, compareFeatureType, imageSearch, advisorConnect, advisorConnectType, viewportMode, userTestingLock, selectedProductSlugs, setSelectedProductSlugs } =
     useAgentMode();
   const demoTheme = useSyncExternalStore(
     (onStoreChange) => {
@@ -5982,6 +5982,7 @@ export function SidecarAssistant({
                 reviewCount={message.reviewCount}
                 colors={message.colors}
                 sizes={message.sizes}
+                showColourPicker={colourPicker}
                 onAddToCart={({ quantity }) =>
                   handleAddToCart(message.productSlug, quantity)
                 }
@@ -6154,6 +6155,7 @@ export function SidecarAssistant({
       productSelection,
       suggestions,
       suggestionsType,
+      colourPicker,
       updatingCart,
     ],
   );

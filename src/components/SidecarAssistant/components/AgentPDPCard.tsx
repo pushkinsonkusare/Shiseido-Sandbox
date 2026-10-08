@@ -62,9 +62,19 @@ export type AgentPDPCardProps = {
   }) => void;
   /** Click handler for the Apple Pay CTA. Hidden when not provided. */
   onApplePay?: () => void;
+  /** Simulated platform colour swatches, shown above size. */
+  showColourPicker?: boolean;
   /** Optional class name appended to the root element. */
   className?: string;
 };
+
+const DEMO_COLOURS: (AgentPDPColorOption & { unavailable?: boolean })[] = [
+  { id: "beige", label: "Beige", color: "#e6d3b4" },
+  { id: "blush", label: "Blush", color: "#e8b4c4" },
+  { id: "lilac", label: "Lilac", color: "#c9c4ea", unavailable: true },
+  { id: "white", label: "White", color: "#ffffff" },
+  { id: "black", label: "Black", color: "#1c1c1c" },
+];
 
 /**
  * Five-star rating row with fractional (half-star) fill. Each position
@@ -123,19 +133,19 @@ export function AgentPDPCard({
   description,
   rating,
   reviewCount,
-  colors,
   sizes,
   initialQuantity = 1,
   maxQuantity = 99,
   onAddToCart,
   onApplePay,
+  showColourPicker = false,
   className,
 }: AgentPDPCardProps) {
   const [imageIndex, setImageIndex] = useState(0);
   const [descExpanded, setDescExpanded] = useState(false);
   const [descClamped, setDescClamped] = useState(false);
   const descRef = useRef<HTMLParagraphElement | null>(null);
-  const [colorId, setColorId] = useState(colors?.[0]?.id);
+  const [colorId, setColorId] = useState(DEMO_COLOURS[0].id);
   const [sizeId, setSizeId] = useState(sizes?.[0]?.id);
   const [quantity, setQuantity] = useState(
     Math.max(1, Math.min(initialQuantity, maxQuantity)),
@@ -172,7 +182,7 @@ export function AgentPDPCard({
   const decrement = () => setQuantity((q) => Math.max(1, q - 1));
   const increment = () => setQuantity((q) => Math.min(maxQuantity, q + 1));
 
-  const colorLabel = colors?.find((c) => c.id === colorId)?.label;
+  const colorLabel = DEMO_COLOURS.find((c) => c.id === colorId)?.label;
   const selectedSize = sizes?.find((s) => s.id === sizeId);
   const sizeLabel = selectedSize?.label;
   const displayPrice = selectedSize?.price ?? price;
@@ -261,14 +271,14 @@ export function AgentPDPCard({
           </div>
         ) : null}
 
-        {colors && colors.length > 0 ? (
-          <div className="agent-pdp__group" role="radiogroup" aria-label="Color">
+        {showColourPicker ? (
+          <div className="agent-pdp__group" role="radiogroup" aria-label="Colour">
             <p className="agent-pdp__group-label">
-              Color:{" "}
+              Colour:{" "}
               <span style={{ fontWeight: 400 }}>{colorLabel ?? "N/A"}</span>
             </p>
-            <div className="agent-pdp__group-options">
-              {colors.map((option) => {
+            <div className="agent-pdp__swatches">
+              {DEMO_COLOURS.map((option) => {
                 const selected = option.id === colorId;
                 return (
                   <button
@@ -276,18 +286,16 @@ export function AgentPDPCard({
                     type="button"
                     role="radio"
                     aria-checked={selected}
+                    aria-label={option.label}
+                    disabled={option.unavailable}
                     className={
-                      "agent-pdp__option agent-pdp__option--swatch" +
-                      (selected ? " agent-pdp__option--selected" : "")
+                      "agent-pdp__swatch" +
+                      (selected ? " agent-pdp__swatch--selected" : "") +
+                      (option.unavailable ? " agent-pdp__swatch--unavailable" : "")
                     }
+                    style={{ ["--swatch" as string]: option.color }}
                     onClick={() => setColorId(option.id)}
-                  >
-                    <span
-                      className="agent-pdp__option-swatch"
-                      style={{ ["--swatch-color" as string]: option.color }}
-                    />
-                    {option.label}
-                  </button>
+                  />
                 );
               })}
             </div>

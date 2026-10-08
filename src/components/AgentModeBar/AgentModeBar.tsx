@@ -53,6 +53,8 @@ export function AgentModeBar() {
     setSuggestions,
     suggestionsType,
     setSuggestionsType,
+    colourPicker,
+    setColourPicker,
     pdpInlineWidget,
     setPdpInlineWidget,
     pdpInlineWidgetType,
@@ -445,6 +447,17 @@ export function AgentModeBar() {
                     </div>
                   </div>
                 )}
+                <label className="agent-mode-bar__feature">
+                  <input
+                    type="checkbox"
+                    className="agent-mode-bar__feature-checkbox"
+                    checked={colourPicker}
+                    onChange={(event) => setColourPicker(event.target.checked)}
+                  />
+                  <span className="agent-mode-bar__feature-label">
+                    Colour picker
+                  </span>
+                </label>
                 <label className="agent-mode-bar__feature">
                   <input
                     type="checkbox"
