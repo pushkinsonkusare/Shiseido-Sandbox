@@ -29,6 +29,7 @@ export type ChatMessage =
   | AgentCompareMessage
   | AgentCartMessage
   | AgentOrderMessage
+  | AgentOrderLookupMessage
   | AgentNbasMessage
   | ContextSeparatorMessage
   | ContextEndMessage;
@@ -200,6 +201,15 @@ export type AgentOrderMessage = {
   summary: string;
   items: AgentCartItem[];
   lineItems: AgentCartLineItem[];
+};
+
+/** Guest "Where is my order?" card: email, order number and ZIP. */
+export type AgentOrderLookupMessage = {
+  id: string;
+  kind: "agent_order_lookup";
+  acknowledgement: string;
+  /** Set once the shopper submits, which locks the fields. */
+  submitted?: boolean;
 };
 
 export type AgentNbasMessage = {

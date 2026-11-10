@@ -71,6 +71,12 @@ export {
 } from "./AgentCart";
 
 export {
+  AgentOrderLookupForm,
+  type AgentOrderLookupFormProps,
+  type OrderLookupValues,
+} from "./AgentOrderLookupForm";
+
+export {
   AgentOrderSummary,
   type AgentOrderItem,
   type AgentOrderLineItem,

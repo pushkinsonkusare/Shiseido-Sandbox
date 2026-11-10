@@ -34,6 +34,7 @@ import {
   AgentCompareCard,
   AgentCompareSummariesCard,
   AgentNBAs,
+  AgentOrderLookupForm,
   AgentOrderSummary,
   AgentPDPCard,
   AgentPLPCard,
@@ -185,6 +186,9 @@ const NUDGE_INTERVAL_MS = 90_000;
 const NUDGE_DURATION_MS = 2500;
 
 const RESPONSE_LATENCY_MS = 500;
+/** A guest order lookup "hits" the order system, so the fetching-order loader
+ * holds long enough to be read before the summary lands. */
+const GUEST_ORDER_LOOKUP_LATENCY_MS = 2000;
 /** A guardrail turn is a read of the message, not a search, so it answers
  * faster than any lookup: a long "searching" beat before "I can't help with
  * that" implies the store went looking. */
@@ -630,6 +634,11 @@ const NEEDS_FOLLOW_UP_ROW = new Set<ChatMessage["kind"]>([
 /** Long enough for a flow to append its own row first, short enough that the
  * pause doesn't read as the agent having nothing more to offer. */
 const NBA_FALLBACK_DELAY_MS = 500;
+
+/** Prototype stand-in for "is the shopper signed in?". There is no auth state
+ * yet, so every shopper is a guest and order tracking asks for the order
+ * details instead of reading the account's history. */
+const IS_GUEST_SHOPPER = true;
 
 const HYGIENE_TITLE: Record<HygieneTopic, string> = {
   return: "Returns & refunds",
@@ -1970,6 +1979,75 @@ export function SidecarAssistant({
     });
   }, [appendMessage, getProductBySlug, orderHistory]);
 
+  const renderGuestOrderLookup = useCallback(() => {
+    appendMessage({
+      id: nextId("lookup"),
+      kind: "agent_order_lookup",
+      acknowledgement:
+        "Happy to help you find your order. Since you're shopping as a guest, I'll need a few details to look it up.",
+    });
+  }, [appendMessage]);
+
+  const submitGuestOrderLookup = useCallback(
+    (messageId: string, values: { email: string; orderNo: string; zip: string }) => {
+      updateMessage(messageId, (message) =>
+        message.kind === "agent_order_lookup"
+          ? { ...message, submitted: true }
+          : message,
+      );
+      // The shopper's side of the exchange: the order number only, so the email
+      // and ZIP stay in the locked form rather than echoing into the transcript.
+      appendMessage({
+        id: nextId("shopper"),
+        kind: "shopper_text",
+        text: `Track order ${values.orderNo}`,
+      });
+      const loaderId = nextId("loader");
+      appendMessage({ id: loaderId, kind: "agent_loader", variant: "fetching_order" });
+
+      scheduleResponse(() => {
+        removeMessage(loaderId);
+        const order = orderHistory[0];
+        if (!order) {
+          appendMessage({
+            id: nextId("agent"),
+            kind: "agent_simple",
+            title: "Order tracking",
+            body: "I couldn't find an order with those details. Double-check them and try again.",
+          });
+          return;
+        }
+        const items = order.productSlugs
+          .map((slug) => getProductBySlug(slug))
+          .filter((product): product is CatalogProduct => Boolean(product))
+          .slice(0, 2)
+          .map((product) => toCartItem(product, 1));
+        appendMessage({
+          id: nextId("order"),
+          kind: "agent_order",
+          acknowledgement: `Order ${values.orderNo} is ${order.status.toLowerCase()}.`,
+          summary: TRACK_ORDER_BODY,
+          items,
+          lineItems: [
+            { label: "Order ID", value: values.orderNo },
+            { label: "Status", value: order.status },
+            { label: "Payment", value: order.paymentMethod },
+            { label: "Order total", value: order.total, emphasis: true },
+          ],
+        });
+        appendMessage(buildNbasMessage(ORDER_FOLLOWUP_NBAS));
+      }, GUEST_ORDER_LOOKUP_LATENCY_MS);
+    },
+    [
+      appendMessage,
+      getProductBySlug,
+      orderHistory,
+      removeMessage,
+      scheduleResponse,
+      updateMessage,
+    ],
+  );
+
   const applyPromoToCart = useCallback(
     (cartMessageId: string, code: string) => {
       const trimmed = code.trim().toUpperCase();
@@ -3254,6 +3332,11 @@ export function SidecarAssistant({
         return;
       }
 
+      if (isOrderTrackingIntent && IS_GUEST_SHOPPER) {
+        renderGuestOrderLookup();
+        return;
+      }
+
       if (isOrderTrackingIntent) {
         renderRecentOrderSummary();
         appendMessage(buildNbasMessage(ORDER_FOLLOWUP_NBAS));
@@ -3464,6 +3547,7 @@ export function SidecarAssistant({
       appendMessage,
       products,
       renderRankedPlp,
+      renderGuestOrderLookup,
       renderRecentOrderSummary,
       renderRoutineCard,
     ],
@@ -6048,6 +6132,15 @@ export function SidecarAssistant({
                 lineItems={message.lineItems}
               />
             );
+          case "agent_order_lookup":
+            return (
+              <AgentOrderLookupForm
+                key={message.id}
+                acknowledgement={message.acknowledgement}
+                submitted={message.submitted}
+                onSubmit={(values) => submitGuestOrderLookup(message.id, values)}
+              />
+            );
           case "agent_nbas":
             return (
               <AgentNBAs
@@ -6143,6 +6236,7 @@ export function SidecarAssistant({
       handleNbaSelect,
       handleRemoveCartCoupon,
       handleRemoveCartItem,
+      submitGuestOrderLookup,
       handleRoutineShowMore,
       handleShowMore,
       handleToggleSelect,

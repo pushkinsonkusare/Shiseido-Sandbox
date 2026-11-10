@@ -3024,3 +3024,71 @@ html[data-demo-viewport="mobile"]
     max-width: 220px;
   }
 }
+
+/* ---------- Guest order lookup form ----------
+   Built on the summary card (acknowledgement row, 20px gutters) and the coupon
+   box's input, so it reads as the same family as the cart and order cards. */
+
+.agent-lookup__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.agent-lookup__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.agent-lookup__label {
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 20px;
+  color: var(--agentic-card-foreground);
+}
+
+/* The coupon input leaves room on the left for its tag icon, and the NTO theme
+   re-asserts that padding. These fields have no icon, so win it back. */
+.agent-lookup__form .agent-lookup__field input.agent-summary__promo-input {
+  padding-left: 16px;
+}
+
+.agent-lookup__field .agent-summary__promo-input[aria-invalid="true"] {
+  border-color: #b3261e;
+}
+
+.agent-lookup__error {
+  margin: 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: #b3261e;
+}
+
+.agent-lookup__form .agent-msg__btn {
+  width: 100%;
+  height: 40px;
+  /* 16px field gap + 8px, so the CTA sits apart from the last field. */
+  margin-top: 8px;
+}
+
+/* Same rule as the composer's send button: near-black once it can be pressed,
+   flat light grey with muted text until then. */
+/* Doubled class so the NTO theme's teal override on primary buttons loses. */
+.agent-lookup__form .agent-msg__btn.agent-msg__btn--primary {
+  background: #131315;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.agent-lookup__form .agent-msg__btn:hover:not(:disabled) {
+  background: #000000;
+}
+
+.agent-lookup__form .agent-msg__btn:disabled {
+  background: #ececec;
+  color: rgba(23, 23, 27, 0.35);
+  box-shadow: none;
+  opacity: 1;
+  cursor: not-allowed;
+}
