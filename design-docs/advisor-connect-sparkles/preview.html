@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Advisor connect sparkles: handoff preview</title>
+<style>
+  body { margin: 0; font-family: -apple-system, system-ui, sans-serif; color: #17171b; background: #fafafa; }
+  main { max-width: 760px; margin: 48px auto; padding: 0 24px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p { color: #545454; line-height: 1.5; }
+  .row { display: flex; gap: 24px; flex-wrap: wrap; margin: 24px 0; }
+  .tile { background: #fff; border: 1px solid #ececec; border-radius: 12px; padding: 24px; display: grid; place-items: center; gap: 12px; }
+  .tile span { font-size: 12px; color: #545454; }
+  .dark { background: #17171b; border-color: #17171b; }
+  .dark span { color: #bdbdc4; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  td { border-top: 1px solid #ececec; padding: 8px 0; vertical-align: top; }
+  td:first-child { color: #545454; width: 180px; }
+  code { font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Advisor connect sparkles</h1>
+  <p>The loader shown while the Beauty Advisor connects. Open this file in any browser to see it play. The animation is the same file at every size.</p>
+
+  <div class="row">
+    <div class="tile"><img src="sparkles-animated.svg" width="128" height="121" alt="" /><span>128 × 121 (as shipped)</span></div>
+    <div class="tile"><img src="sparkles-animated.svg" width="64" height="60" alt="" /><span>64 × 60</span></div>
+    <div class="tile"><img src="sparkles-animated.svg" width="256" height="242" alt="" /><span>256 × 242</span></div>
+    <div class="tile dark"><img src="sparkles-animated.svg" width="128" height="121" alt="" /><span>On dark</span></div>
+    <div class="tile"><img src="sparkle-star.svg" width="48" height="48" alt="" /><span>Static star</span></div>
+  </div>
+
+  <table>
+    <tr><td>Loop</td><td>800 ms, linear, infinite. Seamless: each star ends exactly where another begins.</td></tr>
+    <tr><td>Motion</td><td>The big star shrinks to the bottom right, that star crosses back to the top left, and the small top-left star grows into the big one.</td></tr>
+    <tr><td>Keyframes</td><td>9 poses per star, every 12.5% (100 ms). Each pose is a translate + scale; the browser interpolates between them.</td></tr>
+    <tr><td>Fill</td><td>Horizontal linear gradient <code>#567ad2</code> → <code>#c96880</code>, applied per star.</td></tr>
+    <tr><td>Canvas</td><td>viewBox <code>0 0 276 261</code>; rendered at 128 × 121 px in the app.</td></tr>
+    <tr><td>Reduced motion</td><td>Animation stops under <code>prefers-reduced-motion: reduce</code>.</td></tr>
+  </table>
+</main>
+</body>
+</html>

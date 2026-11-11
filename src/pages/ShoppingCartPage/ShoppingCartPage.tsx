@@ -1,10 +1,13 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useCatalog } from "../../catalog/CatalogContext";
 import { formatPrice } from "../../catalog/catalog";
+import { cartPromoDiscount, resolveCartPromo } from "../../catalog/spendTiers";
 import { UnifiedTopHeader } from "../../components/UnifiedTopHeader/UnifiedTopHeader";
 import { useSearchOverlay } from "../../components/SearchOverlay/SearchOverlayContext";
 import {
+  CheckIcon,
   ChevronDownIcon,
+  HeartIcon,
   StoreIcon,
   TruckIcon,
 } from "../../components/icons/StorefrontIcons";
@@ -29,7 +32,20 @@ type FulfillmentCartItem = CartItem & {
   fulfillment: "pickup" | "delivery";
 };
 
-function CartItemRow({ item }: { item: CartItem }) {
+type CartItemHandlers = {
+  onRemove: (id: string) => void;
+  onQuantityChange: (id: string, quantity: number) => void;
+};
+
+const QUANTITY_OPTIONS = Array.from({ length: 10 }, (_, i) => i + 1);
+
+function CartItemRow({ item, onRemove, onQuantityChange }: { item: CartItem } & CartItemHandlers) {
+  // Wishlist and gift are demo-only: they live with the row, not the cart.
+  const [saved, setSaved] = useState(false);
+  const [gift, setGift] = useState(false);
+  const qtyId = `cart-qty-${item.id}`;
+  const quantities = item.quantity > 10 ? [...QUANTITY_OPTIONS, item.quantity] : QUANTITY_OPTIONS;
+
   return (
     <article className="figma-cart__item">
       <div className="figma-cart__item-thumb">
@@ -43,16 +59,35 @@ function CartItemRow({ item }: { item: CartItem }) {
             <p>Size: {item.size}</p>
           </div>
           <div className="figma-cart__item-actions">
-            <button type="button">Remove</button>
-            <button type="button">Add to Wishlist</button>
+            <button type="button" onClick={() => onRemove(item.id)} aria-label={`Remove ${item.name}`}>
+              Remove
+            </button>
+            <button
+              type="button"
+              className={"figma-cart__wishlist" + (saved ? " figma-cart__wishlist--saved" : "")}
+              aria-pressed={saved}
+              onClick={() => setSaved((value) => !value)}
+            >
+              {saved ? <HeartIcon width={14} height={14} aria-hidden="true" /> : null}
+              {saved ? "Saved to Wishlist" : "Add to Wishlist"}
+            </button>
           </div>
         </div>
         <div className="figma-cart__item-right">
           <div className="figma-cart__qty">
-            <span className="figma-cart__qty-label">Quantity:</span>
+            <label className="figma-cart__qty-label" htmlFor={qtyId}>Quantity:</label>
             <div className="figma-cart__qty-field">
-              <span>{item.quantity}</span>
-              <ChevronDownIcon width={16} height={16} />
+              <select
+                id={qtyId}
+                className="figma-cart__qty-select"
+                value={item.quantity}
+                onChange={(event) => onQuantityChange(item.id, Number(event.target.value))}
+              >
+                {quantities.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+              <ChevronDownIcon width={16} height={16} aria-hidden="true" />
             </div>
           </div>
           <div className="figma-cart__badges-price">
@@ -63,8 +98,16 @@ function CartItemRow({ item }: { item: CartItem }) {
               {item.oldPrice ? <span className="figma-cart__price-old">{item.oldPrice}</span> : null}
               <span className="figma-cart__price-current">{item.price}</span>
             </div>
-            <button type="button" className="figma-cart__gift-btn">
-              <span className="figma-cart__gift-box" aria-hidden="true" />
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={gift}
+              className={"figma-cart__gift-btn" + (gift ? " figma-cart__gift-btn--checked" : "")}
+              onClick={() => setGift((value) => !value)}
+            >
+              <span className="figma-cart__gift-box" aria-hidden="true">
+                {gift ? <CheckIcon width={12} height={12} /> : null}
+              </span>
               <span className="figma-cart__gift-text">
                 This is a gift. <span className="figma-cart__gift-learn">Learn more</span>
               </span>
@@ -82,13 +125,16 @@ function CartSection({
   icon,
   items,
   showChangeStore,
+  onRemove,
+  onQuantityChange,
 }: {
   title: ReactNode;
   subtitle: string;
   icon: ReactNode;
   items: CartItem[];
   showChangeStore?: boolean;
-}) {
+} & CartItemHandlers) {
+  if (items.length === 0) return null;
   return (
     <section className="figma-cart__section-card">
       <header className="figma-cart__section-head">
@@ -107,7 +153,7 @@ function CartSection({
       </header>
       <div className="figma-cart__items">
         {items.map((item) => (
-          <CartItemRow key={item.id} item={item} />
+          <CartItemRow key={item.id} item={item} onRemove={onRemove} onQuantityChange={onQuantityChange} />
         ))}
       </div>
     </section>
@@ -115,7 +161,10 @@ function CartSection({
 }
 
 export default function ShoppingCartPage() {
-  const { cartLines, getProductBySlug } = useCatalog();
+  const { cartLines, setCartLines, cartPromo, getProductBySlug } = useCatalog();
+  const removeLine = (id: string) => setCartLines(cartLines.filter((line) => line.id !== id));
+  const setLineQuantity = (id: string, quantity: number) =>
+    setCartLines(cartLines.map((line) => (line.id === id ? { ...line, quantity } : line)));
   const { navigate } = usePrototypeNavigation();
   const { openSearchOverlay } = useSearchOverlay();
   const cartItems: FulfillmentCartItem[] = cartLines.flatMap((line) => {
@@ -145,11 +194,12 @@ export default function ShoppingCartPage() {
   const pickupItems = cartItems.filter((item) => item.fulfillment === "pickup");
   const deliveryItems = cartItems.filter((item) => item.fulfillment === "delivery");
   const subtotalValue = cartItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-  const promotionValue = cartItems.reduce((sum, item) => {
-    const oldPrice = item.oldPrice ? Number.parseFloat(item.oldPrice.replace(/[^0-9.]/g, "")) : item.unitPrice;
-    return sum + (oldPrice - item.unitPrice) * item.quantity;
-  }, 0);
-  const totalValue = subtotalValue - promotionValue;
+  // Same coupon maths as the agent cart, so both summaries agree. The pickup
+  // "was" prices are compare-at prices already folded into the unit price,
+  // so they are not taken off again here.
+  const promo = resolveCartPromo(subtotalValue, cartPromo);
+  const promotionValue = cartPromoDiscount(subtotalValue, promo);
+  const totalValue = Math.max(0, subtotalValue - promotionValue);
 
   return (
     <div className="figma-cart">
@@ -159,7 +209,7 @@ export default function ShoppingCartPage() {
           them as a single column-1 item beside the assistant panel. */}
       <div className="figma-cart__page-inner">
         <div className="figma-cart__title-strip">
-          <h1>Cart ({cartItems.length} items)</h1>
+          <h1>Cart ({cartItems.reduce((sum, item) => sum + item.quantity, 0)} items)</h1>
         </div>
 
         <div className="figma-cart__main-wrap">
@@ -170,11 +220,14 @@ export default function ShoppingCartPage() {
                 <strong className="figma-cart__shipping-strong">Priority Shipping</strong>
               </p>
               <div className="figma-cart__range">
-                <span>{formatPrice(Math.max(0, subtotalValue / 2))}</span>
+                <span>{formatPrice(Math.min(subtotalValue, 150))}</span>
                 <span>{formatPrice(150)}</span>
               </div>
               <div className="figma-cart__bar">
-                <div className="figma-cart__bar-fill" />
+                <div
+                  className="figma-cart__bar-fill"
+                  style={{ width: `${Math.min(100, (subtotalValue / 150) * 100)}%` }}
+                />
               </div>
             </section>
 
@@ -190,13 +243,26 @@ export default function ShoppingCartPage() {
               subtitle={SITE_ADDRESS}
               items={pickupItems}
               showChangeStore
+              onRemove={removeLine}
+              onQuantityChange={setLineQuantity}
             />
             <CartSection
               icon={<TruckIcon width={20} height={20} />}
               title={`Delivery - ${deliveryItems.length} items`}
               subtitle={SITE_ADDRESS}
               items={deliveryItems}
+              onRemove={removeLine}
+              onQuantityChange={setLineQuantity}
             />
+            {cartItems.length === 0 ? (
+              <section className="figma-cart__section-card figma-cart__empty">
+                <h2 className="figma-cart__section-title">Your cart is empty</h2>
+                <p className="figma-cart__section-sub">Items you add will show up here.</p>
+                <button type="button" className="figma-cart__btn-checkout" onClick={() => navigate(ROUTES.home)}>
+                  Continue Shopping
+                </button>
+              </section>
+            ) : null}
           </div>
 
           <aside className="figma-cart__summary">
@@ -205,7 +271,10 @@ export default function ShoppingCartPage() {
             </div>
             <div className="figma-cart__summary-lines">
               <div className="figma-cart__line"><span>Subtotal</span><span>{formatPrice(subtotalValue)}</span></div>
-              <div className="figma-cart__line"><span>Promotions</span><span>-{formatPrice(promotionValue)}</span></div>
+              {promo ? (
+                <div className="figma-cart__line"><span>Coupon {promo.code}</span><span>-{formatPrice(promotionValue)}</span></div>
+              ) : null}
+              <div className="figma-cart__line"><span>Promotions</span><span>-</span></div>
               <div className="figma-cart__line"><span>Shipping</span><span>{subtotalValue >= 150 ? "$0.00" : "Calculated at checkout"}</span></div>
               <div className="figma-cart__line"><span>Tax</span><span>Calculated at checkout</span></div>
               <div className="figma-cart__line figma-cart__line--total"><span>Total</span><span>{formatPrice(totalValue)}</span></div>
@@ -215,10 +284,12 @@ export default function ShoppingCartPage() {
                 <span>Do you have a promo code?</span>
                 <ChevronDownIcon width={24} height={24} className="figma-cart__promo-chevron" />
               </button>
-              <div className="figma-cart__applied">
-                <span className="figma-cart__promo-badge">Set & Bundle Savings</span>
-                <span className="figma-cart__applied-amt">-{formatPrice(promotionValue)}</span>
-              </div>
+              {promo ? (
+                <div className="figma-cart__applied">
+                  <span className="figma-cart__promo-badge">{promo.code} · {Math.round(promo.fraction * 100)}% off</span>
+                  <span className="figma-cart__applied-amt">-{formatPrice(promotionValue)}</span>
+                </div>
+              ) : null}
             </div>
             <div className="figma-cart__summary-footer">
               <button type="button" className="figma-cart__btn-checkout" onClick={() => navigate(ROUTES.checkout)}>Continue to Checkout</button>

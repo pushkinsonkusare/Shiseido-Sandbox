@@ -1,4 +1,10 @@
 import {
+  SPEND_TIERS,
+  SPEND_TIER_CODES,
+  cartPromoDiscount,
+  spendTierFor,
+} from "../../catalog/spendTiers";
+import {
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -13,6 +19,7 @@ import { useCatalog } from "../../catalog/CatalogContext";
 import { useAgentMode, UT_WELCOME_NBA_LABEL, DEMO_SCENARIO, CLARIFYING_PDP_SCENARIO_SLUG, MAX_SELECTED_PRODUCTS } from "../AgentModeBar/AgentModeContext";
 import {
   ArrowDownIcon,
+  ArrowLeftIcon,
   ArrowRightIcon,
   CameraIcon,
   CloseIcon,
@@ -52,11 +59,13 @@ import {
   type AgentPDPSizeOption,
   type AgentPLPProduct,
 } from "./components";
+import { AgentCartUpsell } from "./components/AgentCartUpsell";
 import { SimulatedIOSKeyboard } from "./components/SimulatedIOSKeyboard";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import {
   LANDING_NBA_SUCCESS_THRESHOLDS,
   ORDER_FOLLOWUP_NBAS,
+  EMPTY_CART_NBAS,
   POLICY_BODIES,
   PROBING_FALLBACK_BODY,
   TRACK_ORDER_BODY,
@@ -409,6 +418,15 @@ function sanitizeAgentMessage(message: ChatMessage): ChatMessage {
           : message.recommendation,
       };
     case "agent_cart":
+      // Every cart update passes through here, so the spend tier always
+      // matches the subtotal however the cart changed.
+      return applySpendTiers({
+        ...message,
+        acknowledgement: message.acknowledgement
+          ? stripEmDashes(message.acknowledgement)
+          : message.acknowledgement,
+        summary: stripEmDashes(message.summary),
+      });
     case "agent_order":
       return {
         ...message,
@@ -1074,8 +1092,69 @@ function toCartItem(product: CatalogProduct, quantity: number): AgentCartItem {
   };
 }
 
+type AgentCartMessage = Extract<ChatMessage, { kind: "agent_cart" }>;
+
+/** Id of the cart the shopper already has on the storefront. It lives outside
+ *  the transcript, so the agent starts from the same cart the store shows. */
+const STORE_CART_ID = "store-cart";
+
+function buildStoreCart(items: AgentCartItem[]): AgentCartMessage {
+  return applySpendTiers({
+    id: STORE_CART_ID,
+    kind: "agent_cart",
+    acknowledgement: "Here's your cart.",
+    summary: cartSummaryText(items, cartSubtotal(items)),
+    items,
+    lineItems: [],
+  });
+}
+
+function latestCartIn(messages: ChatMessage[]): AgentCartMessage | undefined {
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const message = messages[i];
+    if (message.kind === "agent_cart") return message;
+  }
+  return undefined;
+}
+
 function cartItemUnitPrice(item: AgentCartItem): number {
   return Number(item.price.replace(/[^0-9.]/g, "")) || 0;
+}
+
+const UPSELL_ADD_LATENCY_MS = 700;
+
+/** Puts the cart on the spend tier its subtotal earns. A stronger code the
+ *  shopper entered themselves wins; a weaker one is replaced, not stacked. */
+function applySpendTiers(cart: AgentCartMessage): AgentCartMessage {
+  const tier = spendTierFor(cartSubtotal(cart.items));
+  const manual =
+    cart.appliedPromo && !SPEND_TIER_CODES.has(cart.appliedPromo.code)
+      ? cart.appliedPromo
+      : undefined;
+  let cartCoupons = (cart.cartCoupons ?? []).filter(
+    (code) => !SPEND_TIER_CODES.has(code),
+  );
+  let appliedPromo = manual;
+  if (tier && (!manual || manual.fraction < tier.fraction)) {
+    cartCoupons = [
+      ...cartCoupons.filter((code) => code !== manual?.code),
+      tier.code,
+    ];
+    appliedPromo = { code: tier.code, fraction: tier.fraction };
+  }
+  return {
+    ...cart,
+    appliedPromo,
+    cartCoupons,
+    lineItems: recomputeCartLineItems(cart.items, appliedPromo),
+  };
+}
+
+function cartSubtotal(items: AgentCartItem[]): number {
+  return items.reduce(
+    (sum, item) => sum + cartItemUnitPrice(item) * item.quantity,
+    0,
+  );
 }
 
 /** Recompute cart totals for an arbitrary set of items, honoring an optional
@@ -1089,9 +1168,14 @@ function recomputeCartLineItems(
     (sum, item) => sum + cartItemUnitPrice(item) * item.quantity,
     0,
   );
-  const discount = appliedPromo
-    ? Math.round(subtotal * appliedPromo.fraction * 100) / 100
-    : 0;
+  // The spend-threshold coupon only pays out while the cart stays at or above
+  // the threshold, so removing items drops the discount again.
+  const tierThreshold = SPEND_TIERS.find(
+    (tier) => tier.code === appliedPromo?.code,
+  )?.threshold;
+  const promoEarned =
+    appliedPromo && (tierThreshold === undefined || subtotal >= tierThreshold);
+  const discount = promoEarned ? cartPromoDiscount(subtotal, appliedPromo) : 0;
 
   const lines: AgentCartLineItem[] = [
     {
@@ -1279,10 +1363,10 @@ export function SidecarAssistant({
   pendingAsk = null,
   onPendingAskHandled,
 }: SidecarAssistantProps = {}) {
-  const { products, heroProduct, getProductBySlug, getRelatedProducts, orderHistory } =
+  const { products, heroProduct, getProductBySlug, getRelatedProducts, orderHistory, cartLines, setCartLines, setCartPromo } =
     useCatalog();
   const { currentRoute, currentProductSlug } = usePrototypeNavigation();
-  const { accordionRecommendations, contextIsland, contextPill, contextDividerPill, contextStickyPill, productSelection, productSelectionType, suggestions, suggestionsType, colourPicker, compareFeature, compareFeatureType, imageSearch, advisorConnect, advisorConnectType, viewportMode, userTestingLock, selectedProductSlugs, setSelectedProductSlugs } =
+  const { accordionRecommendations, contextIsland, contextPill, contextDividerPill, contextStickyPill, productSelection, productSelectionType, suggestions, suggestionsType, colourPicker, compareFeature, compareFeatureType, imageSearch, advisorConnect, advisorConnectType, cartStyle, viewportMode, userTestingLock, selectedProductSlugs, setSelectedProductSlugs } =
     useAgentMode();
   const demoTheme = useSyncExternalStore(
     (onStoreChange) => {
@@ -1332,6 +1416,18 @@ export function SidecarAssistant({
    * NBA submits). Manual typed sends keep multiline wrapping. */
   const [truncateComposerGhost, setTruncateComposerGhost] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // The storefront cart, the agent's cart until a cart card in the chat takes
+  // over (the first add folds into it and empties this one).
+  const [storeCart, setStoreCart] = useState<AgentCartMessage>(() =>
+    buildStoreCart(
+      cartLines.flatMap((line) => {
+        const product = getProductBySlug(line.productSlug);
+        return product ? [toCartItem(product, line.quantity)] : [];
+      }),
+    ),
+  );
+  const storeCartRef = useRef(storeCart);
+  storeCartRef.current = storeCart;
   const [welcomeRefreshCount, setWelcomeRefreshCount] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
@@ -1355,21 +1451,105 @@ export function SidecarAssistant({
   // Context island: item count and total from the latest cart card, and the
   // product the conversation is currently scoped to (the primary selection).
   const cartTotals = useMemo(() => {
-    const cart = [...messages]
-      .reverse()
-      .find(
-        (m): m is Extract<ChatMessage, { kind: "agent_cart" }> =>
-          m.kind === "agent_cart",
-      );
-    if (!cart) return { count: 0, total: "" };
+    const cart = latestCartIn(messages) ?? storeCart;
+    if (cart.items.length === 0) return { count: 0, total: "" };
     return {
       count: cart.items.reduce((sum, item) => sum + item.quantity, 0),
       // The emphasised line is the authoritative total: it already accounts
       // for any applied promo, so the island never disagrees with the card.
       total: cart.lineItems.find((line) => line.emphasis)?.value ?? "",
     };
-  }, [messages]);
+  }, [messages, storeCart]);
   const cartItemCount = cartTotals.count;
+  // "In panel" cart style: the chevron on the cart card swaps the transcript
+  // and composer for this cart view until the shopper goes back.
+  const [cartPanelOpen, setCartPanelOpen] = useState(false);
+  const latestCartMessage = useMemo(
+    () => latestCartIn(messages) ?? storeCart,
+    [messages, storeCart],
+  );
+  // A code the shopper typed into the agent cart also applies on the store
+  // cart page; spend tiers are recomputed there from the subtotal.
+  const manualPromo =
+    latestCartMessage.appliedPromo &&
+    !SPEND_TIER_CODES.has(latestCartMessage.appliedPromo.code)
+      ? latestCartMessage.appliedPromo
+      : null;
+  useEffect(() => {
+    setCartPromo(manualPromo);
+  }, [manualPromo?.code, manualPromo?.fraction, setCartPromo]);
+
+  // Keep the agent's cart and the storefront cart in step both ways. Lines we
+  // pushed are remembered, so any other change came from the store pages
+  // (quantity, remove) and is folded into the agent's cart instead.
+  const pushedCartLinesRef = useRef(cartLines);
+  useEffect(() => {
+    if (cartLines !== pushedCartLinesRef.current) {
+      pushedCartLinesRef.current = cartLines;
+      const current = new Map(
+        latestCartMessage.items.map((item) => [item.id, item]),
+      );
+      const items = cartLines.flatMap((line) => {
+        const existing = current.get(line.id);
+        if (existing) return [{ ...existing, quantity: line.quantity }];
+        const product = getProductBySlug(line.productSlug);
+        return product ? [toCartItem(product, line.quantity)] : [];
+      });
+      // updateMessage is a stable callback declared further down.
+      updateMessage(latestCartMessage.id, (message) =>
+        message.kind === "agent_cart"
+          ? { ...message, items, summary: cartSummaryText(items, cartSubtotal(items)) }
+          : message,
+      );
+      return;
+    }
+    const byId = new Map(cartLines.map((line) => [line.id, line]));
+    const next = latestCartMessage.items.map((item) => ({
+      id: item.id,
+      productSlug: item.id.replace(/^cart-/, ""),
+      quantity: item.quantity,
+      fulfillment: byId.get(item.id)?.fulfillment ?? ("delivery" as const),
+      label: byId.get(item.id)?.label ?? "",
+    }));
+    const same =
+      next.length === cartLines.length &&
+      next.every(
+        (line, i) =>
+          line.id === cartLines[i].id && line.quantity === cartLines[i].quantity,
+      );
+    if (!same) {
+      pushedCartLinesRef.current = next;
+      setCartLines(next);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latestCartMessage, cartLines, setCartLines, getProductBySlug]);
+  const cartPanelVisible = cartPanelOpen && cartStyle === "in-panel";
+  const cartPanelHasItems = Boolean(latestCartMessage?.items.length);
+  const cartPanelSubtotal = latestCartMessage
+    ? cartSubtotal(latestCartMessage.items)
+    : 0;
+  // Products that help reach the threshold: anything not already in the cart,
+  // with the cheapest single item that closes the gap first, then the rest.
+  const upsellProducts = useMemo(() => {
+    if (!cartPanelVisible || !latestCartMessage) return [];
+    const inCart = new Set(latestCartMessage.items.map((item) => item.id));
+    // Aim at the next milestone; once all are reached, lead with the priciest.
+    const nextTier = SPEND_TIERS.find((tier) => cartPanelSubtotal < tier.threshold);
+    const remaining = nextTier ? nextTier.threshold - cartPanelSubtotal : Infinity;
+    const candidates = products.filter(
+      (product) =>
+        !inCart.has(`cart-${product.slug}`) && (product.price ?? 0) > 0,
+    );
+    const closers = candidates
+      .filter((product) => (product.price ?? 0) >= remaining)
+      .sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+    const others = candidates
+      .filter((product) => (product.price ?? 0) < remaining)
+      .sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+    return [...closers, ...others]
+      .slice(0, 8)
+      .map((product) => toPlpProduct(product, () => {}));
+  }, [cartPanelVisible, latestCartMessage, cartPanelSubtotal, products]);
   const hasContextSeparators = useMemo(
     () => messages.some((message) => message.kind === "context_separator"),
     [messages],
@@ -1736,16 +1916,49 @@ export function SidecarAssistant({
   );
 
   const removeMessage = useCallback((id: string) => {
+    // Folding the storefront cart into a chat card empties it, so the card
+    // is the one cart from then on.
+    if (id === STORE_CART_ID) {
+      setStoreCart(buildStoreCart([]));
+      return;
+    }
     setMessages((current) => current.filter((message) => message.id !== id));
   }, []);
 
   const updateMessage = useCallback(
     (id: string, updater: (message: ChatMessage) => ChatMessage) => {
+      if (id === STORE_CART_ID) {
+        // Edits from the cart panel before any cart card is in the chat. An
+        // updater that turns the cart into another kind means it was emptied.
+        setStoreCart((current) => {
+          const next = updater(current);
+          return next.kind === "agent_cart"
+            ? (sanitizeAgentMessage(next) as AgentCartMessage)
+            : buildStoreCart([]);
+        });
+        return;
+      }
       setMessages((current) =>
         current.map((message) =>
           message.id === id ? sanitizeAgentMessage(updater(message)) : message,
         ),
       );
+    },
+    [],
+  );
+
+  /** The shopper's cart: the latest cart card, else the storefront cart. */
+  const currentCart = useCallback(
+    (): AgentCartMessage =>
+      latestCartIn(messagesRef.current) ?? storeCartRef.current,
+    [],
+  );
+
+  const findCart = useCallback(
+    (id: string): AgentCartMessage | undefined => {
+      if (id === STORE_CART_ID) return storeCartRef.current;
+      const message = messagesRef.current.find((m) => m.id === id);
+      return message?.kind === "agent_cart" ? message : undefined;
     },
     [],
   );
@@ -1834,12 +2047,7 @@ export function SidecarAssistant({
       // Accumulate into the shopper's existing cart rather than spawning a
       // fresh single-item card on every add. We fold the new item into the
       // most recent cart card, replacing it so only one up-to-date cart shows.
-      const list = messagesRef.current;
-      const previousCart = [...list]
-        .reverse()
-        .find((message): message is Extract<ChatMessage, { kind: "agent_cart" }> =>
-          message.kind === "agent_cart",
-        );
+      const previousCart = currentCart();
 
       const newItem = toCartItem(product, quantity);
       let items: AgentCartItem[];
@@ -1866,7 +2074,7 @@ export function SidecarAssistant({
         0,
       );
 
-      if (previousCart) removeMessage(previousCart.id);
+      removeMessage(previousCart.id);
 
       const id = nextId("cart");
       appendMessage({
@@ -1881,20 +2089,37 @@ export function SidecarAssistant({
       });
       return id;
     },
-    [appendMessage, getProductBySlug, removeMessage],
+    [appendMessage, currentCart, getProductBySlug, removeMessage],
   );
 
   // Surface the shopper's current cart as a fresh cart card at the bottom of
   // the conversation. Used by the context-island / cart FAB so a tap always
   // reads as a shopper turn ("Show my cart") and gets a cart-stage reply.
   const showCartCard = useCallback(() => {
-    const list = messagesRef.current;
-    const previousCart = [...list]
-      .reverse()
-      .find((message): message is Extract<ChatMessage, { kind: "agent_cart" }> =>
-        message.kind === "agent_cart",
-      );
-    if (!previousCart) return;
+    const previousCart = currentCart();
+    if (previousCart.items.length === 0) {
+      appendMessage({
+        id: nextId("shopper"),
+        kind: "shopper_text",
+        text: "Show my cart",
+      });
+      const emptyLoaderId = nextId("loader");
+      appendMessage({
+        id: emptyLoaderId,
+        kind: "agent_loader",
+        variant: "thinking",
+      });
+      scheduleResponse(() => {
+        removeMessage(emptyLoaderId);
+        appendMessage({
+          id: nextId("agent"),
+          kind: "agent_simple",
+          body: "Your cart is empty right now. Want some help finding something you'll love?",
+        });
+        appendMessage(buildNbasMessage(EMPTY_CART_NBAS));
+      });
+      return;
+    }
 
     // Snapshot so the delayed response still has the cart even if the
     // prior card is removed before the loader finishes.
@@ -1940,6 +2165,7 @@ export function SidecarAssistant({
     });
   }, [
     appendMessage,
+    currentCart,
     getProductBySlug,
     products,
     removeMessage,
@@ -2098,10 +2324,44 @@ export function SidecarAssistant({
     [appendMessage, getProductBySlug, updateMessage],
   );
 
+  // Upsell adds from the panel are silent: they update the cart in place, with
+  // no shopper bubble or agent reply, and apply the spend-threshold coupon
+  // themselves once the subtotal crosses the line.
+  const [upsellBusy, setUpsellBusy] = useState(false);
+  const addToCartFromPanel = useCallback(
+    (cartMessageId: string, slug: string) => {
+      const product = getProductBySlug(slug);
+      if (!product || upsellBusy) return;
+      setUpsellBusy(true);
+      window.setTimeout(() => {
+        updateMessage(cartMessageId, (message) => {
+          if (message.kind !== "agent_cart") return message;
+          const addedId = `cart-${product.slug}`;
+          const existing = message.items.find((item) => item.id === addedId);
+          const items = existing
+            ? message.items.map((item) =>
+                item.id === addedId
+                  ? { ...item, quantity: item.quantity + 1 }
+                  : item,
+              )
+            : [...message.items, toCartItem(product, 1)];
+          // The spend tier is applied by applySpendTiers on the way in.
+          return {
+            ...message,
+            items,
+            summary: cartSummaryText(items, cartSubtotal(items)),
+          };
+        });
+        setUpsellBusy(false);
+      }, UPSELL_ADD_LATENCY_MS);
+    },
+    [getProductBySlug, updateMessage, upsellBusy],
+  );
+
   const runCheckoutFlow = useCallback(
     (cartMessageId: string) => {
-      const cart = messagesRef.current.find((m) => m.id === cartMessageId);
-      if (!cart || cart.kind !== "agent_cart") return;
+      const cart = findCart(cartMessageId);
+      if (!cart) return;
 
       const paymentLoaderId = nextId("loader");
       appendMessage({ id: paymentLoaderId, kind: "agent_loader", variant: "fetching_payment" });
@@ -2687,8 +2947,8 @@ export function SidecarAssistant({
 
   const handleRemoveCartItem = useCallback(
     (cartMessageId: string, itemId: string) => {
-      const cart = messagesRef.current.find((m) => m.id === cartMessageId);
-      if (!cart || cart.kind !== "agent_cart") return;
+      const cart = findCart(cartMessageId);
+      if (!cart) return;
       const remaining = cart.items.filter((item) => item.id !== itemId);
 
       if (remaining.length === 0) {
@@ -2790,13 +3050,10 @@ export function SidecarAssistant({
     });
   }
 
-  const findLatestCartId = useCallback((): string | undefined => {
-    const list = messagesRef.current;
-    for (let i = list.length - 1; i >= 0; i -= 1) {
-      if (list[i].kind === "agent_cart") return list[i].id;
-    }
-    return undefined;
-  }, []);
+  const findLatestCartId = useCallback(
+    (): string | undefined => currentCart().id,
+    [currentCart],
+  );
 
   const applyAgentActions = useCallback(
     (actions: AgentAction[]): boolean => {
@@ -3933,7 +4190,7 @@ export function SidecarAssistant({
           stage: "compare",
           products: comparedProducts,
           recommended,
-          inCartSlugs: cartSlugsFromMessages(messagesRef.current),
+          inCartSlugs: cartSlugsFromMessages([storeCartRef.current, ...messagesRef.current]),
         });
         appendMessage(
           buildStageNbasMessage("compare", compareNbas, false, {
@@ -4445,7 +4702,7 @@ export function SidecarAssistant({
           stage: "compare",
           products: compared,
           recommended,
-          inCartSlugs: cartSlugsFromMessages(messagesRef.current),
+          inCartSlugs: cartSlugsFromMessages([storeCartRef.current, ...messagesRef.current]),
         }).filter((item) => !answered.has(item.label.trim().toLowerCase()));
         if (remaining.length === 0) return;
         appendMessage(
@@ -4584,12 +4841,8 @@ export function SidecarAssistant({
       });
     }
 
-    const latestCart = [...messagesRef.current]
-      .reverse()
-      .find((message): message is Extract<ChatMessage, { kind: "agent_cart" }> =>
-        message.kind === "agent_cart",
-      );
-    const cartProducts = cartSlugsFromMessages(messagesRef.current)
+    const latestCart = currentCart();
+    const cartProducts = cartSlugsFromMessages([storeCartRef.current, ...messagesRef.current])
       .map((slug) => getProductBySlug(slug))
       .filter((product): product is CatalogProduct => Boolean(product));
     if (cartProducts.length > 0) {
@@ -6120,6 +6373,8 @@ export function SidecarAssistant({
                 }
                 onCheckout={() => handleCheckout(message.id)}
                 onApplePay={() => handleCheckout(message.id)}
+                summaryOnly={cartStyle === "in-panel"}
+                onViewCart={() => setCartPanelOpen(true)}
               />
             );
           case "agent_order":
@@ -6237,6 +6492,7 @@ export function SidecarAssistant({
       handleRemoveCartCoupon,
       handleRemoveCartItem,
       submitGuestOrderLookup,
+      cartStyle,
       handleRoutineShowMore,
       handleShowMore,
       handleToggleSelect,
@@ -6475,6 +6731,8 @@ export function SidecarAssistant({
     setUpdatingCart(null);
     setSentDraft("");
     revokeShopperImageUrls(messagesRef.current);
+    // A new chat keeps the shopper's cart; it goes back outside the transcript.
+    setStoreCart({ ...currentCart(), id: STORE_CART_ID });
     // Emptying the list lets the welcome-seed effect re-run and restore the
     // greeting card + NBA row, matching a fresh session.
     setMessages([]);
@@ -6619,20 +6877,38 @@ export function SidecarAssistant({
             : ""
         }`}
       >
+        {/* The cart view takes over the header rather than stacking a second
+            bar under it: the brand tile turns into a back button and the title
+            names the view. */}
         <div className="sidecar-assistant__header-title">
-          <span className="sidecar-assistant__header-icon" aria-hidden="true">
-            <SparkleIcon width={18} height={18} strokeWidth={1.5} />
+          {cartPanelVisible ? (
+            <button
+              type="button"
+              className="sidecar-assistant__header-btn sidecar-assistant__header-back"
+              aria-label="Back to chat"
+              onClick={() => setCartPanelOpen(false)}
+            >
+              <ArrowLeftIcon width={18} height={18} />
+            </button>
+          ) : (
+            <span className="sidecar-assistant__header-icon" aria-hidden="true">
+              <SparkleIcon width={18} height={18} strokeWidth={1.5} />
+            </span>
+          )}
+          <span className="sidecar-assistant__header-label">
+            {cartPanelVisible ? "Your cart" : "Beauty Advisor"}
           </span>
-          <span className="sidecar-assistant__header-label">Beauty Advisor</span>
         </div>
         <div className="sidecar-assistant__header-actions">
           {/* With the island off the cart lives in the header rather than over
               the transcript, which leaves nothing floating between the shopper
               and what they are reading. Only immersive has the width to carry
               the island's totals beside the button. */}
-          {!contextIsland && cartItemCount > 0 ? (
+          {/* Always shown, even with an empty cart; the count badge only
+              appears once something has been added. */}
+          {!contextIsland ? (
             <div className="sidecar-assistant__header-cart">
-              {detached ? (
+              {detached && cartItemCount > 0 ? (
                 <span className="sidecar-assistant__header-cart-summary">
                   {cartTotals.total ? (
                     <span className="sidecar-assistant__header-cart-total">
@@ -6648,12 +6924,18 @@ export function SidecarAssistant({
                 type="button"
                 className="sidecar-assistant__header-btn sidecar-assistant__header-cart-btn"
                 aria-label={`Cart: ${cartItemCount} item${cartItemCount === 1 ? "" : "s"}`}
-                onClick={showCartCard}
+                onClick={
+                  cartStyle === "in-panel"
+                    ? () => setCartPanelOpen(true)
+                    : showCartCard
+                }
               >
                 <ShoppingCartIcon width={16} height={16} />
-                <span className="sidecar-assistant__context-island-badge">
-                  {cartItemCount}
-                </span>
+                {cartItemCount > 0 ? (
+                  <span className="sidecar-assistant__context-island-badge">
+                    {cartItemCount}
+                  </span>
+                ) : null}
               </button>
             </div>
           ) : null}
@@ -6761,7 +7043,11 @@ export function SidecarAssistant({
                 type="button"
                 className="sidecar-assistant__context-island-cart"
                 aria-label={`Cart: ${cartItemCount} item${cartItemCount === 1 ? "" : "s"}`}
-                onClick={showCartCard}
+                onClick={
+                  cartStyle === "in-panel"
+                    ? () => setCartPanelOpen(true)
+                    : showCartCard
+                }
               >
                 <ShoppingCartIcon width={20} height={20} />
                 <span className="sidecar-assistant__context-island-badge">
@@ -6773,7 +7059,102 @@ export function SidecarAssistant({
         </div>
       ) : null}
 
-      <div className="sidecar-assistant__chat-area">
+      {cartPanelVisible ? (
+        <section
+          className="sidecar-assistant__cart-panel"
+          aria-label="Your cart"
+        >
+          <div className="sidecar-assistant__cart-panel-body">
+            {latestCartMessage && cartPanelHasItems ? (
+            <AgentCart
+              detailsOnly
+              summary={latestCartMessage.summary}
+              items={latestCartMessage.items}
+              lineItems={latestCartMessage.lineItems}
+              cartCoupons={latestCartMessage.cartCoupons}
+              onApplyPromo={(code) =>
+                handleApplyPromo(latestCartMessage.id, code)
+              }
+              onRemoveCoupon={(code) =>
+                handleRemoveCartCoupon(latestCartMessage.id, code)
+              }
+              onQuantityChange={(itemId, quantity) =>
+                handleCartQuantityChange(latestCartMessage.id, itemId, quantity)
+              }
+              onRemoveItem={(itemId) =>
+                handleRemoveCartItem(latestCartMessage.id, itemId)
+              }
+              updatingItemId={
+                updatingCart?.cartId === latestCartMessage.id
+                  ? updatingCart.itemId
+                  : null
+              }
+              onCheckout={() => {
+                setCartPanelOpen(false);
+                handleCheckout(latestCartMessage.id);
+              }}
+              onApplePay={() => {
+                setCartPanelOpen(false);
+                handleCheckout(latestCartMessage.id);
+              }}
+            />
+            ) : null}
+            {latestCartMessage && cartPanelHasItems ? (
+              <AgentCartUpsell
+                className="sidecar-assistant__cart-upsell"
+                tiers={SPEND_TIERS}
+                subtotal={cartPanelSubtotal}
+                products={upsellProducts}
+                busy={upsellBusy}
+                onAdd={(slug) =>
+                  addToCartFromPanel(latestCartMessage.id, slug)
+                }
+              />
+            ) : null}
+            {latestCartMessage && cartPanelHasItems ? null : (
+              <div
+                className="sidecar-assistant__cart-empty"
+                data-component="agent-cart-empty"
+              >
+                <div
+                  className="sidecar-assistant__cart-empty-art"
+                  aria-hidden="true"
+                >
+                  <ShoppingCartIcon width={40} height={40} strokeWidth={1.4} />
+                </div>
+                <h3 className="sidecar-assistant__cart-empty-title">
+                  Your cart is empty
+                </h3>
+                <p className="sidecar-assistant__cart-empty-body">
+                  Not sure where to start? Ask me and I'll help you find
+                  something you'll love.
+                </p>
+                <AgentNBAs
+                  className="sidecar-assistant__cart-empty-nbas"
+                  regenerateButton={false}
+                  nbas={EMPTY_CART_NBAS.map((label) => ({
+                    id: `cart-empty-${label}`,
+                    label,
+                  }))}
+                  onSelect={(nba) => {
+                    // Back to the chat, then send the pill as the shopper's
+                    // first turn so the agent picks up from there.
+                    setCartPanelOpen(false);
+                    handleNbaSelect("cart-panel-empty", nba.label);
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        </section>
+      ) : null}
+
+      {/* Hidden rather than unmounted while the cart view is up, so the
+          transcript keeps its scroll position and the composer its draft. */}
+      <div
+        className="sidecar-assistant__chat-area"
+        style={cartPanelVisible ? { display: "none" } : undefined}
+      >
         <div
           className={`sidecar-assistant__chat${
             contextDividerPill && contextStickyPill
@@ -6809,7 +7190,11 @@ export function SidecarAssistant({
         ) : null}
       </div>
 
-      <form className="sidecar-assistant__input-bar" onSubmit={handleSubmit}>
+      <form
+        className="sidecar-assistant__input-bar"
+        onSubmit={handleSubmit}
+        style={cartPanelVisible ? { display: "none" } : undefined}
+      >
         {!inChatProductSelection &&
         (selectedSlugs.length > 0 || askingAboutRow) ? (
           <div className="sidecar-assistant__selection-tray">

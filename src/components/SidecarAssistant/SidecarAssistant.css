@@ -209,6 +209,12 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   }
 }
 
+/* Back button that stands in for the brand tile while the cart view is open;
+   pulled left so its arrow lines up with where the tile sat. */
+.sidecar-assistant__header-back {
+  margin-left: -6px;
+}
+
 .sidecar-assistant__header-label {
   font-size: 16px;
   font-weight: 500;
@@ -687,6 +693,73 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+/* "In panel" cart view: replaces the transcript and composer until the shopper
+   goes back to the chat. */
+.sidecar-assistant__cart-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: rgba(250, 250, 250, 1);
+}
+
+.sidecar-assistant__cart-panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px;
+}
+
+/* Empty cart: a centred illustration, message and conversation starters that
+   hand the shopper back to the agent. */
+.sidecar-assistant__cart-empty {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 8px 48px;
+  text-align: center;
+}
+
+.sidecar-assistant__cart-empty-art {
+  width: 88px;
+  height: 88px;
+  margin-bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #ececec;
+  color: #17171b;
+}
+
+.sidecar-assistant__cart-empty-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 26px;
+  color: var(--agentic-foreground);
+}
+
+.sidecar-assistant__cart-empty-body {
+  margin: 0 0 16px;
+  max-width: 280px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--agentic-body, #545454);
+}
+
+.sidecar-assistant__cart-empty .sidecar-assistant__cart-empty-nbas {
+  justify-content: center;
+}
+
+.sxs-layout__panel--detached .sidecar-assistant__cart-panel-body {
+  padding-inline: max(20px, calc((100% - var(--sxs-immersive-column)) / 2));
 }
 
 .sidecar-assistant__chat {
@@ -2056,4 +2129,8 @@ html[data-demo-viewport="mobile"]
   margin-top: 0;
   padding: 16px;
   box-shadow: none;
+}
+
+.sidecar-assistant__cart-upsell {
+  margin-top: 16px;
 }

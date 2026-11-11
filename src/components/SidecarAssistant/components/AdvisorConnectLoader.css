@@ -18,19 +18,73 @@
   height: 121px;
   margin-bottom: 18px;
   flex: 0 0 auto;
-  background-image: url("./advisor-connect-sparkles.png");
-  background-repeat: no-repeat;
-  background-size: 1024px 121px;
-  animation: advisor-connect-sparkle-play 800ms steps(8) infinite;
+  display: block;
+  overflow: visible;
 }
 
-@keyframes advisor-connect-sparkle-play {
-  from {
-    background-position: 0 0;
-  }
-  to {
-    background-position: -1024px 0;
-  }
+/* The sparkles replay the original 8-frame sprite (advisor-connect-
+   sparkles.png). Each keyframe is one frame's measured centre (in sprite
+   pixels, the SVG's viewBox) and radius, 100ms apart as before; the stars
+   now glide between frames instead of cutting. Every cycle the small star
+   grows into the big one, the big one shrinks to the bottom right, and that
+   star crosses back to the top left, so the loop is seamless. */
+.advisor-connect__sparkle {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  animation-duration: 800ms;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.advisor-connect__sparkle--shrink {
+  transform: translate(136.5px, 133px) scale(0.79);
+  animation-name: advisor-connect-sparkle-shrink;
+}
+
+.advisor-connect__sparkle--grow {
+  transform: translate(47px, 47px) scale(0.355);
+  animation-name: advisor-connect-sparkle-grow;
+}
+
+.advisor-connect__sparkle--cross {
+  transform: translate(229px, 213.5px) scale(0.355);
+  animation-name: advisor-connect-sparkle-cross;
+}
+
+@keyframes advisor-connect-sparkle-shrink {
+  0% { transform: translate(136.5px, 133px) scale(0.79); }
+  12.5% { transform: translate(139px, 135.5px) scale(0.775); }
+  25% { transform: translate(157.5px, 151.5px) scale(0.69); }
+  37.5% { transform: translate(199.5px, 188px) scale(0.49); }
+  50% { transform: translate(215.5px, 201.5px) scale(0.42); }
+  62.5% { transform: translate(223px, 208px) scale(0.385); }
+  75% { transform: translate(226.5px, 211px) scale(0.37); }
+  87.5% { transform: translate(228.5px, 212.5px) scale(0.36); }
+  100% { transform: translate(229px, 213.5px) scale(0.355); }
+}
+
+@keyframes advisor-connect-sparkle-grow {
+  0% { transform: translate(47px, 47px) scale(0.355); }
+  12.5% { transform: translate(49.5px, 49.5px) scale(0.37); }
+  25% { transform: translate(67px, 66px) scale(0.445); }
+  37.5% { transform: translate(107.5px, 105.5px) scale(0.63); }
+  50% { transform: translate(123px, 120px) scale(0.695); }
+  62.5% { transform: translate(130.5px, 127px) scale(0.73); }
+  75% { transform: translate(134px, 131px) scale(0.745); }
+  87.5% { transform: translate(136px, 132.5px) scale(0.755); }
+  100% { transform: translate(136.5px, 133px) scale(0.79); }
+}
+
+@keyframes advisor-connect-sparkle-cross {
+  0% { transform: translate(229px, 213.5px) scale(0.355); }
+  12.5% { transform: translate(223.5px, 208px) scale(0.36); }
+  25% { transform: translate(192px, 167px) scale(0.32); }
+  37.5% { transform: translate(128px, 122px) scale(0.06); }
+  50% { transform: translate(71.5px, 69px) scale(0.355); }
+  62.5% { transform: translate(56.5px, 55px) scale(0.36); }
+  75% { transform: translate(48.5px, 48px) scale(0.36); }
+  87.5% { transform: translate(45px, 45px) scale(0.355); }
+  100% { transform: translate(47px, 47px) scale(0.355); }
 }
 
 .advisor-connect__title {
@@ -202,7 +256,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .advisor-connect__sparkles {
+  .advisor-connect__sparkle {
     animation: none;
   }
 

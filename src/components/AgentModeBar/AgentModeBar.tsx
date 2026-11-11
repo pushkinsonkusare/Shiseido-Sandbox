@@ -6,6 +6,7 @@ import {
   AGENT_MODES,
   COMPARE_FEATURE_TYPES,
   ADVISOR_CONNECT_TYPES,
+  CART_STYLES,
   CONTEXT_TYPES,
   PRODUCT_SELECTION_TYPES,
   SUGGESTIONS_TYPES,
@@ -71,6 +72,8 @@ export function AgentModeBar() {
     setAdvisorConnect,
     advisorConnectType,
     setAdvisorConnectType,
+    cartStyle,
+    setCartStyle,
     userTestingLock,
   } = useAgentMode();
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
@@ -268,6 +271,25 @@ export function AgentModeBar() {
                       (theme === id ? " agent-mode-bar__option-button--active" : "")
                     }
                     onClick={() => setTheme(id)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="agent-mode-bar__section">
+              <h3 className="agent-mode-bar__section-title">Cart style</h3>
+              <div className="agent-mode-bar__option-grid" role="group" aria-label="Cart style">
+                {CART_STYLES.map(({ id, label }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    className={
+                      "agent-mode-bar__option-button" +
+                      (cartStyle === id ? " agent-mode-bar__option-button--active" : "")
+                    }
+                    onClick={() => setCartStyle(id)}
                   >
                     {label}
                   </button>

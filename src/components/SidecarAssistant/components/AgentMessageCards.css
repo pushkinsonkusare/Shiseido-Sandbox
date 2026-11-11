@@ -2132,6 +2132,11 @@ html[data-demo-theme="consumer-electronics"] .agent-plp__carousel--list .agent-p
   pointer-events: none;
 }
 
+.agent-summary__box-header--static {
+  align-items: center;
+  cursor: default;
+}
+
 .agent-summary__box-header:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--agentic-focus);
@@ -3085,10 +3090,158 @@ html[data-demo-viewport="mobile"]
   background: #000000;
 }
 
-.agent-lookup__form .agent-msg__btn:disabled {
+/* Also listed with :hover, because the NTO theme's teal primary hover has no
+   :not(:disabled) guard and would otherwise light up the locked button. */
+.agent-lookup__form .agent-msg__btn.agent-msg__btn--primary:disabled,
+.agent-lookup__form .agent-msg__btn.agent-msg__btn--primary:disabled:hover {
   background: #ececec;
   color: rgba(23, 23, 27, 0.35);
   box-shadow: none;
   opacity: 1;
   cursor: not-allowed;
+}
+
+/* "In panel" cart view: the details sit straight in the card rather than in
+   the collapsible summary box, so drop the box's inner side padding and line
+   them up with the coupon field and CTAs. */
+.agent-cart__panel-details .agent-summary__details {
+  padding: 0;
+}
+
+.agent-cart__panel-details .agent-summary__item:first-child {
+  padding-top: 0;
+}
+
+/* Spend-threshold upsell shown beneath the cart in the "in panel" view. */
+.agent-upsell__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.agent-upsell__icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #ececec;
+  color: #17171b;
+}
+
+.agent-upsell__icon--done {
+  background: #e3f4e8;
+  color: #1c7c3c;
+}
+
+.agent-upsell__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.agent-upsell__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #17171b;
+}
+
+.agent-upsell__body {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #5c5c63;
+}
+
+/* Track with a dot per milestone; the last milestone sits at the right edge,
+   so dots and labels hang inward from their position rather than centring. */
+.agent-upsell__track {
+  position: relative;
+  height: 16px;
+  margin: 0 8px;
+}
+
+.agent-upsell__progress {
+  position: absolute;
+  inset: 5px 0 auto;
+  height: 6px;
+  border-radius: 999px;
+  background: #ececec;
+  overflow: hidden;
+}
+
+.agent-upsell__milestone {
+  position: absolute;
+  top: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #d5d5da;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #ffffff;
+  transition: background-color 300ms ease, border-color 300ms ease;
+}
+
+.agent-upsell__milestone--reached {
+  border-color: #17171b;
+  background: #17171b;
+}
+
+.agent-upsell__milestone-labels {
+  position: relative;
+  height: 32px;
+  margin: 8px 8px 0;
+}
+
+.agent-upsell__milestone-label {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #8a8a91;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.agent-upsell__milestone-label:last-child {
+  transform: translateX(calc(-100% + 8px));
+  align-items: flex-end;
+}
+
+.agent-upsell__milestone-value {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.agent-upsell__milestone-label--reached,
+.agent-upsell__milestone-label--next {
+  color: #17171b;
+}
+
+.agent-upsell__progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: #17171b;
+  transition: width 400ms ease;
+}
+
+.agent-upsell__carousel[aria-busy="true"] {
+  opacity: 0.6;
+  pointer-events: none;
+  transition: opacity 150ms ease;
 }

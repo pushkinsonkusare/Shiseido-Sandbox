@@ -2570,6 +2570,13 @@ export const CART_FOLLOWUP_NBAS = [
   "Edit cart",
 ] as const;
 
+/** Suggestions offered when the shopper opens an empty cart. */
+export const EMPTY_CART_NBAS = [
+  "Sunscreen for dry skin",
+  "Skincare for oily skin",
+  "Help me choose a serum",
+] as const;
+
 export const ORDER_FOLLOWUP_NBAS = [
   "Track this order",
   "Continue shopping",

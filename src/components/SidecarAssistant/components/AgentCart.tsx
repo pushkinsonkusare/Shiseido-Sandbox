@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   ArrowRightIcon,
   ChevronDownIcon,
+  ChevronRightIcon,
   ChevronUpIcon,
   CloseIcon,
   ExternalLinkIcon,
@@ -82,6 +83,20 @@ export type AgentCartProps = {
   checkoutLabel?: string;
   /** When provided, renders an Apple Pay shortcut above the checkout CTA. */
   onApplePay?: () => void;
+  /**
+   * "In panel" cart style: show only the acknowledgement and a collapsed cart
+   * summary. The summary does not expand, and the coupon field, CTAs and
+   * footnote are hidden.
+   */
+  summaryOnly?: boolean;
+  /**
+   * "In panel" cart view: the item list and totals are always shown, with no
+   * acknowledgement or collapsible summary, followed by the coupon field, CTAs
+   * and footnote.
+   */
+  detailsOnly?: boolean;
+  /** "In panel" only: called by the round chevron CTA beside the summary. */
+  onViewCart?: () => void;
   /** Optional class name appended to the root element. */
   className?: string;
 };
@@ -110,6 +125,9 @@ export function AgentCart({
   onCheckout,
   checkoutLabel = "Checkout",
   onApplePay,
+  summaryOnly = false,
+  onViewCart,
+  detailsOnly = false,
   className,
 }: AgentCartProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -127,11 +145,210 @@ export function AgentCart({
     setPromoCode("");
   };
 
+  const detailsBlock = (
+    <div className="agent-summary__details">
+      <div className="agent-summary__items">
+        {items.map((item) => (
+          <div key={item.id} className="agent-summary__item">
+            <div className="agent-summary__thumb">
+              <img src={item.imageUrl} alt={item.imageAlt} />
+            </div>
+            <div className="agent-summary__item-info">
+              <h4
+                className="agent-summary__item-title"
+                title={item.title}
+              >
+                {item.title}
+              </h4>
+
+              {item.meta && item.meta.length > 0 ? (
+                <div className="agent-summary__item-meta-group">
+                  {item.meta.map((line) => (
+                    <p
+                      key={line}
+                      className="agent-summary__item-meta"
+                    >
+                      {line}
+                    </p>
+                  ))}
+                </div>
+              ) : null}
+
+              {item.promotion ? (
+                <p className="agent-summary__item-meta">
+                  Promotion: {item.promotion}
+                </p>
+              ) : null}
+
+              {item.couponTags && item.couponTags.length > 0 ? (
+                <div className="agent-summary__chips">
+                  {item.couponTags.map((code) => (
+                    <span
+                      key={code}
+                      className="agent-summary__chip"
+                    >
+                      <TagIcon
+                        className="agent-summary__chip-icon"
+                        width={12}
+                        height={12}
+                      />
+                      <span className="agent-summary__chip-label">
+                        {code}
+                      </span>
+                      <button
+                        type="button"
+                        className="agent-summary__chip-remove"
+                        aria-label={`Remove coupon ${code}`}
+                        onClick={() =>
+                          onRemoveItemCoupon?.(item.id, code)
+                        }
+                      >
+                        <CloseIcon width={12} height={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+
+              <div className="agent-summary__item-pricing">
+                <span className="agent-summary__item-pricing--main">
+                  {item.price.replace(/^From\s+/i, "")}
+                </span>
+                {item.comparePrice ? (
+                  <span className="agent-summary__item-pricing--strike">
+                    {item.comparePrice}
+                  </span>
+                ) : null}
+              </div>
+
+              <div className="agent-summary__qty">
+                <span className="agent-summary__qty-label">
+                  Quantity
+                </span>
+                <div className="agent-summary__stepper-row">
+                  <div
+                    className="agent-summary__stepper"
+                    role="group"
+                    aria-label={`Quantity for ${item.title}`}
+                  >
+                    <button
+                      type="button"
+                      className="agent-summary__stepper-btn"
+                      aria-label="Decrease quantity"
+                      disabled={updating || item.quantity <= 1}
+                      onClick={() =>
+                        onQuantityChange?.(
+                          item.id,
+                          Math.max(1, item.quantity - 1),
+                        )
+                      }
+                    >
+                      <MinusIcon width={14} height={14} />
+                    </button>
+                    <span className="agent-summary__stepper-value">
+                      {item.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      className="agent-summary__stepper-btn"
+                      aria-label="Increase quantity"
+                      disabled={updating}
+                      onClick={() =>
+                        onQuantityChange?.(
+                          item.id,
+                          item.quantity + 1,
+                        )
+                      }
+                    >
+                      <PlusIcon width={14} height={14} />
+                    </button>
+                  </div>
+                  {updatingItemId === item.id ? (
+                    <span
+                      className="agent-summary__qty-spinner"
+                      role="status"
+                      aria-label="Updating cart"
+                    />
+                  ) : null}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="agent-summary__remove"
+                disabled={updating}
+                onClick={() => onRemoveItem?.(item.id)}
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {cartCoupons && cartCoupons.length > 0 ? (
+        <div className="agent-summary__chips agent-summary__chips--cart">
+          {cartCoupons.map((code) => (
+            <span key={code} className="agent-summary__chip">
+              <TagIcon
+                className="agent-summary__chip-icon"
+                width={12}
+                height={12}
+              />
+              <span className="agent-summary__chip-label">
+                {code}
+              </span>
+              <button
+                type="button"
+                className="agent-summary__chip-remove"
+                aria-label={`Remove coupon ${code}`}
+                onClick={() => onRemoveCoupon?.(code)}
+              >
+                <CloseIcon width={12} height={12} />
+              </button>
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="agent-summary__lines" aria-busy={updating}>
+        {lineItems.map((line, index) => (
+          <div
+            key={`${line.label}-${index}`}
+            className={
+              "agent-summary__line" +
+              (line.emphasis ? " agent-summary__line--total" : "")
+            }
+          >
+            <span className="agent-summary__line-label">
+              {line.label}
+              {line.note ? (
+                <span className="agent-summary__line-note">
+                  {line.note}
+                </span>
+              ) : null}
+            </span>
+            <span className="agent-summary__line-value">
+              {updating ? (
+                <span
+                  className="agent-summary__line-skeleton"
+                  aria-label="Updating"
+                />
+              ) : (
+                line.value
+              )}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="agent-cart" data-component="agent-cart">
       <article className={rootClass}>
         <div className="agent-summary__card-content">
-          {acknowledgement ? (
+          {acknowledgement && !detailsOnly ? (
             <div className="agent-summary__row">
               <p className="agent-summary__acknowledgement">
                 {acknowledgement}
@@ -139,8 +356,29 @@ export function AgentCart({
             </div>
           ) : null}
 
+          {detailsOnly ? (
+            <div className="agent-summary__row agent-cart__panel-details">
+              {detailsBlock}
+            </div>
+          ) : (
           <div className="agent-summary__row">
             <div className="agent-summary__box">
+              {summaryOnly ? (
+                <div className="agent-summary__box-header agent-summary__box-header--static">
+                  <span className="agent-summary__box-icon" aria-hidden="true">
+                    <ShoppingCartIcon width={16} height={16} />
+                  </span>
+                  <p className="agent-summary__box-summary">{summary}</p>
+                  <button
+                    type="button"
+                    className="agent-product-card__cart-btn agent-summary__view-cart"
+                    aria-label="View cart"
+                    onClick={onViewCart}
+                  >
+                    <ChevronRightIcon width={18} height={18} />
+                  </button>
+                </div>
+              ) : (
               <button
                 type="button"
                 className="agent-summary__box-header"
@@ -164,208 +402,15 @@ export function AgentCart({
                   )}
                 </span>
               </button>
+              )}
 
-              {expanded ? (
-                <div className="agent-summary__details">
-                  <div className="agent-summary__items">
-                    {items.map((item) => (
-                      <div key={item.id} className="agent-summary__item">
-                        <div className="agent-summary__thumb">
-                          <img src={item.imageUrl} alt={item.imageAlt} />
-                        </div>
-                        <div className="agent-summary__item-info">
-                          <h4
-                            className="agent-summary__item-title"
-                            title={item.title}
-                          >
-                            {item.title}
-                          </h4>
-
-                          {item.meta && item.meta.length > 0 ? (
-                            <div className="agent-summary__item-meta-group">
-                              {item.meta.map((line) => (
-                                <p
-                                  key={line}
-                                  className="agent-summary__item-meta"
-                                >
-                                  {line}
-                                </p>
-                              ))}
-                            </div>
-                          ) : null}
-
-                          {item.promotion ? (
-                            <p className="agent-summary__item-meta">
-                              Promotion: {item.promotion}
-                            </p>
-                          ) : null}
-
-                          {item.couponTags && item.couponTags.length > 0 ? (
-                            <div className="agent-summary__chips">
-                              {item.couponTags.map((code) => (
-                                <span
-                                  key={code}
-                                  className="agent-summary__chip"
-                                >
-                                  <TagIcon
-                                    className="agent-summary__chip-icon"
-                                    width={12}
-                                    height={12}
-                                  />
-                                  <span className="agent-summary__chip-label">
-                                    {code}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    className="agent-summary__chip-remove"
-                                    aria-label={`Remove coupon ${code}`}
-                                    onClick={() =>
-                                      onRemoveItemCoupon?.(item.id, code)
-                                    }
-                                  >
-                                    <CloseIcon width={12} height={12} />
-                                  </button>
-                                </span>
-                              ))}
-                            </div>
-                          ) : null}
-
-                          <div className="agent-summary__item-pricing">
-                            <span className="agent-summary__item-pricing--main">
-                              {item.price.replace(/^From\s+/i, "")}
-                            </span>
-                            {item.comparePrice ? (
-                              <span className="agent-summary__item-pricing--strike">
-                                {item.comparePrice}
-                              </span>
-                            ) : null}
-                          </div>
-
-                          <div className="agent-summary__qty">
-                            <span className="agent-summary__qty-label">
-                              Quantity
-                            </span>
-                            <div className="agent-summary__stepper-row">
-                              <div
-                                className="agent-summary__stepper"
-                                role="group"
-                                aria-label={`Quantity for ${item.title}`}
-                              >
-                                <button
-                                  type="button"
-                                  className="agent-summary__stepper-btn"
-                                  aria-label="Decrease quantity"
-                                  disabled={updating || item.quantity <= 1}
-                                  onClick={() =>
-                                    onQuantityChange?.(
-                                      item.id,
-                                      Math.max(1, item.quantity - 1),
-                                    )
-                                  }
-                                >
-                                  <MinusIcon width={14} height={14} />
-                                </button>
-                                <span className="agent-summary__stepper-value">
-                                  {item.quantity}
-                                </span>
-                                <button
-                                  type="button"
-                                  className="agent-summary__stepper-btn"
-                                  aria-label="Increase quantity"
-                                  disabled={updating}
-                                  onClick={() =>
-                                    onQuantityChange?.(
-                                      item.id,
-                                      item.quantity + 1,
-                                    )
-                                  }
-                                >
-                                  <PlusIcon width={14} height={14} />
-                                </button>
-                              </div>
-                              {updatingItemId === item.id ? (
-                                <span
-                                  className="agent-summary__qty-spinner"
-                                  role="status"
-                                  aria-label="Updating cart"
-                                />
-                              ) : null}
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            className="agent-summary__remove"
-                            disabled={updating}
-                            onClick={() => onRemoveItem?.(item.id)}
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {cartCoupons && cartCoupons.length > 0 ? (
-                    <div className="agent-summary__chips agent-summary__chips--cart">
-                      {cartCoupons.map((code) => (
-                        <span key={code} className="agent-summary__chip">
-                          <TagIcon
-                            className="agent-summary__chip-icon"
-                            width={12}
-                            height={12}
-                          />
-                          <span className="agent-summary__chip-label">
-                            {code}
-                          </span>
-                          <button
-                            type="button"
-                            className="agent-summary__chip-remove"
-                            aria-label={`Remove coupon ${code}`}
-                            onClick={() => onRemoveCoupon?.(code)}
-                          >
-                            <CloseIcon width={12} height={12} />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  <div className="agent-summary__lines" aria-busy={updating}>
-                    {lineItems.map((line, index) => (
-                      <div
-                        key={`${line.label}-${index}`}
-                        className={
-                          "agent-summary__line" +
-                          (line.emphasis ? " agent-summary__line--total" : "")
-                        }
-                      >
-                        <span className="agent-summary__line-label">
-                          {line.label}
-                          {line.note ? (
-                            <span className="agent-summary__line-note">
-                              {line.note}
-                            </span>
-                          ) : null}
-                        </span>
-                        <span className="agent-summary__line-value">
-                          {updating ? (
-                            <span
-                              className="agent-summary__line-skeleton"
-                              aria-label="Updating"
-                            />
-                          ) : (
-                            line.value
-                          )}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
+              {expanded && !summaryOnly ? detailsBlock : null}
             </div>
           </div>
+          )}
 
+          {summaryOnly ? null : (
+          <>
           <form className="agent-summary__promo" onSubmit={handlePromoSubmit}>
             <div className="agent-summary__promo-field">
               <TagIcon
@@ -427,6 +472,8 @@ export function AgentCart({
           <div className="agent-summary__row">
             <p className="agent-summary__footnote">{footnote}</p>
           </div>
+          </>
+          )}
         </div>
       </article>
     </div>

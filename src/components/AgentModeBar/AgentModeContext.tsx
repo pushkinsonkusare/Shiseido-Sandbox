@@ -89,6 +89,14 @@ export const ADVISOR_CONNECT_TYPES: {
   { id: "skeleton-shimmer", label: "Skeleton shimmer" },
 ];
 
+/** Where the cart opens when the shopper asks for it. */
+export type CartStyle = "in-chat" | "in-panel";
+
+export const CART_STYLES: { id: CartStyle; label: string }[] = [
+  { id: "in-chat", label: "in chat" },
+  { id: "in-panel", label: "in panel" },
+];
+
 /** Single welcome NBA shown under UserTesting lock (`?ut=`). */
 export const UT_WELCOME_NBA_LABEL = "Skincare for oily skin";
 
@@ -228,6 +236,9 @@ type AgentModeContextValue = {
   /** Sub-option of Advisor connect; retained while the parent checkbox is off. */
   advisorConnectType: AdvisorConnectType;
   setAdvisorConnectType: (type: AdvisorConnectType) => void;
+  /** Where the cart opens; defaults to "in-chat". */
+  cartStyle: CartStyle;
+  setCartStyle: (style: CartStyle) => void;
   /**
    * False while the PDP widget answers inline, which is the point of that
    * mode: it shows what the storefront looks like for a customer who never
@@ -520,6 +531,7 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
   );
   const [advisorConnectType, setAdvisorConnectType] =
     useState<AdvisorConnectType>(UT_BOOTSTRAP.advisorConnectType);
+  const [cartStyle, setCartStyle] = useState<CartStyle>("in-chat");
 
   const value = useMemo(
     () => ({
@@ -569,6 +581,8 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       setAdvisorConnect,
       advisorConnectType,
       setAdvisorConnectType,
+      cartStyle,
+      setCartStyle,
       sidecarAvailable:
         DEMO_SCENARIO != null ||
         !(pdpInlineWidget && pdpInlineWidgetType === "inline-answer"),
@@ -597,6 +611,7 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       imageSearch,
       advisorConnect,
       advisorConnectType,
+      cartStyle,
     ],
   );
 
