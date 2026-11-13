@@ -7,6 +7,8 @@ export type PrimaryNavItem = {
    * so e.g. "Drones" matches both "Drones" and "4K drones".
    */
   category?: string;
+  /** Sends the link to a page other than the product listing. */
+  route?: "/skincare-blog";
 };
 
 export const SITE_BRAND = "Shiseido";
@@ -20,4 +22,5 @@ export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
   { label: "Moisturizers", category: "Moisturizers" },
   { label: "Sun Care", category: "Sunscreen" },
   { label: "Sets & Gifts", category: "Sets" },
+  { label: "Skincare Blog", route: "/skincare-blog" },
 ];

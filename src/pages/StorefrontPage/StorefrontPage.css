@@ -1293,26 +1293,116 @@ html[data-demo-viewport="desktop"] .figma-storefront__top-actions {
   align-items: center;
 }
 
-html[data-demo-viewport="desktop"] .figma-storefront__hero {
-  height: 490px;
-  aspect-ratio: auto;
-  display: block;
+/* Desktop demo mode forces the wide hero only on wide hosts. On a real
+ * phone or narrow window the portrait slide art and bottom-aligned copy
+ * apply, matching the advisor's bottom sheet at the same breakpoint. */
+@media (min-width: 768px) {
+  html[data-demo-viewport="desktop"] .figma-storefront__hero {
+    height: 490px;
+    aspect-ratio: auto;
+    display: block;
+  }
+
+  html[data-demo-viewport="desktop"] .figma-storefront__hero-image--desktop {
+    display: block;
+    object-position: center;
+  }
+
+  html[data-demo-viewport="desktop"] .figma-storefront__hero-image--mobile {
+    display: none;
+  }
+
+  html[data-demo-viewport="desktop"] .figma-storefront__hero-overlay {
+    align-items: center;
+    background: transparent;
+  }
 }
 
-html[data-demo-viewport="desktop"] .figma-storefront__hero-image--desktop {
-  display: block;
-  object-position: center;
-}
-
-html[data-demo-viewport="desktop"] .figma-storefront__hero-image--mobile {
-  display: none;
-}
-
-html[data-demo-viewport="desktop"] .figma-storefront__hero-overlay {
-  align-items: center;
-  background: transparent;
+/* Desktop: the hero fills most of the screen (tablets keep 490px). */
+@media (min-width: 1100px) {
+  html[data-demo-viewport="desktop"] .figma-storefront__hero {
+    height: max(490px, 80vh);
+  }
 }
 
 html[data-demo-viewport="desktop"] .figma-storefront__mobile-menu-trigger {
   display: none;
+}
+
+/* AI advisor slide: the photo's open cream wall sits on the left behind the
+ * copy; on phones keep both faces in frame and lift the copy off the skin. */
+.figma-storefront__hero--ai-advisor {
+  background: #f3e6d8;
+}
+
+/* The wide art is only used inside the phone-frame demo's desktop fallback;
+ * real tablet and desktop widths use the split layout below. */
+.figma-storefront__hero--ai-advisor .figma-storefront__hero-image--desktop {
+  object-position: center;
+}
+
+.figma-storefront__hero--ai-advisor .figma-storefront__hero-overlay {
+  color: #17171b;
+}
+
+/* Phones use portrait art (faces up top, its own cream fade below for the
+ * copy), so the default mobile crop and transparent overlay are enough. */
+
+/* Tablet and desktop: the wide art crops onto the faces (and, at the tall
+ * desktop height, cuts one off), so split the banner instead: copy on a cream field at left, the portrait art
+ * at right with its left edge feathered into the cream. Skipped inside the
+ * 402px phone-frame demo, which has its own mobile layout. */
+@media (min-width: 768px) {
+  html:not([data-demo-viewport="mobile"]) .figma-storefront__hero--ai-advisor {
+    background: #f3e6d8;
+  }
+
+  html:not([data-demo-viewport="mobile"]) .figma-storefront__hero--ai-advisor .figma-storefront__hero-image--desktop {
+    display: none;
+  }
+
+  html:not([data-demo-viewport="mobile"]) .figma-storefront__hero--ai-advisor .figma-storefront__hero-image--mobile {
+    display: block;
+    left: auto;
+    right: 0;
+    width: 52%;
+    object-fit: cover;
+    object-position: center top;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 22%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 22%);
+  }
+
+  html:not([data-demo-viewport="mobile"]) .figma-storefront__hero--ai-advisor .figma-storefront__hero-content {
+    max-width: 50%;
+  }
+}
+
+/* Fade-free crop of the AI advisor portrait. Only used at desktop widths. */
+.figma-storefront__hero-image--split {
+  display: none;
+}
+
+/* Desktop: swap the portrait (which fades to cream at the bottom) for its
+ * top crop so the photo runs edge to edge vertically, no bottom fade. */
+@media (min-width: 1100px) {
+  html:not([data-demo-viewport="mobile"]) .figma-storefront__hero--ai-advisor .figma-storefront__hero-image--mobile {
+    display: none;
+  }
+
+  html:not([data-demo-viewport="mobile"]) .figma-storefront__hero--ai-advisor .figma-storefront__hero-image--split {
+    display: block;
+    left: auto;
+    right: 0;
+    width: auto;
+    max-width: 62%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 22%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 22%);
+  }
+
+  html:not([data-demo-viewport="mobile"]) .figma-storefront__hero--ai-advisor .figma-storefront__hero-content {
+    max-width: 44%;
+  }
 }

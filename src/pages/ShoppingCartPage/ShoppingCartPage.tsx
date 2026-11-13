@@ -13,6 +13,7 @@ import {
 } from "../../components/icons/StorefrontIcons";
 import { ROUTES, usePrototypeNavigation } from "../../prototypeRoutes";
 import { SITE_ADDRESS, SITE_BRAND, SITE_FOOTER_COPY } from "../../siteContent";
+import { CartTierNudge } from "./CartTierNudge";
 import "./ShoppingCartPage.css";
 
 type CartItem = {
@@ -214,22 +215,15 @@ export default function ShoppingCartPage() {
 
         <div className="figma-cart__main-wrap">
           <div className="figma-cart__left">
-            <section className="figma-cart__shipping-progress">
-              <p>
-                You are <strong>{formatPrice(Math.max(0, 150 - subtotalValue))}</strong> away from{" "}
-                <strong className="figma-cart__shipping-strong">Priority Shipping</strong>
-              </p>
-              <div className="figma-cart__range">
-                <span>{formatPrice(Math.min(subtotalValue, 150))}</span>
-                <span>{formatPrice(150)}</span>
-              </div>
-              <div className="figma-cart__bar">
-                <div
-                  className="figma-cart__bar-fill"
-                  style={{ width: `${Math.min(100, (subtotalValue / 150) * 100)}%` }}
-                />
-              </div>
-            </section>
+            {cartItems.length > 0 ? (
+              <CartTierNudge
+                subtotal={subtotalValue}
+                cartProducts={cartLines.flatMap((line) => {
+                  const product = getProductBySlug(line.productSlug);
+                  return product ? [product] : [];
+                })}
+              />
+            ) : null}
 
             <CartSection
               icon={<StoreIcon width={20} height={20} />}

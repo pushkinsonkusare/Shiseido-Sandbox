@@ -42,6 +42,12 @@ export type AskAssistantEventDetail = {
    * dispatch is not pill-driven.
    */
   pillKind?: PdpNbaPillKind;
+  /**
+   * Products the page already picked, shown as the advisor's answer instead
+   * of re-parsing the prompt. The cart's spend-tier pills use this so a
+   * "reach $100" ask lands on items in budget, not on the cart's contents.
+   */
+  picks?: { slugs: string[]; intro: string };
 };
 
 /** Fire the cross-cutting event both Sidecar and SxS assistants listen for. */

@@ -40,11 +40,12 @@ function AboutUsPage() {
             {PRIMARY_NAV_ITEMS.map((item) => (
               <a
                 key={item.label}
-                href={ROUTES.productListing}
+                href={item.route ?? ROUTES.productListing}
                 className={item.emphasized ? "figma-about__sale-link" : undefined}
                 onClick={(event) => {
                   event.preventDefault();
-                  navigate(ROUTES.productListing, { category: item.category ?? null });
+                  if (item.route) navigate(item.route);
+                  else navigate(ROUTES.productListing, { category: item.category ?? null });
                 }}
               >
                 {item.label}

@@ -78,6 +78,7 @@ html.sxs-resizing * {
 .sxs-shell:has(.figma-pdp),
 .sxs-shell:has(.figma-storefront),
 .sxs-shell:has(.figma-plp),
+.sxs-shell:has(.blog),
 .sxs-shell:has(.figma-cart),
 .sxs-shell:has(.figma-about),
 .sxs-shell:has(.figma-overview) {
@@ -101,6 +102,7 @@ html.sxs-resizing * {
  * (e.g. --plp-surface) which still cascade to children via the inheritance
  * tree even when the box itself is removed. */
 .sxs-layout__main > .figma-plp,
+.sxs-layout__main > .blog,
 .sxs-layout__main > .figma-storefront,
 .sxs-layout__main > .figma-pdp,
 .sxs-layout__main > .figma-cart,
@@ -141,6 +143,7 @@ html.sxs-resizing * {
  * full-width footer rule below) so they reflow next to the assistant panel
  * instead of extending behind it when the panel is open. */
 .sxs-layout__main .figma-plp__page-inner,
+.sxs-layout__main .blog__inner,
 .sxs-layout__main .figma-storefront__page-inner,
 .sxs-layout__main .figma-storefront__newsletter,
 .sxs-layout__main .figma-storefront__footer,
@@ -552,6 +555,7 @@ html[data-demo-viewport="mobile"] .sxs-layout--mobile {
 }
 
 .sxs-layout--mobile .sxs-layout__main > .figma-plp,
+.sxs-layout--mobile .sxs-layout__main > .blog,
 .sxs-layout--mobile .sxs-layout__main > .figma-storefront,
 .sxs-layout--mobile .sxs-layout__main > .figma-pdp,
 .sxs-layout--mobile .sxs-layout__main > .figma-cart,
@@ -717,5 +721,19 @@ html[data-demo-viewport="mobile"] .sxs-shell:has(.sxs-layout--mobile) .sxs-layou
 }
 
 .sxs-shell:has(.sxs-layout--mobile) .sxs-layout__fab-label {
+  display: none;
+}
+
+/* Real phones / narrow windows (outside the 402px demo frame): the sheet
+ * spans the actual screen and tracks the visible height under the
+ * on-screen keyboard. Expand (immersive) is desktop-only. */
+html:not([data-demo-viewport="mobile"]) .sxs-layout__panel--mobile {
+  width: 100% !important;
+  height: var(--sxs-mobile-vh, 100dvh) !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.sxs-layout__panel--mobile .sidecar-assistant__header-btn--detach {
   display: none;
 }

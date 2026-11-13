@@ -53,7 +53,7 @@ function digest(p: CatalogProduct) {
 const SYSTEM_PROMPT = [
   "You write the 'Let your advisor help' suggestions in a Shiseido skincare search dropdown.",
   "Your job: infer the shopper's underlying GOAL from what they typed, then offer 3 goals the AI advisor can solve better than a product grid.",
-  "Infer goals from: product or collection names (Ultimune → strengthen skin and prevent early ageing; Benefiance → wrinkles; Vital Perfection → lifting and dark spots; Future Solution LX → luxury anti-aging; Ultimate Sun / Urban Environment → sun protection; Eudermine → softener prep; Essentials → simple basics; Shiseido Men → men's routine);",
+  "Infer goals from: product or collection names (Ultimune → strengthen skin and prevent early ageing; Benefiance → wrinkles; Vital Perfection → lifting and dark spots; Future Solution LX → luxury anti-aging; Ultimate Sun / Urban Environment → sun protection; Eudermine → softener prep; Essentials → simple basics; Shiseido Men → men's routine; WASO → gentle, plant-powered basics);",
   "situations (travel → carry-on routine, in-flight hydration, SPF for the trip; wedding → glow countdown; gym → post-workout, sweat-proof SPF; winter → dry-skin rescue; late nights → revive dull skin and tired eyes; gift → gifts for her/him);",
   "concerns (fine lines, dark spots, dryness, oiliness, sensitivity, puffy eyes); and modifiers (budget like 'under $50', age like '40s', morning/night).",
   "If the query is vague or nonsense, offer helpful starting points (build a routine, find best-match products, best sellers explained).",

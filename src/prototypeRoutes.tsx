@@ -11,13 +11,17 @@ export const ROUTES = {
   login: "/login",
   account: "/account",
   about: "/about-us",
+  blog: "/skincare-blog",
+  blogArticle: "/skincare-blog/:slug",
 } as const;
 
 export type AppRoute = (typeof ROUTES)[keyof typeof ROUTES];
-type StaticRoute = Exclude<AppRoute, typeof ROUTES.productDetail>;
+type StaticRoute = Exclude<AppRoute, typeof ROUTES.productDetail | typeof ROUTES.blogArticle>;
 
 const staticRoutes = new Set<StaticRoute>(
-  Object.values(ROUTES).filter((route) => route !== ROUTES.productDetail) as StaticRoute[],
+  Object.values(ROUTES).filter(
+    (route) => route !== ROUTES.productDetail && route !== ROUTES.blogArticle,
+  ) as StaticRoute[],
 );
 const basePath = (() => {
   const normalizedBase = (import.meta.env.BASE_URL || "/").replace(/\/+$/, "");
@@ -165,6 +169,9 @@ type NavigationContextValue = {
   currentSearchQuery: string;
   navigate: (route: StaticRoute, options?: NavigateOptions) => void;
   navigateToProduct: (slug: string) => void;
+  /** Slug of the open skincare-blog article (null off the article route). */
+  currentBlogSlug: string | null;
+  navigateToBlogArticle: (slug: string) => void;
   /** Demo page-load hold after in-app navigation. */
   isPageLoading: boolean;
 };
@@ -297,6 +304,7 @@ function buildBrowserUrl(route: StaticRoute, options?: NavigateOptions) {
 type RouteState = {
   currentRoute: AppRoute;
   currentProductSlug: string | null;
+  currentBlogSlug: string | null;
   currentCategory: string | null;
   currentCategories: string[];
   currentUseCases: string[];
@@ -316,6 +324,7 @@ type RouteState = {
 const EMPTY_ROUTE_STATE: RouteState = {
   currentRoute: ROUTES.home,
   currentProductSlug: null,
+  currentBlogSlug: null,
   currentCategory: null,
   currentCategories: [],
   currentUseCases: [],
@@ -340,6 +349,14 @@ function getRouteState(pathname: string, search: string): RouteState {
       ...EMPTY_ROUTE_STATE,
       currentRoute: ROUTES.productDetail,
       currentProductSlug: normalizedPath.slice("/products/".length),
+    };
+  }
+
+  if (normalizedPath.startsWith(`${ROUTES.blog}/`)) {
+    return {
+      ...EMPTY_ROUTE_STATE,
+      currentRoute: ROUTES.blogArticle,
+      currentBlogSlug: normalizedPath.slice(ROUTES.blog.length + 1),
     };
   }
 
@@ -427,6 +444,7 @@ function getRouteState(pathname: string, search: string): RouteState {
   return {
     currentRoute: route,
     currentProductSlug: null,
+    currentBlogSlug: null,
     currentCategory: category,
     currentCategories: categories,
     currentUseCases: useCases,
@@ -518,6 +536,7 @@ export function PrototypeNavigationProvider({ children }: { children: ReactNode 
     () => ({
       currentRoute: routeState.currentRoute,
       currentProductSlug: routeState.currentProductSlug,
+      currentBlogSlug: routeState.currentBlogSlug,
       currentCategory: routeState.currentCategory,
       currentCategories: routeState.currentCategories,
       currentUseCases: routeState.currentUseCases,
@@ -602,6 +621,7 @@ export function PrototypeNavigationProvider({ children }: { children: ReactNode 
         setRouteState({
           currentRoute: route,
           currentProductSlug: null,
+          currentBlogSlug: null,
           currentCategory: isPlp ? options?.category?.trim() || null : null,
           currentCategories: cleanCategories,
           currentUseCases: isPlp ? normalizeCapabilities(options?.capabilities) : [],
@@ -642,10 +662,28 @@ export function PrototypeNavigationProvider({ children }: { children: ReactNode 
         scrollAppToTop();
         requestAnimationFrame(scrollAppToTop);
       },
+      navigateToBlogArticle: (slug) => {
+        const current = routeStateRef.current;
+        if (current.currentRoute !== ROUTES.blogArticle || current.currentBlogSlug !== slug) {
+          beginPageLoad();
+        }
+        const nextBrowserPath = withDemoSearch(toBrowserPath(`${ROUTES.blog}/${slug}`));
+        if (`${window.location.pathname}${window.location.search}` !== nextBrowserPath) {
+          window.history.pushState({}, "", nextBrowserPath);
+        }
+        setRouteState({
+          ...EMPTY_ROUTE_STATE,
+          currentRoute: ROUTES.blogArticle,
+          currentBlogSlug: slug,
+        });
+        scrollAppToTop();
+        requestAnimationFrame(scrollAppToTop);
+      },
     }),
     [
       routeState.currentRoute,
       routeState.currentProductSlug,
+      routeState.currentBlogSlug,
       routeState.currentCategory,
       routeState.currentCategories,
       routeState.currentUseCases,

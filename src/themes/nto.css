@@ -531,6 +531,16 @@ html[data-demo-theme="consumer-electronics"] .agent-msg__card {
   overflow: hidden;
 }
 
+/* Outer chat cards hold the 12px product cards, so they round a step larger
+ * to keep the corners nested instead of fighting each other. */
+html[data-demo-theme="consumer-electronics"] .agent-msg__card,
+html[data-demo-theme="consumer-electronics"] .agent-plp__card,
+html[data-demo-theme="consumer-electronics"] .agent-routine__card,
+html[data-demo-theme="consumer-electronics"] .agent-pdp__card,
+html[data-demo-theme="consumer-electronics"] .agent-summary__card {
+  border-radius: 20px;
+}
+
 html[data-demo-theme="consumer-electronics"] .agent-product-card,
 html[data-demo-theme="consumer-electronics"] .agent-compare-summaries__top {
   box-shadow: 0 1px 3px rgba(16, 24, 40, 0.03);
@@ -691,7 +701,7 @@ html[data-demo-theme="consumer-electronics"] .agent-product-card__store-btn:hove
 }
 
 html[data-demo-theme="consumer-electronics"] .agent-product-card__check {
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1.5px solid #737373;
   background: #ffffff;
   color: transparent;
@@ -1005,6 +1015,11 @@ html[data-demo-theme="consumer-electronics"] .figma-order-confirmation__primary-
   border-color: transparent;
   border-radius: var(--nto-radius-btn);
   box-shadow: var(--nto-shadow-soft);
+}
+
+/* Express wallets share the checkout button's corners. */
+html[data-demo-theme="consumer-electronics"] .figma-cart__express button {
+  border-radius: var(--nto-radius-btn);
 }
 
 html[data-demo-theme="consumer-electronics"] .figma-pdp__pay-methods {

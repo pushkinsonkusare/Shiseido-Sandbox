@@ -1,5 +1,6 @@
 import { useLayoutEffect } from "react";
 import AboutUsPage from "./pages/AboutUsPage/AboutUsPage";
+import { BlogArticlePage, BlogIndexPage } from "./pages/BlogPage/BlogPage";
 import { AgentModeBar } from "./components/AgentModeBar/AgentModeBar";
 import { AgentModeProvider, useAgentMode } from "./components/AgentModeBar/AgentModeContext";
 import { MobileChrome } from "./components/MobileChrome/MobileChrome";
@@ -22,11 +23,11 @@ import StorefrontPage from "./pages/StorefrontPage/StorefrontPage";
 import { PrototypeNavigationProvider, ROUTES, scrollAppToTop, usePrototypeNavigation } from "./prototypeRoutes";
 
 function RoutedApp() {
-  const { currentRoute, currentProductSlug, isPageLoading } = usePrototypeNavigation();
+  const { currentRoute, currentProductSlug, currentBlogSlug, isPageLoading } = usePrototypeNavigation();
 
   useLayoutEffect(() => {
     scrollAppToTop();
-  }, [currentRoute, currentProductSlug, isPageLoading]);
+  }, [currentRoute, currentProductSlug, currentBlogSlug, isPageLoading]);
 
   if (isPageLoading) {
     return <PageSkeleton route={currentRoute} />;
@@ -49,6 +50,10 @@ function RoutedApp() {
       return <OverviewPage />;
     case ROUTES.about:
       return <AboutUsPage />;
+    case ROUTES.blog:
+      return <BlogIndexPage />;
+    case ROUTES.blogArticle:
+      return <BlogArticlePage />;
     case ROUTES.home:
     default:
       return <StorefrontPage />;

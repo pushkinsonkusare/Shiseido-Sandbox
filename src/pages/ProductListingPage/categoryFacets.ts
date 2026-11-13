@@ -84,6 +84,7 @@ const SKINCARE_FACETS: FacetSpec[] = [
       { label: "Urban Environment", value: "urban-environment" },
       { label: "Ultimate Sun", value: "ultimate-sun" },
       { label: "Shiseido Men", value: "shiseido-men" },
+      { label: "WASO", value: "waso" },
     ],
   },
   {

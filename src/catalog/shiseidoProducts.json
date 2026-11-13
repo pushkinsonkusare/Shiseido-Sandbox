@@ -641,6 +641,234 @@
     "pdpUrl": "https://www.shiseido.com/us/en/benefiance-wrinkleresist24-pure-retinol-express-smoothing-eye-mask-9990000000084.html"
   },
   {
+    "id": "0730852149328",
+    "slug": "white-lucent-brightening-gel-cream",
+    "name": "Brightening Gel Cream",
+    "brand": "Shiseido",
+    "collection": "Benefiance",
+    "category": "Moisturizers",
+    "productType": "Moisturizer (gel cream)",
+    "routineCompleteness": "Full routine (serum/eye/day-SPF/night/cream/softener/mask)",
+    "price": 75,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "50mL",
+        "price": 75
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [
+      "Brightening"
+    ],
+    "badges": [],
+    "outOfStock": true,
+    "shortDescription": "Brightening gel cream",
+    "overview": "Achieve visibly brighter skin with this lightweight, daily gel moisturizer that targets the causes of dark spots and discoloration.\nThis complexion-perfecting, hydrating gel moisturizer diminishes the look of dark spots and unevenness. Yoshino Cherry Extract and our exclusive SAKURA-Bright Complex work from within to restore vibrancy for dewy, even, radiant skin.",
+    "keyBenefits": [
+      "Visibly brightens skin and diminishes the look of dark spots and unevenness",
+      "Provides 24-hour moisture",
+      "Refreshing, gel cream texture",
+      "Good for all skin types",
+      "Paraben-free",
+      "Dermatologist-tested. Non-comedogenic."
+    ],
+    "howToUse": [
+      "Apply in the morning and evening, as the last step of your skincare routine.",
+      "Use the spatula to scoop two pearl-sized amounts, then dot the cream on the 5 points of your face: forehead, nose, chin, and both cheeks.",
+      "Gently smooth the cream from the center outward over your face. Apply an additional pearl-sized amount to your neck, and sweep the cream upward to your jawline."
+    ],
+    "ingredients": "- SAKURA-Bright Complex: Prevents dullness and promotes brightening from within by supporting skin's natural resilience to the appearance of dullness, dark sports and uneven tone.\n- Yoshino Cherry Extract: Improves the appearance of dullness and sallowness.\nINGREDIENTS: WATER(AQUA/EAU)･BUTYLENE GLYCOL･GLYCERIN･DIMETHICONE･SD ALCOHOL 40-B (ALCOHOL DENAT.)･TRIETHYLHEXANOIN･PEG/PPG-14/7 DIMETHYL ETHER･HYDROGENATED POLYDECENE･BEHENYL ALCOHOL･STEARYL ALCOHOL･MYRISTYL MYRISTATE･GLYCERYL STEARATE SE･TREHALOSE･POTASSIUM METHOXYSALICYLATE･PHYTOSTERYL MACADAMIATE･METHYL METHACRYLATE CROSSPOLYMER･POLYSORBATE 60･PEG-40 STEARATE･PHENOXYETHANOL･DIMETHYLACRYLAMIDE/SODIUM ACRYLOYLDIMETHYLTAURATE CROSSPOLYMER･HYDROGENATED PALM OIL･ELAEIS GUINEENSIS (PALM) KERNEL OIL･ELAEIS GUINEENSIS (PALM) OIL･SORBITAN TRISTEARATE･TRISODIUM EDTA･ERYTHRITOL･PEG/PPG-17/4 DIMETHYL ETHER･SODIUM CITRATE･FRAGRANCE (PARFUM)･DIPOTASSIUM GLYCYRRHIZATE･2-O-ETHYL ASCORBIC ACID･ALCOHOL･SILICA･XANTHAN GUM･CAFFEINE･LINALOOL･CITRIC ACID･SODIUM METAPHOSPHATE･PPG-3 DIPIVALATE･HDI/TRIMETHYLOL HEXYLLACTONE CROSSPOLYMER･TOCOPHEROL･CITRONELLOL･SODIUM METABISULFITE･GERANIOL･ANGELICA KEISKEI LEAF/STEM EXTRACT･LIMONENE･PAEONIA ALBIFLORA ROOT EXTRACT･CRATAEGUS MONOGYNA FLOWER EXTRACT･ACRYLATES/C10-30 ALKYL ACRYLATE CROSSPOLYMER･FRUCTOSE･REHMANNIA CHINENSIS ROOT EXTRACT･IRON OXIDES (CI 77491)･PRUNUS YEDOENSIS LEAF EXTRACT･ZIZIPHUS JUJUBA FRUIT EXTRACT･PYROLA INCARNATA EXTRACT･POTENTILLA ERECTA ROOT EXTRACT･POLYQUATERNIUM-51･BENZOIC ACID･",
+    "primaryImage": "shiseido_product_images/benefiance/brightening-gel-cream-0730852149328_1.jpg",
+    "gallery": [
+      "shiseido_product_images/benefiance/brightening-gel-cream-0730852149328_1.jpg",
+      "shiseido_product_images/benefiance/brightening-gel-cream-0730852149328_2.jpg",
+      "shiseido_product_images/benefiance/brightening-gel-cream-0730852149328_3.jpg",
+      "shiseido_product_images/benefiance/brightening-gel-cream-0730852149328_4.jpg",
+      "shiseido_product_images/benefiance/brightening-gel-cream-0730852149328_5.jpg",
+      "shiseido_product_images/benefiance/brightening-gel-cream-0730852149328_6.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.com/us/en/white-lucent-brightening-gel-cream-0730852149328.html"
+  },
+  {
+    "id": "9990000000203",
+    "slug": "white-lucent-illuminating-micro-spot-serum",
+    "name": "Illuminating Micro-Spot Serum",
+    "brand": "Shiseido",
+    "collection": "Benefiance",
+    "category": "Serums & Treatments",
+    "productType": "Serum",
+    "routineCompleteness": "Full routine (serum/eye/day-SPF/night/cream/softener/mask)",
+    "price": 135,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "30mL",
+        "price": 135
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [
+      "Brightening"
+    ],
+    "badges": [],
+    "outOfStock": true,
+    "shortDescription": "Targets dark spots",
+    "overview": "A brightening serum that helps reduce the look of dark spots, uneven skin tone and dullness. 89% noticed lighter dark spots and brighter skin in just 1 week.*\nOur exclusive SAKURA-Bright System and ReNeura Technology+™ strengthens skin's natural support to help target the appearance of dark spots. See a powerful brightening effect for radiant results. This scientifically advanced formula helps reduce the look of dark spots, uneven skin tone and dullness. Reveals a smooth, bright complexion with a luminous finish.\n*Consumer tested by 96 women.",
+    "keyBenefits": [
+      "Rapidly improves the look of dark spots, dullness and uneven skin tone",
+      "Provides 24-hour moisture",
+      "Smooth, non-sticky texture",
+      "Good for all skin types",
+      "Dermatologist-tested. Non-comedogenic."
+    ],
+    "howToUse": [
+      "Use morning and evening after softener, pumping twice to dispense formula onto the palm of your hand.",
+      "Place on 5 areas of the face (cheeks, forehead, nose and chin) and smooth over the face, starting with the wider areas like the cheeks and forehead and moving from the center of the face outwards. Massage onto skin until fully absorbed."
+    ],
+    "ingredients": "- SAKURA-Bright Complex: Features highly concentrated 4MSK for an increased brightening effect and White Sand Lily extract which helps skin become resistant to dark spot appearance, while targeting current discoloration.\n- ReNeura Technology+™: Features Natsume and Active Response Powder Ashitaba to help improve skin receptivity to awaken and maintain the effectiveness of your treatment over time.\n\"INGREDIENTS: WATER (AQUA/EAU)・BUTYLENE GLYCOL・GLYCERIN・DIPROPYLENE GLYCOL・POTASSIUM METHOXYSALICYLATE・DIMETHICONE・BEHENYL ALCOHOL・TRIETHYLHEXANOIN・DIPHENYLSILOXY PHENYL TRIMETHICONE・TALC・BATYL ALCOHOL・DIISOSTEARYL MALATE・PHENOXYETHANOL・PEG-6・PEG-32・BEHENIC ACID・PEG-60 GLYCERYL ISOSTEARATE・PEG-10 DIMETHICONE・SODIUM METAPHOSPHATE・DISODIUM EDTA・TOCOPHERYL ACETATE・PEG/PPG-17/4 DIMETHYL ETHER・PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE・SILICA・SODIUM CITRATE・ALUMINA・POTASSIUM HYDROXIDE・SUCCINOGLYCAN・PEG/PPG-14/7 DIMETHYL ETHER・DIPOTASSIUM GLYCYRRHIZATE・2-O-ETHYL ASCORBIC ACID・XANTHAN GUM・TITANIUM DIOXIDE (CI 77891)・ALCOHOL・FRAGRANCE (PARFUM)・CAFFEINE・SODIUM METABISULFITE・CITRIC ACID・LINALOOL・TOCOPHEROL・CITRONELLOL・GERANIOL・ANGELICA KEISKEI LEAF/STEM EXTRACT・CRATAEGUS MONOGYNA FLOWER EXTRACT・LIMONENE・CELLULOSE・PANCRATIUM MARITIMUM EXTRACT・REHMANNIA CHINENSIS ROOT EXTRACT・ARTEMISIA PRINCEPS LEAF EXTRACT・PRUNUS YEDOENSIS LEAF EXTRACT・ZIZIPHUS JUJUBA FRUIT EXTRACT・PYROLA INCARNATA EXTRACT・POTENTILLA ERECTA ROOT EXTRACT・",
+    "primaryImage": "shiseido_product_images/benefiance/illuminating-micro-spot-serum-9990000000203_1.jpg",
+    "gallery": [
+      "shiseido_product_images/benefiance/illuminating-micro-spot-serum-9990000000203_1.jpg",
+      "shiseido_product_images/benefiance/illuminating-micro-spot-serum-9990000000203_2.jpg",
+      "shiseido_product_images/benefiance/illuminating-micro-spot-serum-9990000000203_3.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.com/us/en/white-lucent-illuminating-micro-spot-serum-9990000000203.html"
+  },
+  {
+    "id": "0195106537380",
+    "slug": "benefiance-brightening-and-smoothing-serum-set",
+    "name": "Brightening & Smoothing Serum Set",
+    "brand": "Shiseido",
+    "collection": "Benefiance",
+    "category": "Sets & Bundles",
+    "productType": "Set",
+    "routineCompleteness": "Full routine (serum/eye/day-SPF/night/cream/softener/mask)",
+    "price": 89,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "Set",
+        "price": 89
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [],
+    "badges": [
+      "New"
+    ],
+    "outOfStock": false,
+    "shortDescription": "Serum-led brightening set",
+    "overview": "Visibly improve the appearance of dark spots and wrinkles, featuring a full-size Benefiance Dark Spot and Wrinkle Smoothing Serum. A $140 value.\n\nWash away impurities with Clarifying Cleansing Foam, visibly brighten and boost clarity with Eudermine Activating Essence, and help visibly correct signs of aging with Ultimune Power Infusing Serum. Finish with Benefiance Dark Spot and Wrinkle Smoothing Serum, a powerful serum clinically proven to improve the appearance of dark spots and wrinkles.*\n*Clinical test with 33 individuals after 2 weeks.\nSet Includes:\n\n- Clarifying Cleansing Foam, 15mL\n- Eudermine Activating Essence, 30mL\n- Ultimune Power Infusing Serum, 10mL\n- Benefiance Dark Spot and Wrinkle Smoothing Serum, 30mL (Full Size)",
+    "keyBenefits": [],
+    "howToUse": [
+      "Clarifying Cleansing Foam: Use daily as your first skincare step. Wet skin and lather a pearl-sized amount between fingers. Massage over face with gentle circular motions, and rinse.",
+      "Eudermine Activating Essence: Use in the morning and evening after cleansing. Saturate Shiseido’s Facial Cotton with a quarter-size amount and smooth over skin. Tap gently into skin after application.",
+      "Ultimune Power Infusing Serum: Use in the morning and evening after cleansing and before moisturizing. Dispense onto fingertips and smooth evenly over face and neck.",
+      "Benefiance Dark Spot and Wrinkle Smoothing Serum: Apply to cleansed skin. Pump twice and massage onto face until fully absorbed."
+    ],
+    "ingredients": "Benefiance Dark Spot and Wrinkle Smoothing Serum:\n- Picão Preto Extract: A gentle, plant-based retinol alternative that helps reduce the appearance of wrinkles and roughness.\n- Niacinamide: A form of Vitamin B3 that helps to reduce the appearance of hyperpigmentation and fine lines while supporting skin's barrier function.\n- 4MSK: SHISEIDO's brightening ingredient supports a more even, radiant complexion over time and diminishes the appearance of dark spots.\nSHISEIDO BENEFIANCE DARK SPOT AND WRINKLE SMOOTHING SERUM\n\nINGREDIENTS : WATER/AQUA/EAU･ALCOHOL DENAT.･DIPROPYLENE GLYCOL･DIMETHICONE･PENTAERYTHRITYL\nTETRAETHYLHEXANOATE･GLYCERIN･NIACINAMIDE･BUTYROSPERMUM PARKII (SHEA) BUTTER･PETROLATUM･\nHYDROGENATED POLYDECENE･PHYTOSTERYL MACADAMIATE･BEHENYL ALCOHOL･PEG/PPG-14/7 DIMETHYL\nETHER･POTASSIUM METHOXYSALICYLATE･SILICA･BEHENETH-20･ELAEIS GUINEENSIS (PALM) OIL･GOSSYPIUM\nHERBACEUM (COTTON) SEED OIL･BATYL ALCOHOL･MALTITOL･BIDENS PILOSA EXTRACT･CHLORPHENESIN･\nPOLYVINYL ALCOHOL･XANTHAN GUM･SODIUM CITRATE･POTASSIUM HYDROXIDE･DIPOTASSIUM GLYCYRRHIZATE･\nLINALOOL･DISODIUM EDTA･HYDROLYZED HYALURONIC ACID･SODIUM HYALURONATE･SODIUM METAPHOSPHATE･\nLIMONENE･CITRUS LIMON (LEMON) PEEL OIL･HEXAMETHYLINDANOPYRAN･SODIUM METABISULFITE･\nTETRAMETHYL ACETYLOCTAHYDRONAPHTHALENES･CITRONELLOL･GERANIOL･CITRUS AURANTIUM BERGAMIA\n(BERGAMOT) FRUIT OIL･PINENE･CRATAEGUS MONOGYNA FLOWER EXTRACT･ANGELICA KEISKEI LEAF/STEM\nEXTRACT･PANAX GINSENG ROOT EXTRACT･ZIZIPHUS JUJUBA FRUIT EXTRACT･HYDROGENATED POLYISOBUTENE\n･BUTYLENE GLYCOL･FRAGRANCE (PARFUM)･TOCOPHEROL･CAFFEINE･ALCOHOL･CITRIC ACID･CITRUS\nAURANTIUM PEEL OIL･TERPINEOL･ALPINIA SPECIOSA LEAF EXTRACT･ALPHA-ISOMETHYL IONONE･\nPHENOXYETHANOL･LINALYL ACETATE･GERANYL ACETATE･LINUM USITATISSIMUM (LINSEED) SEED OIL･IRON\nOXIDES (CI 77492)･IRON OXIDES (CI 77491)\nSHISEIDO CLARIFYING CLEANSING FOAM\n\nINGREDIENTS:WATER(AQUA/EAU)･ALCOHOL･DIPROPYLENE GLYCOL･BUTYLENE GLYCOL･GLYCERIN･DIGLYCERIN･PEG/PPG-14/7 DIMETHYL ETHER･POTASSIUM METHOXYSALICYLATE･LACTOBACILLUS/RICE FERMENT･PEG-60 HYDROGENATED CASTOR OIL･DIPHENYLSILOXY PHENYL TRIMETHICONE･2-O-ETHYL ASCORBIC ACID･ERYTHRITOL･DIPOTASSIUM GLYCYRRHIZATE･XANTHAN GUM･SODIUM POLYACRYLATE･CITRUS JUNOS FRUIT EXTRACT･SODIUM ACETYLATED HYALURONATE･SODIUM HYALURONATE･HAMAMELIS VIRGINIANA (WITCH HAZEL) LEAF EXTRACT･CARBOMER･POLYGLYCERYL-2 DIISOSTEARATE･POTASSIUM HYDROXIDE･DISODIUM EDTA･ISOSTEARYL ALCOHOL･ISOSTEARIC ACID･SODIUM CITRATE･CITRIC ACID･LINALOOL･GERANIOL･HEXYL CINNAMAL･CITRONELLOL･SODIUM METABISULFITE･ALPHA-ISOMETHYL IONONE･LIMONENE･PHENOXYETHANOL･FRAGRANCE (PARFUM)･RED 33 (CI 17200)･YELLOW 5 (CI 19140)･ <M103959-712>\nSHISEIDO ULTIMUNE POWER INFUSING SERUM\n\nINGREDIENTS:WATER(AQUA/EAU)･GLYCERIN･BUTYLENE GLYCOL･ALCOHOL DENAT.･DIMETHICONE･DIGLYCERIN･PEG/PPG-17/4 DIMETHYL ETHER･PEG-8･ISODECYL NEOPENTANOATE･TREHALOSE･AMMONIUM ACRYLOYLDIMETHYLTAURATE/BEHENETH-25 METHACRYLATE CROSSPOLYMER･PEG-14M･TOCOPHERYL ACETATE･PEG/PPG-14/7 DIMETHYL ETHER･PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE･ROSA DAMASCENA FLOWER WATER･ECTOIN･XYLITOL･LAURYL BETAINE･ORIGANUM MAJORANA LEAF EXTRACT･HYDROXYPROLINE･CAMELLIA JAPONICA SEED OIL･CAMELLIA JAPONICA FLOWER EXTRACT･HOUTTUYNIA CORDATA EXTRACT･SODIUM CARBOXYMETHYL BETA-GLUCAN･CAMELLIA JAPONICA LEAF EXTRACT･CAMELLIA JAPONICA SEED EXTRACT･LACTOBACILLUS/HIBISCUS SABDARIFFA FLOWER FERMENT FILTRATE･IRIS FLORENTINA ROOT EXTRACT･GANODERMA LUCIDUM (MUSHROOM) STEM EXTRACT･TRIETHYLHEXANOIN･ACRYLATES/C10-30 ALKYL ACRYLATE CROSSPOLYMER･ALCOHOL･DISODIUM EDTA･POTASSIUM HYDROXIDE･SILICA･ISOCETETH-10･LINALOOL･SODIUM METABISULFITE･CITRONELLOL･ASPERGILLUS FERMENT･BHT･SODIUM BICARBONATE･TOCOPHEROL･PHENOXYETHANOL･CHLORPHENESIN･SODIUM BENZOATE･FRAGRANCE (PARFUM)･ <M128589-712>",
+    "primaryImage": "shiseido_product_images/benefiance/brightening-and-smoothing-serum-set-0195106537380_1.jpg",
+    "gallery": [
+      "shiseido_product_images/benefiance/brightening-and-smoothing-serum-set-0195106537380_1.jpg",
+      "shiseido_product_images/benefiance/brightening-and-smoothing-serum-set-0195106537380_2.jpg",
+      "shiseido_product_images/benefiance/brightening-and-smoothing-serum-set-0195106537380_3.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.com/us/en/benefiance-brightening-and-smoothing-serum-set-0195106537380.html"
+  },
+  {
+    "id": "0195106537342",
+    "slug": "benefiance-hydrating-and-smoothing-cream-set",
+    "name": "Hydrating & Smoothing Cream Set",
+    "brand": "Shiseido",
+    "collection": "Benefiance",
+    "category": "Sets & Bundles",
+    "productType": "Set",
+    "routineCompleteness": "Full routine (serum/eye/day-SPF/night/cream/softener/mask)",
+    "price": 79,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "Set",
+        "price": 79
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [],
+    "badges": [
+      "New"
+    ],
+    "outOfStock": false,
+    "shortDescription": "Hydrating cream routine set",
+    "overview": "Experience intense hydration and visible wrinkle correction, featuring a full-size Benefiance Wrinkle Smoothing Cream Enriched. A $148 value.\n\nVisibly brighten and boost clarity with Eudermine Activating Essence, and help visibly correct signs of aging with Ultimune Power Infusing Serum. Use Benefiance Wrinkle Smoothing Cream Enriched for intense hydration and visible wrinkle correction. Lastly, use Benefiance Wrinkle Smoothing Eye Cream to visibly reduce the appearance of eye area wrinkles and dark circles.\nSet Includes:\n\n- Eudermine Activating Essence, 30mL\n- Ultimune Power Infusing Serum, 10mL\n- Benefiance Wrinkle Smoothing Cream Enriched, 50mL (Full Size)\n- Benefiance Wrinkle Smoothing Eye Cream, 5mL",
+    "keyBenefits": [],
+    "howToUse": [
+      "Eudermine Activating Essence: Use in the morning and evening after cleansing. Saturate Shiseido’s Facial Cotton with a quarter-size amount and smooth over skin. Tap gently into skin after application.",
+      "Ultimune Power Infusing Serum: Use in the morning and evening after cleansing and before moisturizing. Dispense onto fingertips and smooth evenly over face and neck.",
+      "Benefiance Wrinkle Smoothing Cream Enriched: Use morning and evening. Scoop two pearl-size amounts, dot around face and smooth from the center outward.",
+      "Benefiance Wrinkle Smoothing Eye Cream: Use in the morning and evening. Dot a pearl-sized amount around the eye area and gently massage under the eye as well as around the lid and brow bone."
+    ],
+    "ingredients": "Benefiance Wrinkle Smoothing Cream Enriched:\n- KOMBU-Bounce Complex: Green, Brown, and Red Algae plus Chlorella helps fortify skin's barrier to minimize the appearance of wrinkles.\n- Turmeric Extract: Offers potent antioxidant properties to help support elasticity and minimize the appearance of wrinkles.\n- Niacinamide: Fortifies skin's barrier and helps smooth skin's texture.\n- Yuzu Seed Extract: Supports collagen for visibly resilient, vibrant skin.\nSHISEIDO BENEFIANCE WRINKLE SMOOTHING CREAM ENRICHED\n\nINGREDIENTS:WATER(AQUA/EAU)･ALCOHOL･DIPROPYLENE GLYCOL･BUTYLENE GLYCOL･GLYCERIN･DIGLYCERIN･PEG/PPG-14/7 DIMETHYL ETHER･POTASSIUM METHOXYSALICYLATE･LACTOBACILLUS/RICE FERMENT･PEG-60 HYDROGENATED CASTOR OIL･DIPHENYLSILOXY PHENYL TRIMETHICONE･2-O-ETHYL ASCORBIC ACID･ERYTHRITOL･DIPOTASSIUM GLYCYRRHIZATE･XANTHAN GUM･SODIUM POLYACRYLATE･CITRUS JUNOS FRUIT EXTRACT･SODIUM ACETYLATED HYALURONATE･SODIUM HYALURONATE･HAMAMELIS VIRGINIANA (WITCH HAZEL) LEAF EXTRACT･CARBOMER･POLYGLYCERYL-2 DIISOSTEARATE･POTASSIUM HYDROXIDE･DISODIUM EDTA･ISOSTEARYL ALCOHOL･ISOSTEARIC ACID･SODIUM CITRATE･CITRIC ACID･LINALOOL･GERANIOL･HEXYL CINNAMAL･CITRONELLOL･SODIUM METABISULFITE･ALPHA-ISOMETHYL IONONE･LIMONENE･PHENOXYETHANOL･FRAGRANCE (PARFUM)･RED 33 (CI 17200)･YELLOW 5 (CI 19140)･ <M103959-712>\nSHISEIDO EUDERMINE ACTIVATING ESSENCE\n\nINGREDIENTS:WATER(AQUA/EAU)･ALCOHOL･DIPROPYLENE GLYCOL･BUTYLENE GLYCOL･GLYCERIN･DIGLYCERIN･PEG/PPG-14/7 DIMETHYL ETHER･POTASSIUM METHOXYSALICYLATE･LACTOBACILLUS/RICE FERMENT･PEG-60 HYDROGENATED CASTOR OIL･DIPHENYLSILOXY PHENYL TRIMETHICONE･2-O-ETHYL ASCORBIC ACID･ERYTHRITOL･DIPOTASSIUM GLYCYRRHIZATE･XANTHAN GUM･SODIUM POLYACRYLATE･CITRUS JUNOS FRUIT EXTRACT･SODIUM ACETYLATED HYALURONATE･SODIUM HYALURONATE･HAMAMELIS VIRGINIANA (WITCH HAZEL) LEAF EXTRACT･CARBOMER･POLYGLYCERYL-2 DIISOSTEARATE･POTASSIUM HYDROXIDE･DISODIUM EDTA･ISOSTEARYL ALCOHOL･ISOSTEARIC ACID･SODIUM CITRATE･CITRIC ACID･LINALOOL･GERANIOL･HEXYL CINNAMAL･CITRONELLOL･SODIUM METABISULFITE･ALPHA-ISOMETHYL IONONE･LIMONENE･PHENOXYETHANOL･FRAGRANCE (PARFUM)･RED 33 (CI 17200)･YELLOW 5 (CI 19140)･<M103959-712>\nSHISEIDO ULTIMUNE POWER INFUSING SERUM\n\nINGREDIENTS:WATER(AQUA/EAU)･GLYCERIN･BUTYLENE GLYCOL･ALCOHOL DENAT.･DIMETHICONE･DIGLYCERIN･PEG/PPG-17/4 DIMETHYL ETHER･PEG-8･ISODECYL NEOPENTANOATE･TREHALOSE･AMMONIUM ACRYLOYLDIMETHYLTAURATE/BEHENETH-25 METHACRYLATE CROSSPOLYMER･PEG-14M･TOCOPHERYL ACETATE･PEG/PPG-14/7 DIMETHYL ETHER･PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE･ROSA DAMASCENA FLOWER WATER･ECTOIN･XYLITOL･LAURYL BETAINE･ORIGANUM MAJORANA LEAF EXTRACT･HYDROXYPROLINE･CAMELLIA JAPONICA SEED OIL･CAMELLIA JAPONICA FLOWER EXTRACT･HOUTTUYNIA CORDATA EXTRACT･SODIUM CARBOXYMETHYL BETA-GLUCAN･CAMELLIA JAPONICA LEAF EXTRACT･CAMELLIA JAPONICA SEED EXTRACT･LACTOBACILLUS/HIBISCUS SABDARIFFA FLOWER FERMENT FILTRATE･IRIS FLORENTINA ROOT EXTRACT･GANODERMA LUCIDUM (MUSHROOM) STEM EXTRACT･TRIETHYLHEXANOIN･ACRYLATES/C10-30 ALKYL ACRYLATE CROSSPOLYMER･ALCOHOL･DISODIUM EDTA･POTASSIUM HYDROXIDE･SILICA･ISOCETETH-10･LINALOOL･SODIUM METABISULFITE･CITRONELLOL･ASPERGILLUS FERMENT･BHT･SODIUM BICARBONATE･TOCOPHEROL･PHENOXYETHANOL･CHLORPHENESIN･SODIUM BENZOATE･FRAGRANCE (PARFUM)･ <M128589-712>\nSHISEIDO BENEFIANCE WRINKLE SMOOTHING EYE CREAM N\n\nINGREDIENTS:WATER(AQUA/EAU)･HYDROGENATED POLYDECENE･MINERAL OIL(PARAFFINUM LIQUIDUM/HUILE MINÉRALE)･GLYCERIN･BUTYLENE GLYCOL･PARAFFIN･MICROCRYSTALLINE WAX(CERA MICROCRISTALLINA/CIRE MICROCRISTALLINE)･POLYGLYCERYL-2 DIISOSTEARATE･SQUALANE･GLYCERYL OLEATE･SODIUM GLUTAMATE･SODIUM PCA･DIPROPYLENE GLYCOL･CARNOSINE･BEESWAX(CERA ALBA/CIRE D'ABEILLE)･POLYETHYLENE･TOCOPHERYL ACETATE･PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE･CAFFEINE･PEG/PPG-14/7 DIMETHYL ETHER･SAPINDUS MUKOROSSI PEEL EXTRACT･UNCARIA GAMBIR EXTRACT･ANGELICA KEISKEI LEAF/STEM EXTRACT･CRATAEGUS MONOGYNA FLOWER EXTRACT･SANGUISORBA OFFICINALIS ROOT EXTRACT･PANAX GINSENG ROOT EXTRACT･CAMELLIA SINENSIS LEAF EXTRACT･SODIUM ACETYLATED HYALURONATE･ZIZIPHUS JUJUBA FRUIT EXTRACT･EUCHEUMA SERRA/GRATELOUPIA SPARSA/SACCHARINA ANGUSTATA/ULVA LINZA/UNDARIA PINNATIFIDA EXTRACT･SODIUM LACTATE･CURCUMA LONGA (TURMERIC) RHIZOME EXTRACT･SACCHARINA ANGUSTATA/UNDARIA PINNATIFIDA EXTRACT･CHLORELLA VULGARIS EXTRACT･ALCOHOL･TRISODIUM EDTA･TOCOPHEROL･SODIUM METABISULFITE･PPG-3 DIPIVALATE･BHT･ALPINIA SPECIOSA LEAF EXTRACT･CARBOMER･POLYSORBATE 20･PALMITOYL TRIPEPTIDE-1･PALMITOYL TETRAPEPTIDE-7･ETHYLPARABEN･METHYLPARABEN･FRAGRANCE (PARFUM)･IRON OXIDES (CI 77492)･IRON OXIDES (CI 77491)･LINALOOL･LIMONENE･CITRUS LIMON (LEMON) PEEL OIL･HEXAMETHYLINDANOPYRAN･TETRAMETHYL ACETYLOCTAHYDRONAPHTHALENES･CITRONELLOL･LINALYL ACETATE･GERANIOL･CITRUS AURANTIUM PEEL OIL･GERANYL ACETATE･ALPHA-ISOMETHYL IONONE･CITRUS AURANTIUM BERGAMIA (BERGAMOT) PEEL OIL･ <M143078-712>",
+    "primaryImage": "shiseido_product_images/benefiance/hydrating-and-smoothing-cream-set-0195106537342_1.jpg",
+    "gallery": [
+      "shiseido_product_images/benefiance/hydrating-and-smoothing-cream-set-0195106537342_1.jpg",
+      "shiseido_product_images/benefiance/hydrating-and-smoothing-cream-set-0195106537342_2.jpg",
+      "shiseido_product_images/benefiance/hydrating-and-smoothing-cream-set-0195106537342_3.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.com/us/en/benefiance-hydrating-and-smoothing-cream-set-0195106537342.html"
+  },
+  {
+    "id": "0195106537335",
+    "slug": "benefiance-wrinkle-smoothing-eye-cream-set",
+    "name": "Wrinkle Smoothing Eye Cream Set",
+    "brand": "Shiseido",
+    "collection": "Benefiance",
+    "category": "Sets & Bundles",
+    "productType": "Set",
+    "routineCompleteness": "Full routine (serum/eye/day-SPF/night/cream/softener/mask)",
+    "price": 68,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "Set",
+        "price": 68
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [],
+    "badges": [
+      "New"
+    ],
+    "outOfStock": false,
+    "shortDescription": "Eye cream routine set",
+    "overview": "Visibly reduce wrinkles and diminish the appearance of dark circles, featuring a full-size Benefiance Wrinkle Smoothing Eye Cream. A $146 value.\n\nBegin by washing away impurities with Clarifying Cleansing Foam. Then, visibly brighten and boost clarity with Eudermine Activating Essence, and help visibly correct signs of aging with Ultimune Power Infusing Serum. Complete your routine by using Benefiance Wrinkle Smoothing Eye Cream to visibly reduce the appearance of eye area wrinkles and dark circles.\nSet Includes:\n\n- Clarifying Cleansing Foam, 15mL\n- Eudermine Activating Essence, 70mL\n- Ultimune Power Infusing Serum, 10mL\n- Benefiance Wrinkle Smoothing Eye Cream, 15mL (Full Size)",
+    "keyBenefits": [],
+    "howToUse": [
+      "Clarifying Cleansing Foam : Use morning and evening as your first skincare step. Wet skin, dispense a pearl-size amount, lather between fingers, massage over face, and rinse.",
+      "Eudermine Activating Essence: Use in the morning and evening after cleansing. Saturate Shiseido’s Facial Cotton with a quarter-size amount and smooth over skin. Tap gently into skin after application.",
+      "Ultimune Power Infusing Serum: Use in the morning and evening after cleansing and before moisturizing. Dispense onto fingertips and smooth evenly over face and neck.",
+      "Benefiance Wrinkle Smoothing Eye Cream: Use in the morning and evening. Dot a pearl-sized amount around the eye area and gently massage under the eye as well as around the lid and brow bone."
+    ],
+    "ingredients": "Benefiance Wrinkle Smoothing Eye Cream:\n- Squalane: Known for hydrating properties to help support skin's moisture barrier.\n- Ginseng Extract: Helps energize the eye area to support brightness.\n- Vitamin E: Antioxidant properties to help defend against pollutants and environmental stressors.\nSHISEIDO BENEFIANCE WRINKLE SMOOTHING EYE CREAM N\n\n(INGREDIENTS:WATER(AQUA/EAU)･HYDROGENATED POLYDECENE･MINERAL OIL(PARAFFINUM LIQUIDUM/HUILE MINÉRALE)･GLYCERIN･BUTYLENE GLYCOL･PARAFFIN･MICROCRYSTALLINE WAX(CERA MICROCRISTALLINA/CIRE MICROCRISTALLINE)･POLYGLYCERYL-2 DIISOSTEARATE･SQUALANE･GLYCERYL OLEATE･SODIUM GLUTAMATE･SODIUM PCA･DIPROPYLENE GLYCOL･CARNOSINE･BEESWAX(CERA ALBA/CIRE D'ABEILLE)･POLYETHYLENE･TOCOPHERYL ACETATE･PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE･CAFFEINE･PEG/PPG-14/7 DIMETHYL ETHER･SAPINDUS MUKOROSSI PEEL EXTRACT･UNCARIA GAMBIR EXTRACT･ANGELICA KEISKEI LEAF/STEM EXTRACT･CRATAEGUS MONOGYNA FLOWER EXTRACT･SANGUISORBA OFFICINALIS ROOT EXTRACT･PANAX GINSENG ROOT EXTRACT･CAMELLIA SINENSIS LEAF EXTRACT･SODIUM ACETYLATED HYALURONATE･ZIZIPHUS JUJUBA FRUIT EXTRACT･EUCHEUMA SERRA/GRATELOUPIA SPARSA/SACCHARINA ANGUSTATA/ULVA LINZA/UNDARIA PINNATIFIDA EXTRACT･SODIUM LACTATE･CURCUMA LONGA (TURMERIC) RHIZOME EXTRACT･SACCHARINA ANGUSTATA/UNDARIA PINNATIFIDA EXTRACT･CHLORELLA VULGARIS EXTRACT･ALCOHOL･TRISODIUM EDTA･TOCOPHEROL･SODIUM METABISULFITE･PPG-3 DIPIVALATE･BHT･ALPINIA SPECIOSA LEAF EXTRACT･CARBOMER･POLYSORBATE 20･PALMITOYL TRIPEPTIDE-1･PALMITOYL TETRAPEPTIDE-7･ETHYLPARABEN･METHYLPARABEN･FRAGRANCE (PARFUM)･IRON OXIDES (CI 77492)･IRON OXIDES (CI 77491)･LINALOOL･LIMONENE･CITRUS LIMON (LEMON) PEEL OIL･HEXAMETHYLINDANOPYRAN･TETRAMETHYL ACETYLOCTAHYDRONAPHTHALENES･CITRONELLOL･LINALYL ACETATE･GERANIOL･CITRUS AURANTIUM PEEL OIL･GERANYL ACETATE･ALPHA-ISOMETHYL IONONE･CITRUS AURANTIUM BERGAMIA (BERGAMOT) PEEL OIL･ <M082659-702>\nSHISEIDO CLARIFYING CLEANSING FOAM\n\nINGREDIENTS:WATER(AQUA/EAU)･STEARIC ACID･PEG-8･MYRISTIC ACID･GLYCERIN･POTASSIUM HYDROXIDE･DIPROPYLENE GLYCOL･LAURIC ACID･GLYCERYL STEARATE SE･SORBITOL･COCAMIDOPROPYL BETAINE･PEG-60 GLYCERYL ISOSTEARATE･SODIUM METHYL COCOYL TAURATE･PHYTOSTERYL MACADAMIATE･FRAGRANCE (PARFUM)･POLYQUATERNIUM-39･DISODIUM EDTA･ORYZA SATIVA (RICE) GERM OIL･LINALOOL･GERANIOL･CITRONELLOL･KAOLIN･SODIUM BENZOATE･BUTYLENE GLYCOL･ACRYLATES COPOLYMER･BETAINE･SILK POWDER(SERICA/POUDRE DE SOIE)･TOCOPHEROL･SODIUM ACETYLATED HYALURONATE･ARTEMISIA PRINCEPS LEAF EXTRACT･SODIUM LAURYL SULFATE･<M111802-702>\nSHISEIDO EUDERMINE ACTIVATING ESSENCE\n\nINGREDIENTS:WATER(AQUA/EAU)･ALCOHOL･DIPROPYLENE GLYCOL･BUTYLENE GLYCOL･GLYCERIN･DIGLYCERIN･PEG/PPG-14/7 DIMETHYL ETHER･POTASSIUM METHOXYSALICYLATE･LACTOBACILLUS/RICE FERMENT･PEG-60 HYDROGENATED CASTOR OIL･DIPHENYLSILOXY PHENYL TRIMETHICONE･2-O-ETHYL ASCORBIC ACID･ERYTHRITOL･DIPOTASSIUM GLYCYRRHIZATE･XANTHAN GUM･SODIUM POLYACRYLATE･CITRUS JUNOS FRUIT EXTRACT･SODIUM ACETYLATED HYALURONATE･SODIUM HYALURONATE･HAMAMELIS VIRGINIANA (WITCH HAZEL) LEAF EXTRACT･CARBOMER･POLYGLYCERYL-2 DIISOSTEARATE･POTASSIUM HYDROXIDE･DISODIUM EDTA･ISOSTEARYL ALCOHOL･ISOSTEARIC ACID･SODIUM CITRATE･CITRIC ACID･LINALOOL･GERANIOL･HEXYL CINNAMAL･CITRONELLOL･SODIUM METABISULFITE･ALPHA-ISOMETHYL IONONE･LIMONENE･PHENOXYETHANOL･FRAGRANCE (PARFUM)･RED 33 (CI 17200)･YELLOW 5 (CI 19140)･<M103959-712>\nSHISEIDO ULTIMUNE POWER INFUSING SERUM\n\nINGREDIENTS:WATER(AQUA/EAU)･GLYCERIN･BUTYLENE GLYCOL･ALCOHOL DENAT.･DIMETHICONE･DIGLYCERIN･PEG/PPG-17/4 DIMETHYL ETHER･PEG-8･ISODECYL NEOPENTANOATE･TREHALOSE･AMMONIUM ACRYLOYLDIMETHYLTAURATE/BEHENETH-25 METHACRYLATE CROSSPOLYMER･PEG-14M･TOCOPHERYL ACETATE･PEG/PPG-14/7 DIMETHYL ETHER･PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE･ROSA DAMASCENA FLOWER WATER･ECTOIN･XYLITOL･LAURYL BETAINE･ORIGANUM MAJORANA LEAF EXTRACT･HYDROXYPROLINE･CAMELLIA JAPONICA SEED OIL･CAMELLIA JAPONICA FLOWER EXTRACT･HOUTTUYNIA CORDATA EXTRACT･SODIUM CARBOXYMETHYL BETA-GLUCAN･CAMELLIA JAPONICA LEAF EXTRACT･CAMELLIA JAPONICA SEED EXTRACT･LACTOBACILLUS/HIBISCUS SABDARIFFA FLOWER FERMENT FILTRATE･IRIS FLORENTINA ROOT EXTRACT･GANODERMA LUCIDUM (MUSHROOM) STEM EXTRACT･TRIETHYLHEXANOIN･ACRYLATES/C10-30 ALKYL ACRYLATE CROSSPOLYMER･ALCOHOL･DISODIUM EDTA･POTASSIUM HYDROXIDE･SILICA･ISOCETETH-10･LINALOOL･SODIUM METABISULFITE･CITRONELLOL･ASPERGILLUS FERMENT･BHT･SODIUM BICARBONATE･TOCOPHEROL･PHENOXYETHANOL･CHLORPHENESIN･SODIUM BENZOATE･FRAGRANCE (PARFUM)･ <M128589-712>",
+    "primaryImage": "shiseido_product_images/benefiance/wrinkle-smoothing-eye-cream-set-0195106537335_1.jpg",
+    "gallery": [
+      "shiseido_product_images/benefiance/wrinkle-smoothing-eye-cream-set-0195106537335_1.jpg",
+      "shiseido_product_images/benefiance/wrinkle-smoothing-eye-cream-set-0195106537335_2.jpg",
+      "shiseido_product_images/benefiance/wrinkle-smoothing-eye-cream-set-0195106537335_3.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.com/us/en/benefiance-wrinkle-smoothing-eye-cream-set-0195106537335.html"
+  },
+  {
     "id": "newbioperformancecreamduo",
     "slug": "bio-performance-bio-performance-advanced-super-revitalizing-cream-duo-280-value",
     "name": "Bio-Performance Advanced Super Revitalizing Cream Duo ($280 Value)",
@@ -830,6 +1058,40 @@
     "pdpUrl": "https://www.shiseido.com/us/en/bio-performance-skin-filler-serums-9990000000222.html"
   },
   {
+    "id": "newbioperformanceroutinebundle",
+    "slug": "bio-performance-anti-aging-routine-bundle",
+    "name": "Bio-Performance Anti-Aging Routine Bundle",
+    "brand": "Shiseido",
+    "collection": "Bio-Performance",
+    "category": "Sets & Bundles",
+    "productType": "Bundle",
+    "routineCompleteness": "Partial routine (serum + cream)",
+    "price": 204,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "Standard",
+        "price": 204
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [],
+    "badges": [],
+    "outOfStock": false,
+    "shortDescription": "Full Bio-Performance routine",
+    "overview": "Save a bundle. Enjoy 15% off the Clarifying Cleansing Foam, Treatment Softener Enriched & Bio-Performance Advanced Super Revitalizing Cream set. $240 value.",
+    "keyBenefits": [],
+    "howToUse": [],
+    "ingredients": "",
+    "primaryImage": "shiseido_product_images/bio-performance/anti-aging-routine-bundle-newbioperformanceroutinebundle_1.jpg",
+    "gallery": [
+      "shiseido_product_images/bio-performance/anti-aging-routine-bundle-newbioperformanceroutinebundle_1.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.com/us/en/bio-performance-anti-aging-routine-bundle-newbioperformanceroutinebundle.html"
+  },
+  {
     "id": "9990000000212",
     "slug": "essential-energy-hydrating-cream",
     "name": "Hydrating Cream",
@@ -984,6 +1246,48 @@
       "shiseido_product_images/essential-energy/nourish-hydrate-set-0195106533641_3.jpg"
     ],
     "pdpUrl": "https://www.shiseido.com/us/en/essential-energy-nourish-and-hydrate-set-0195106533641.html"
+  },
+  {
+    "id": "0195106537359",
+    "slug": "essential-energy-hydrating-cream-set",
+    "name": "Hydrating Cream Set",
+    "brand": "Shiseido",
+    "collection": "Essential Energy",
+    "category": "Sets & Bundles",
+    "productType": "Set",
+    "routineCompleteness": "Partial routine (moisturizer + SPF + set)",
+    "price": 55,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "Set",
+        "price": 55
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [],
+    "badges": [
+      "New"
+    ],
+    "outOfStock": false,
+    "shortDescription": "Hydrating cream routine set",
+    "overview": "Visibly plump and smooth skin with intense 24-hour hydration,* featuring a full-size Essential Energy Hydrating Cream. A $97 value.\nWash away impurities & pollutants with Clarifying Cleansing Foam, help visibly correct signs of aging with Ultimune Power Infusing Serum, and achieve intense hydration that lasts 24 hours with Essential Energy Hydrating Cream.*\n*Clinically tested by 22 women.\nSet Includes:\n\n- Clarifying Cleansing Foam, 50mL\n- Ultimune Power Infusing Serum, 10mL\n- Essential Energy Hydrating Cream, 50mL (Full Size)",
+    "keyBenefits": [],
+    "howToUse": [
+      "Clarifying Cleansing Foam: Use daily as your first skincare step. Wet skin and lather a pearl-sized amount between fingers. Massage over face with gentle circular motions, and rinse.",
+      "Ultimune Power Infusing Serum: Use in the morning and evening after cleansing and before moisturizing. Dispense onto fingertips and smooth evenly over face and neck.",
+      "Essential Energy Hydrating Cream: Use in the morning and evening after cleanser and serum. Dot two pearl-size amounts around the face, and gently massage outward into skin."
+    ],
+    "ingredients": "Essential Energy Hydrating Cream:\n- Purified Hyaluronic Acid: Helps support delivery, attraction, and retention of moisture.\n- Ginseng Root Helps support skin health for energized and enhanced skin condition.\nSHISEIDO ESSENTIAL ENERGY HYDRATING CREAM\n\nINGREDIENTS:WATER(AQUA/EAU)･DIMETHICONE･BUTYLENE GLYCOL･ALCOHOL DENAT.･BETAINE･GLYCERIN･ISOHEXADECANE･HYDROGENATED POLYDECENE･PPG-3 DIPIVALATE･SILICA･BEHENYL ALCOHOL･STEARYL ALCOHOL･MYRISTYL MYRISTATE･GLYCERYL STEARATE SE･POLYSORBATE 60･PEG-100 STEARATE･PEG/PPG-14/7 DIMETHYL ETHER･PEG/PPG-17/4 DIMETHYL ETHER･PHENOXYETHANOL･DIMETHYLACRYLAMIDE/SODIUM ACRYLOYLDIMETHYLTAURATE CROSSPOLYMER･TITANIUM DIOXIDE (CI 77891)･SORBITAN TRISTEARATE･ERYTHRITOL･FRAGRANCE (PARFUM)･ALCOHOL･AMINOPROPYL DIMETHICONE･2-O-ETHYL ASCORBIC ACID･CARBOMER･TRISODIUM EDTA･XANTHAN GUM･CAFFEINE･POTASSIUM HYDROXIDE･ISOSTEARIC ACID･SODIUM METAPHOSPHATE･PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE･ALUMINUM HYDROXIDE･LINALOOL･TOCOPHEROL･SODIUM METABISULFITE･LIMONENE･SODIUM HYALURONATE･CITRUS UNSHIU PEEL EXTRACT･ANGELICA KEISKEI LEAF/STEM EXTRACT･ZIZIPHUS JUJUBA FRUIT EXTRACT･PANAX GINSENG ROOT EXTRACT･SODIUM ACETYLATED HYALURONATE･SCUTELLARIA BAICALENSIS ROOT EXTRACT･IRON OXIDES (CI 77491)･ALPINIA SPECIOSA LEAF EXTRACT･ROSMARINUS OFFICINALIS (ROSEMARY) LEAF EXTRACT (ROSMARINUS OFFICINALIS LEAF EXTRACT)･SANGUISORBA OFFICINALIS ROOT EXTRACT･PYROLA INCARNATA EXTRACT･ <M111296-702>\nSHISEIDO CLARIFYING CLEANSING FOAM\n\nINGREDIENTS:WATER(AQUA/EAU)･STEARIC ACID･PEG-8･MYRISTIC ACID･GLYCERIN･POTASSIUM HYDROXIDE･DIPROPYLENE GLYCOL･LAURIC ACID･GLYCERYL STEARATE SE･SORBITOL･COCAMIDOPROPYL BETAINE･PEG-60 GLYCERYL ISOSTEARATE･SODIUM METHYL COCOYL TAURATE･PHYTOSTERYL MACADAMIATE･FRAGRANCE (PARFUM)･POLYQUATERNIUM-39･DISODIUM EDTA･ORYZA SATIVA (RICE) GERM OIL･LINALOOL･GERANIOL･CITRONELLOL･KAOLIN･SODIUM BENZOATE･BUTYLENE GLYCOL･ACRYLATES COPOLYMER･BETAINE･SILK POWDER(SERICA/POUDRE DE SOIE)･TOCOPHEROL･SODIUM ACETYLATED HYALURONATE･ARTEMISIA PRINCEPS LEAF EXTRACT･SODIUM LAURYL SULFATE･<M082659-702>\nSHISEIDO ULTIMUNE POWER INFUSING SERUM\n\nINGREDIENTS:WATER(AQUA/EAU)･GLYCERIN･BUTYLENE GLYCOL･ALCOHOL DENAT.･DIMETHICONE･DIGLYCERIN･PEG/PPG-17/4 DIMETHYL ETHER･PEG-8･ISODECYL NEOPENTANOATE･TREHALOSE･AMMONIUM ACRYLOYLDIMETHYLTAURATE/BEHENETH-25 METHACRYLATE CROSSPOLYMER･PEG-14M･TOCOPHERYL ACETATE･PEG/PPG-14/7 DIMETHYL ETHER･PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE･ROSA DAMASCENA FLOWER WATER･ECTOIN･XYLITOL･LAURYL BETAINE･ORIGANUM MAJORANA LEAF EXTRACT･HYDROXYPROLINE･CAMELLIA JAPONICA SEED OIL･CAMELLIA JAPONICA FLOWER EXTRACT･HOUTTUYNIA CORDATA EXTRACT･SODIUM CARBOXYMETHYL BETA-GLUCAN･CAMELLIA JAPONICA LEAF EXTRACT･CAMELLIA JAPONICA SEED EXTRACT･LACTOBACILLUS/HIBISCUS SABDARIFFA FLOWER FERMENT FILTRATE･IRIS FLORENTINA ROOT EXTRACT･GANODERMA LUCIDUM (MUSHROOM) STEM EXTRACT･TRIETHYLHEXANOIN･ACRYLATES/C10-30 ALKYL ACRYLATE CROSSPOLYMER･ALCOHOL･DISODIUM EDTA･POTASSIUM HYDROXIDE･SILICA･ISOCETETH-10･LINALOOL･SODIUM METABISULFITE･CITRONELLOL･ASPERGILLUS FERMENT･BHT･SODIUM BICARBONATE･TOCOPHEROL･PHENOXYETHANOL･CHLORPHENESIN･SODIUM BENZOATE･FRAGRANCE (PARFUM)･ <M128589-712>",
+    "primaryImage": "shiseido_product_images/essential-energy/hydrating-cream-set-0195106537359_1.jpg",
+    "gallery": [
+      "shiseido_product_images/essential-energy/hydrating-cream-set-0195106537359_1.jpg",
+      "shiseido_product_images/essential-energy/hydrating-cream-set-0195106537359_2.jpg",
+      "shiseido_product_images/essential-energy/hydrating-cream-set-0195106537359_3.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.com/us/en/essential-energy-hydrating-cream-set-0195106537359.html"
   },
   {
     "id": "0730852145290",
@@ -1387,6 +1691,108 @@
       "shiseido_product_images/essentials/refreshing-cleansing-water-0729238141681_1.jpg"
     ],
     "pdpUrl": "https://www.shiseido.com/us/en/refreshing-cleansing-water-0729238141681.html"
+  },
+  {
+    "id": "0729238141698",
+    "slug": "refreshing-cleansing-sheets",
+    "name": "Refreshing Cleansing Sheets",
+    "brand": "Shiseido",
+    "collection": "Essentials",
+    "category": "Cleansers",
+    "productType": "Cleansing wipes",
+    "routineCompleteness": "Single products (non-line cleansers)",
+    "price": 19,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "30 Sheets",
+        "price": 19
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [],
+    "badges": [],
+    "outOfStock": false,
+    "shortDescription": "Cleansing wipes on the go",
+    "overview": "Shiseido Refreshing Cleansing Sheets - 30 Sheets offer a luxurious purifying experience, effortlessly removing impurities, makeup, and excess oil. Infused with the nourishing essence of natural ingredients, these ultra-soft wipes leave skin feeling refreshed and hydrated. Backed by pioneering scientific research, each sheet is designed to cater to a diverse range of skin types while ensuring a gentle yet effective cleanse. These portable and convenient sheets embody Shiseido's commitment to high-quality skincare solutions.",
+    "keyBenefits": [
+      "pH-balanced formulation.",
+      "Fresh scent to help reinvigorate and soothe skin.",
+      "Packaging allows for compactness and easy resealing, maintaining the quality of the sheets.",
+      "30 single-use sheets per package",
+      "Dermatologist-tested. Non-Comedogenic. Alcohol-Free. Oil-Free"
+    ],
+    "howToUse": [
+      "Wipe gently over face to cleanse skin. Reseal flap after each use."
+    ],
+    "ingredients": "100% ultra-soft cotton\nWATER(AQUA/EAU)･BUTYLENE GLYCOL･DIPROPYLENE GLYCOL･PEG/PPG-50/40 DIMETHYL ETHER･PPG-13-DECYLTETRADECETH-24･PHENOXYETHANOL･METHYLPARABEN･TETRAHYDROXYPROPYL ETHYLENEDIAMINE･BETAINE･CITRIC ACID･SODIUM CITRATE･FRAGRANCE (PARFUM)･DIMORPHOLINOPYRIDAZINONE･SODIUM METAPHOSPHATE･CITRONELLOL･LINALOOL･LIMONENE･PAEONIA ALBIFLORA ROOT EXTRACT･TOCOPHEROL･HAMAMELIS VIRGINIANA (WITCH HAZEL) LEAF EXTRACT･ROSMARINUS OFFICINALIS (ROSEMARY) LEAF EXTRACT (ROSMARINUS OFFICINALIS LEAF EXTRACT)･BENZOIC ACID･",
+    "primaryImage": "shiseido_product_images/essentials/refreshing-cleansing-sheets-0729238141698_1.jpg",
+    "gallery": [
+      "shiseido_product_images/essentials/refreshing-cleansing-sheets-0729238141698_1.jpg",
+      "shiseido_product_images/essentials/refreshing-cleansing-sheets-0729238141698_2.jpg",
+      "shiseido_product_images/essentials/refreshing-cleansing-sheets-0729238141698_3.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.ca/ca/en/refreshing-cleansing-sheets-0729238141698.html"
+  },
+  {
+    "id": "0729238722026",
+    "slug": "shiseido-facial-cotton",
+    "name": "Facial Cotton",
+    "brand": "Shiseido",
+    "collection": "Essentials",
+    "category": "Cleansers",
+    "productType": "Cleansing tool",
+    "routineCompleteness": "Single products (non-line cleansers)",
+    "price": 15,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "Standard",
+        "price": 15
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [],
+    "badges": [],
+    "outOfStock": false,
+    "shortDescription": "Ultra-soft application cotton",
+    "overview": "Elevate your daily skincare regimen with Shiseido Facial Cotton, a luxurious essential crafted from 100% natural, super-soft cotton. These premium pads are designed to provide gentle exfoliation while effectively removing makeup and aiding in the cleansing and toning process. Ideal for all skin types, each pad ensures maximum absorption and minimal waste of your favorite Shiseido products. The commitment to scientific research guarantees a high-quality experience that respects even the most sensitive skin.\nEach square contains a blend of 123,000 cotton fibers, woven into 28 layers with high moisture-absorbing and releasing properties for less wasted product. Adds a gentle exfoliation benefit to improve skin roughness. Specially crafted to maintain its shape so that fibers don't fluff or stick to face.",
+    "keyBenefits": [
+      "100% natural, soft cotton for softener application and makeup removal",
+      "A blend of long and medium fibers are designed for maximum absorption and release",
+      "Fibers don't fluff or stick to face",
+      "Adds a gentle exfoliation benefit to improve skin roughness"
+    ],
+    "howToUse": [
+      "To apply softener or essence,",
+      "Pour softener or essence onto the cotton pad after cleansing.",
+      "Wrap the cotton around the inner middle finger, between the index and ring fingers.",
+      "Starting from the center of the face, use outward strokes to smooth softener:",
+      "across the forehead",
+      "from nose to cheeks",
+      "around your lips",
+      "upward from your chest to neck",
+      "under your chin",
+      "To remove eye makeup,",
+      "Pour makeup remover onto 3 cotton pads - one for each eye and a third for your eyelashes.",
+      "Rest a cotton pad over each lid and hold it in place for a few seconds. Then gently wipe downward and off skin.",
+      "Place the remaining cotton pad onto the lashes of each eye. Hold it in place for a few seconds to break down the mascara, then wipe from the base to the tip of your eyelashes, starting from outer to inner corner and back again. Repeat on your other eye.",
+      "Follow with cleanser."
+    ],
+    "ingredients": "100% Cotton",
+    "primaryImage": "shiseido_product_images/essentials/facial-cotton-0729238722026_1.jpg",
+    "gallery": [
+      "shiseido_product_images/essentials/facial-cotton-0729238722026_1.jpg",
+      "shiseido_product_images/essentials/facial-cotton-0729238722026_2.jpg",
+      "shiseido_product_images/essentials/facial-cotton-0729238722026_3.jpg",
+      "shiseido_product_images/essentials/facial-cotton-0729238722026_4.jpg",
+      "shiseido_product_images/essentials/facial-cotton-0729238722026_5.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.ca/ca/en/shiseido-facial-cotton-0729238722026.html"
   },
   {
     "id": "9990000000221",
@@ -2075,6 +2481,131 @@
     "pdpUrl": "https://www.shiseido.com/us/en/future-solution-lx-universal-defense-spf-50-0730852213104.html"
   },
   {
+    "id": "0195106537694",
+    "slug": "future-solution-lx-legendary-enmei-ultimate-revitalizing-ritual",
+    "name": "Legendary Enmei Ultimate Revitalizing Ritual",
+    "brand": "Shiseido",
+    "collection": "Future Solution LX",
+    "category": "Sets & Bundles",
+    "productType": "Set",
+    "routineCompleteness": "Full routine (cleanser/softener/serum/eye/day-SPF/night + Legendary Enmei sub-line + suncare/makeup crossover)",
+    "price": 665,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "Set",
+        "price": 665
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [],
+    "badges": [
+      "New"
+    ],
+    "outOfStock": false,
+    "shortDescription": "Ultra-luxury Enmei ritual",
+    "overview": "Formulated with the Legendary Enmei Herb and exceptionally rare Green Treasured Silk, these revitalizing forces of Japan’s lush nature combined with Shiseido’s advanced technology, visibly improve skins’ vitality for a firm, defined, and vibrant look. A $955 value.\n\nBegin your revitalizing ritual with Legendary Enmei Ultimate Renewing Cream for visibly renewed, supple, and rejuvenated skin. Finish with the Legendary Enmei Ultimate Brilliance Eye Cream, a luxurious eye cream that targets dullness, dark circles, sagging, and wrinkles.\nSet Includes:\n\n- Future Solution LX Legendary Enmei Ultimate Renewing Cream (Full Size)\n- Future Solution LX Legendary Enmei Ultimate Brilliance Eye Cream (Full Size)",
+    "keyBenefits": [],
+    "howToUse": [
+      "Legendary Enmei Ultimate Renewing Cream: Use the spatula to scoop two pearl-sized amounts, then dot on the five points of the face: forehead, nose, chin, and both cheeks. Gently smooth the cream outward over your face.",
+      "Legendary Enmei Ultimate Brilliance Eye Cream: Dab cream on five areas (inner corners, under eyes, outer corners, eyelids, above and between the eyebrows) around each eye and smooth with fingers. Blend into skin."
+    ],
+    "ingredients": "Legendary Enmei Ultimate Renewing Cream:\n- Legendary Enmei Complex (comprised of Enmei Herb Extract, Skingenecell 1P, Vitamin C, and Green Treasured Silk Extract): A proprietary ingredient that helps defend skin from external aggressors and improves visible signs of aging.\n- SublimActive (comprised of Camellia Seed Extract): Helps support the skin's energy producing system for optimized condition.\n- Niacinamide: Fortifies skin's barrier and helps smooth skin's texture.\nLegendary Enmei Ultimate Brilliance Eye Cream:\n- Legendary Enmei Complex: A proprietary anti-aging ingredient comprised of Legendary Enmei Herb and Green Treasured Silk that supports antioxidant factors, helping to reduce the appearance of visible signs of aging.\n- Camellia Seed Extract: Known to help support enhanced skin condition.\nSHISEIDO FUTURE SOLUTION LX LEGENDARY ENMEI ULTIMATE BRILLIANCE EYE CREAM\n\nINGREDIENTS:WATER(AQUA/EAU)･GLYCERIN･BUTYLENE GLYCOL･DIPROPYLENE GLYCOL･DIPHENYLSILOXY PHENYL TRIMETHICONE･ALCOHOL･DIMETHICONE･TRIETHYLHEXANOIN･BEHENYL ALCOHOL･PEG/PPG-14/7 DIMETHYL ETHER･POTASSIUM METHOXYSALICYLATE･PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE･HYDROGENATED POLYISOBUTENE･TOCOPHERYL ACETATE･2-O-ETHYL ASCORBIC ACID･XANTHAN GUM･PRUNUS SPECIOSA LEAF EXTRACT･ANGELICA ACUTILOBA ROOT EXTRACT･CITRUS DEPRESSA PEEL EXTRACT･IRIS FLORENTINA ROOT EXTRACT･EUCHEUMA SERRA/GRATELOUPIA SPARSA/SACCHARINA ANGUSTATA/ULVA LINZA/UNDARIA PINNATIFIDA EXTRACT･TYPHA ANGUSTIFOLIA SPIKE EXTRACT･ISODONIS JAPONICUS LEAF/STALK EXTRACT･HYDROLYZED SILK･CAMELLIA JAPONICA SEED EXTRACT･RETINYL PALMITATE･SACCHARINA ANGUSTATA/UNDARIA PINNATIFIDA EXTRACT･CAMELLIA SINENSIS LEAF EXTRACT･BUPLEURUM FALCATUM ROOT EXTRACT･NASTURTIUM OFFICINALE LEAF/STEM EXTRACT･HYDROLYZED CONCHIOLIN PROTEIN･BATYL ALCOHOL･BEHENIC ACID･HYDROGENATED PALM OIL･PEG-60 GLYCERYL ISOSTEARATE･PEG-10 DIMETHICONE･MICA･DIMETHYLACRYLAMIDE/SODIUM ACRYLOYLDIMETHYLTAURATE CROSSPOLYMER･ELAEIS GUINEENSIS (PALM) KERNEL OIL･ELAEIS GUINEENSIS (PALM) OIL･POTASSIUM HYDROXIDE･SODIUM METAPHOSPHATE･DISODIUM EDTA･SILICA･ALUMINUM HYDROXIDE･SODIUM METABISULFITE･CINNAMOMUM CASSIA BARK EXTRACT･TOCOPHEROL･ZEA MAYS (CORN) OIL･BHT･CITRIC ACID･PHENOXYETHANOL･FRAGRANCE (PARFUM)･TITANIUM DIOXIDE (CI 77891)･IRON OXIDES (CI 77491)･LINALOOL･LIMONENE･LINALYL ACETATE･HEXAMETHYLINDANOPYRAN･ACETYL CEDRENE･CITRONELLOL･GERANIOL･ALPHA-ISOMETHYL IONONE･CANANGA ODORATA OIL/EXTRACT･BENZYL BENZOATE･CITRUS AURANTIUM BERGAMIA (BERGAMOT) PEEL OIL･PINENE･PELARGONIUM GRAVEOLENS FLOWER OIL･CITRUS LIMON (LEMON) PEEL OIL･CITRUS AURANTIUM PEEL OIL･<M143077-712>\nSHISEIDO FUTURE SOLUTION LX LEGENDARY ENMEI ULTIMATE RENEWING CREAM\n\nINGREDIENTS:WATER(AQUA/EAU)･GLYCERIN･BUTYLENE GLYCOL･CETYL ETHYLHEXANOATE･NIACINAMIDE･SQUALANE･TRIISOSTEARIN･DIMETHICONE･BEHENYL ALCOHOL･PENTAERYTHRITYL TETRAETHYLHEXANOATE･PETROLATUM･POTASSIUM METHOXYSALICYLATE･CARNOSINE･HYDROGENATED POLYISOBUTENE･STEARYL ALCOHOL･MYRISTYL MYRISTATE･BEHENETH-20･PEG/PPG-14/7 DIMETHYL ETHER･PHENOXYETHANOL･MICROCRYSTALLINE WAX(CERA MICROCRISTALLINA/CIRE MICROCRISTALLINE)･PHYTOSTERYL MACADAMIATE･BUTYROSPERMUM PARKII (SHEA) BUTTER･CITRIC ACID･CAPRYLIC/CAPRIC TRIGLYCERIDE･SILICA･TRIMETHYLSILOXYSILICATE･FRAGRANCE (PARFUM)･ACRYLAMIDE/SODIUM ACRYLOYLDIMETHYLTAURATE COPOLYMER･SODIUM CITRATE･TRISODIUM EDTA･POLYVINYL ALCOHOL･BETAINE･TOCOPHERYL ACETATE･XANTHAN GUM･ISOHEXADECANE･BHT･2-O-ETHYL ASCORBIC ACID･HYDROGENATED VEGETABLE OIL･POLYSORBATE 80･SODIUM METABISULFITE･SODIUM METAPHOSPHATE･LINALOOL･ALCOHOL･SORBITAN OLEATE･LIMONENE･CITRONELLOL･GERANIOL･BENZYL BENZOATE･ALPHA-ISOMETHYL IONONE･PRUNUS SPECIOSA LEAF EXTRACT･IRON OXIDES (CI 77491)･ANGELICA ACUTILOBA ROOT EXTRACT･MELISSA OFFICINALIS LEAF EXTRACT･TYPHA ANGUSTIFOLIA SPIKE EXTRACT･RUBUS SUAVISSIMUS (RASPBERRY) LEAF EXTRACT･GARCINIA MANGOSTANA BARK EXTRACT･ISODONIS JAPONICUS LEAF/STALK EXTRACT･TOCOPHEROL･PINUS SYLVESTRIS CONE EXTRACT･CAMELLIA JAPONICA SEED EXTRACT･CAMELLIA SINENSIS LEAF EXTRACT･HYDROLYZED SILK･KAEMPFERIA GALANGA ROOT EXTRACT･PRUNUS PERSICA (PEACH) LEAF EXTRACT･NELUMBO NUCIFERA GERM EXTRACT･ <M105619-702>",
+    "primaryImage": "shiseido_product_images/future-solution-lx/legendary-enmei-ultimate-revitalizing-ritual-0195106537694_1.jpg",
+    "gallery": [
+      "shiseido_product_images/future-solution-lx/legendary-enmei-ultimate-revitalizing-ritual-0195106537694_1.jpg",
+      "shiseido_product_images/future-solution-lx/legendary-enmei-ultimate-revitalizing-ritual-0195106537694_2.jpg",
+      "shiseido_product_images/future-solution-lx/legendary-enmei-ultimate-revitalizing-ritual-0195106537694_3.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.com/us/en/future-solution-lx-legendary-enmei-ultimate-revitalizing-ritual-0195106537694.html"
+  },
+  {
+    "id": "0195106537397",
+    "slug": "future-solution-lx-regenerating-eye-and-lip-cream-set",
+    "name": "Regenerating Eye & Lip Cream Set",
+    "brand": "Shiseido",
+    "collection": "Future Solution LX",
+    "category": "Sets & Bundles",
+    "productType": "Set",
+    "routineCompleteness": "Full routine (cleanser/softener/serum/eye/day-SPF/night + Legendary Enmei sub-line + suncare/makeup crossover)",
+    "price": 210,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "Set",
+        "price": 210
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [],
+    "badges": [
+      "New"
+    ],
+    "outOfStock": false,
+    "shortDescription": "Eye + lip restoration set",
+    "overview": "Visibly improve and restore skin around the eye and mouth areas, featuring a full-size Future Solution LX Eye and Lip Contour Regenerating Cream and a full-size refill. A $333 value.\n\nVisibly improve the appearance of wrinkles and sagging for a more resilient, firm, and moisturized eye and lip area with Future Solution LX Eye and Lip Contour Regenerating Cream. This limited-edition set features a full-size refill. Refills use up to 79% less plastic waste than regular packaging for the future beauty of our planet.\nSet Includes:\n\n- Future Solution LX Eye and Lip Contour Regenerating Cream, 17mL (Full Size)\n- Future Solution LX Eye and Lip Contour Regenerating Cream, 17mL (Refill Size)",
+    "keyBenefits": [],
+    "howToUse": [
+      "Future Solution LX Eye and Lip Contour Regenerating Cream: Use in the morning and evening. Scoop two pearl-sized amounts, blend between fingers, and smooth around the eye and lip area.",
+      "​​Future Solution LX Eye and Lip Contour Regenerating Cream Refill: Hook fingers around the two protrusions on the sides of the jar and gently pull out the empty container. Insert refill pod, pushing it firmly into the jar. Remove the freshness seal and replace the cap of the container. Discard empty container."
+    ],
+    "ingredients": "Future Solution LX Eye and Lip Contour Regenerating Cream:\n- Exclusive LonGenevity Complex™: This powerful formula, made up of newly-enhanced Enmei Herb, Vitamin C, Green Tea and Skingenecell 1P – a proprietary amino acid derivative – helps optimize skin’s condition at any age and improve skin barrier function, leaving skin more bright, plump and smooth.\n- Sakura (Cherry Blossom Leaf) Extract and Peach Leaf Extract: Help support elastin and strengthen skin's structure.\n- Licorice Extract, Watercress Extract and Okra Extract: Supports skin's collagen to help diminish the appearance of fine lines and wrinkles.\nSHISEIDO FUTURE SOLUTION LX EYE AND LIP CONTOUR REGENERATING CREAM S\n\nINGREDIENTS:WATER(AQUA/EAU)･GLYCERIN･HYDROGENATED POLYDECENE･BUTYLENE GLYCOL･DIPROPYLENE GLYCOL･CETYL ETHYLHEXANOATE･XYLITOL･DIMETHICONE･BEHENYL ALCOHOL･PEG-60 GLYCERYL ISOSTEARATE･MYRISTYL MYRISTATE･SILICA･GLYCERYL STEARATE･STEARYL ALCOHOL･BEESWAX(CERA ALBA/CIRE D'ABEILLE)･TOCOPHERYL ACETATE･PIPERIDINEPROPIONIC ACID･AMMONIUM ACRYLOYLDIMETHYLTAURATE/BEHENETH-25 METHACRYLATE CROSSPOLYMER･XANTHAN GUM･2-O-ETHYL ASCORBIC ACID･GLYCYRRHIZA GLABRA (LICORICE) ROOT EXTRACT･PRUNUS SPECIOSA LEAF EXTRACT･ANGELICA ACUTILOBA ROOT EXTRACT･CITRUS DEPRESSA PEEL EXTRACT･ZIZIPHUS JUJUBA FRUIT EXTRACT･CHAENOMELES SINENSIS FRUIT EXTRACT･RUBUS SUAVISSIMUS (RASPBERRY) LEAF EXTRACT･CAMELLIA SINENSIS LEAF EXTRACT･ISODONIS JAPONICUS LEAF/STALK EXTRACT･HIBISCUS ESCULENTUS FRUIT EXTRACT･BUPLEURUM FALCATUM ROOT EXTRACT･PRUNUS PERSICA (PEACH) LEAF EXTRACT･NASTURTIUM OFFICINALE LEAF/STEM EXTRACT･HYDROLYZED SILK･BUTYROSPERMUM PARKII (SHEA) BUTTER･ISOSTEARIC ACID･HYDROGENATED PALM OIL･ELAEIS GUINEENSIS (PALM) KERNEL OIL･ELAEIS GUINEENSIS (PALM) OIL･ALCOHOL･ACRYLATES/C10-30 ALKYL ACRYLATE CROSSPOLYMER･POTASSIUM HYDROXIDE･DISODIUM EDTA･SODIUM METABISULFITE･SODIUM METAPHOSPHATE･LINALOOL･LIMONENE･ALUMINUM HYDROXIDE･CITRONELLOL･GERANIOL･ALPHA-ISOMETHYL IONONE･BENZYL BENZOATE･TOCOPHEROL･CITRIC ACID･PHENOXYETHANOL･CHLORPHENESIN･FRAGRANCE (PARFUM)･TITANIUM DIOXIDE (CI 77891)･IRON OXIDES (CI 77492)･IRON OXIDES (CI 77491)･ <M118881-712>\nSHISEIDO FUTURE SOLUTION LX EYE AND LIP CONTOUR REGENERATING CREAM S (REFILL)\n\nINGREDIENTS:WATER(AQUA/EAU)･GLYCERIN･HYDROGENATED POLYDECENE･BUTYLENE GLYCOL･DIPROPYLENE GLYCOL･CETYL ETHYLHEXANOATE･XYLITOL･DIMETHICONE･BEHENYL ALCOHOL･PEG-60 GLYCERYL ISOSTEARATE･MYRISTYL MYRISTATE･SILICA･GLYCERYL STEARATE･STEARYL ALCOHOL･BEESWAX(CERA ALBA/CIRE D'ABEILLE)･PIPERIDINEPROPIONIC ACID･TOCOPHERYL ACETATE･XANTHAN GUM･AMMONIUM ACRYLOYLDIMETHYLTAURATE/BEHENETH-25 METHACRYLATE CROSSPOLYMER･2-O-ETHYL ASCORBIC ACID･GLYCYRRHIZA GLABRA (LICORICE) ROOT EXTRACT･PRUNUS SPECIOSA LEAF EXTRACT･ANGELICA ACUTILOBA ROOT EXTRACT･CITRUS DEPRESSA PEEL EXTRACT･ZIZIPHUS JUJUBA FRUIT EXTRACT･CHAENOMELES SINENSIS FRUIT EXTRACT･RUBUS SUAVISSIMUS (RASPBERRY) LEAF EXTRACT･CAMELLIA SINENSIS LEAF EXTRACT･ISODONIS JAPONICUS LEAF/STALK EXTRACT･HIBISCUS ESCULENTUS FRUIT EXTRACT･BUPLEURUM FALCATUM ROOT EXTRACT･PRUNUS PERSICA (PEACH) LEAF EXTRACT･NASTURTIUM OFFICINALE LEAF/STEM EXTRACT･HYDROLYZED SILK･BUTYROSPERMUM PARKII (SHEA) BUTTER･ISOSTEARIC ACID･HYDROGENATED PALM OIL･ELAEIS GUINEENSIS (PALM) KERNEL OIL･ELAEIS GUINEENSIS (PALM) OIL･ALCOHOL･POTASSIUM HYDROXIDE･ACRYLATES/C10-30 ALKYL ACRYLATE CROSSPOLYMER･DISODIUM EDTA･SODIUM METABISULFITE･SODIUM METAPHOSPHATE･ALUMINUM HYDROXIDE･TOCOPHEROL･CITRIC ACID･PHENOXYETHANOL･CHLORPHENESIN･FRAGRANCE (PARFUM)･TITANIUM DIOXIDE (CI 77891)･IRON OXIDES (CI 77492)･IRON OXIDES (CI 77491)･LINALOOL･LIMONENE･LINALYL ACETATE･HEXAMETHYLINDANOPYRAN･ACETYL CEDRENE･CITRONELLOL･GERANIOL･ALPHA-ISOMETHYL IONONE･CANANGA ODORATA OIL/EXTRACT･BENZYL BENZOATE･CITRUS AURANTIUM BERGAMIA (BERGAMOT) PEEL OIL･PELARGONIUM GRAVEOLENS FLOWER OIL･PINENE･<M145847-702>",
+    "primaryImage": "shiseido_product_images/future-solution-lx/regenerating-eye-and-lip-cream-set-0195106537397_1.jpg",
+    "gallery": [
+      "shiseido_product_images/future-solution-lx/regenerating-eye-and-lip-cream-set-0195106537397_1.jpg",
+      "shiseido_product_images/future-solution-lx/regenerating-eye-and-lip-cream-set-0195106537397_2.jpg",
+      "shiseido_product_images/future-solution-lx/regenerating-eye-and-lip-cream-set-0195106537397_3.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.com/us/en/future-solution-lx-regenerating-eye-and-lip-cream-set-0195106537397.html"
+  },
+  {
+    "id": "0195106537601",
+    "slug": "future-solution-lx-restorative-ritual-set",
+    "name": "Restorative Ritual Set",
+    "brand": "Shiseido",
+    "collection": "Future Solution LX",
+    "category": "Sets & Bundles",
+    "productType": "Set",
+    "routineCompleteness": "Full routine (cleanser/softener/serum/eye/day-SPF/night + Legendary Enmei sub-line + suncare/makeup crossover)",
+    "price": 305,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "Set",
+        "price": 305
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [],
+    "badges": [
+      "New"
+    ],
+    "outOfStock": false,
+    "shortDescription": "Regenerating cream ritual",
+    "overview": "Transform skin with this luxurious gift set that visibly firms, plumps, and smooths while reducing the appearance of wrinkles and improving resilience. Featuring a full-size Future Solution LX Total Regenerating Cream. A $446 value.\n\nWash away impurities for smooth, vibrant skin with Future Solution LX Extra Rich Cleansing Foam, bring out increased clarity and radiance with Future Solution LX Concentrated Brightening Softener, visibly firm and brighten skin with Intensive Future Solution LX Firming Brilliance Serum, and help to improve loss of resilience, wrinkles, dullness and pores with Future Solution LX Total Regenerating Cream.\nSet Includes:\n\n- Future Solution LX Extra Rich Cleansing Foam, 50mL\n- Future Solution LX Concentrated Brightening Softener, 74mL\n- Future Solution LX Intensive Firming Brilliance Serum, 8mL\n- Future Solution LX Total Regenerating Cream, 50mL (Full Size)",
+    "keyBenefits": [],
+    "howToUse": [
+      "Future Solution LX Extra Rich Cleansing Foam: Use in the morning and evening as your first skincare step. Wet face, dispense a pearl-size amount, gently massage on face, and rinse.",
+      "​​Future Solution LX Concentrated Brightening Softener: Use in the morning and evening after cleansing. Pour onto Shiseido’s Facial Cotton and smooth over face, from the center outward.",
+      "​​Future Solution LX Intensive Firming Brilliance Serum: Use in the morning and evening. Blend one pump of serum into the skin, starting in the center of the face using upward strokes, also applying to the base of the neck and sweeping upward along the jawline.",
+      "Future Solution LX Total Regenerating Cream: Use in the evening after cleansing and softening. Gently smooth cream outward over face and neck."
+    ],
+    "ingredients": "Future Solution LX Total Regenerating Cream:\n- Exclusive LonGenevity Complex™: Helps optimize skin's condition at any age. This powerful formula helps improve skin barrier function, leaving skin more bright, plump and smooth.\n- Sakura (Cherry Blossom Leaf) Extract and Peach Leaf Extract: Helps support elastin and strengthen skin's structure.\n- Licorice Extract, Rosemary Extract and Okra Extract: Visibly firms, tightens, and renews skin.\nSHISEIDO FUTURE SOLUTION LX TOTAL REGENERATING CREAM S\n\nINGREDIENTS:WATER(AQUA/EAU)･DIPROPYLENE GLYCOL･BUTYLENE GLYCOL･GLYCERIN･XYLITOL･PIPERIDINEPROPIONIC ACID･PETROLATUM･MINERAL OIL(PARAFFINUM LIQUIDUM/HUILE MINÉRALE)･DIMETHICONE･TRIETHYLHEXANOIN･MYRISTYL MYRISTATE･DIPHENYLSILOXY PHENYL TRIMETHICONE･BEHENYL ALCOHOL･BEHENETH-20･STEARYL ALCOHOL･DIISOSTEARYL MALATE･DIPENTAERYTHRITYL HEXAHYDROXYSTEARATE･PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE･PEG/PPG-17/4 DIMETHYL ETHER･CARNOSINE･TOCOPHERYL ACETATE･XANTHAN GUM･2-O-ETHYL ASCORBIC ACID･ISODONIS JAPONICUS LEAF/STALK EXTRACT･GLYCYRRHIZA GLABRA (LICORICE) ROOT EXTRACT･PRUNUS SPECIOSA LEAF EXTRACT･IRIS FLORENTINA ROOT EXTRACT･SANGUISORBA OFFICINALIS ROOT EXTRACT･CAMELLIA SINENSIS LEAF EXTRACT･HIBISCUS ESCULENTUS FRUIT EXTRACT･ROSMARINUS OFFICINALIS (ROSEMARY) LEAF EXTRACT (ROSMARINUS OFFICINALIS LEAF EXTRACT)･ANGELICA ACUTILOBA ROOT EXTRACT･CHAENOMELES SINENSIS FRUIT EXTRACT･SODIUM ACETYLATED HYALURONATE･TREMELLA FUCIFORMIS POLYSACCHARIDE･HOUTTUYNIA CORDATA EXTRACT･BUPLEURUM FALCATUM ROOT EXTRACT･PRUNUS PERSICA (PEACH) LEAF EXTRACT･HYDROLYZED SILK･MICROCRYSTALLINE WAX(CERA MICROCRISTALLINA/CIRE MICROCRISTALLINE)･BATYL ALCOHOL･GLYCERYL STEARATE SE･SODIUM ACRYLATE/SODIUM ACRYLOYLDIMETHYL TAURATE COPOLYMER･HYDROGENATED PALM OIL･ISOHEXADECANE･ELAEIS GUINEENSIS (PALM) KERNEL OIL･ELAEIS GUINEENSIS (PALM) OIL･SODIUM CITRATE･POLYSORBATE 80･SODIUM METHYL STEAROYL TAURATE･BHT･TRISODIUM EDTA･ALCOHOL･SODIUM METABISULFITE･CITRIC ACID･SORBITAN OLEATE･SODIUM METAPHOSPHATE･TOCOPHEROL･PHENOXYETHANOL･FRAGRANCE (PARFUM)･IRON OXIDES (CI 77492)･IRON OXIDES (CI 77491)･LINALOOL･LIMONENE･LINALYL ACETATE･HEXAMETHYLINDANOPYRAN･ACETYL CEDRENE･CITRONELLOL･GERANIOL･ALPHA-ISOMETHYL IONONE･CANANGA ODORATA OIL/EXTRACT･BENZYL BENZOATE･CITRUS AURANTIUM BERGAMIA (BERGAMOT) PEEL OIL･PELARGONIUM GRAVEOLENS FLOWER OIL･PINENE･ <M142859-712>\nSHISEIDO FUTURE SOLUTION LX EXTRA RICH CLEANSING FOAM S\n\nINGREDIENTS:WATER(AQUA/EAU)･MYRISTIC ACID･GLYCERIN･STEARIC ACID･POTASSIUM HYDROXIDE･SORBITOL･DIPROPYLENE GLYCOL･LAURIC ACID･PEG-20 GLYCERYL ISOSTEARATE･PEG-6･PEG-32･SODIUM METHYL COCOYL TAURATE･GLYCOL DISTEARATE･GLYCERYL STEARATE SE･POLYQUATERNIUM-7･ACRYLATES COPOLYMER･ISODONIS JAPONICUS LEAF/STALK EXTRACT･PRUNUS LANNESIANA FLOWER EXTRACT･TRISODIUM EDTA･SODIUM METHYLTAURATE･BUTYLENE GLYCOL･LINALOOL･CITRONELLOL･GERANIOL･LIMONENE･SODIUM METABISULFITE･COCAMIDOPROPYL BETAINE･SODIUM LAURYL SULFATE･SODIUM BENZOATE･FRAGRANCE (PARFUM)･IRON OXIDES (CI 77492)･IRON OXIDES (CI 77491)･<M119671-702>\nSHISEIDO FUTURE SOLUTION LX CONCENTRATED BRIGHTENING SOFTENER S\n\nINGREDIENTS:WATER(AQUA/EAU)･GLYCERIN･DIPROPYLENE GLYCOL･BETAINE･DIMETHICONE･CETYL ETHYLHEXANOATE･PEG-20･POTASSIUM METHOXYSALICYLATE･PIPERIDINEPROPIONIC ACID･TOCOPHERYL ACETATE･ERYTHRITOL･PEG/PPG-14/7 DIMETHYL ETHER･PEG/PPG-17/4 DIMETHYL ETHER･PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE･LAURYL BETAINE･2-O-ETHYL ASCORBIC ACID･XANTHAN GUM･PRUNUS SPECIOSA LEAF EXTRACT･ANGELICA ACUTILOBA ROOT EXTRACT･CHAENOMELES SINENSIS FRUIT EXTRACT･CAMELLIA SINENSIS LEAF EXTRACT･ISODONIS JAPONICUS LEAF/STALK EXTRACT･ROSA MULTIFLORA FRUIT EXTRACT･BUPLEURUM FALCATUM ROOT EXTRACT･PRUNUS PERSICA (PEACH) LEAF EXTRACT･HYDROLYZED SILK･SODIUM ACRYLATE/SODIUM ACRYLOYLDIMETHYL TAURATE COPOLYMER･CARBOMER･BUTYLENE GLYCOL･ISOSTEARIC ACID･ISOHEXADECANE･PEG-60 GLYCERYL ISOSTEARATE･POTASSIUM HYDROXIDE･ALCOHOL･PEG-10 DIMETHICONE･POLYSORBATE 80･ACRYLATES/C10-30 ALKYL ACRYLATE CROSSPOLYMER･SORBITAN OLEATE･TRISODIUM EDTA･SODIUM METAPHOSPHATE･LINALOOL･LIMONENE･SODIUM METABISULFITE･CITRONELLOL･GERANIOL･ALPHA-ISOMETHYL IONONE･BENZYL BENZOATE･TOCOPHEROL･PHENOXYETHANOL･SODIUM BENZOATE･FRAGRANCE (PARFUM)･IRON OXIDES (CI 77491)･IRON OXIDES (CI 77492)･ <M119468-702>\nSHISEIDO FUTURE SOLUTION LX INTENSIVE FIRMING BRILLANCE SERUM\n\nINGREDIENTS:WATER(AQUA/EAU)･GLYCERIN･BUTYLENE GLYCOL･DIPROPYLENE GLYCOL･SODIUM ACRYLATE/SODIUM ACRYLOYLDIMETHYL TAURATE COPOLYMER･DIMETHICONE･TRIETHYLHEXANOIN･DIPHENYLSILOXY PHENYL TRIMETHICONE･POTASSIUM METHOXYSALICYLATE･PIPERIDINEPROPIONIC ACID･TOCOPHERYL ACETATE･XANTHAN GUM･SODIUM POLYACRYLATE･LAURYL BETAINE･2-O-ETHYL ASCORBIC ACID･VP/VA COPOLYMER･PYRUS CYDONIA SEED EXTRACT･CAMELLIA SINENSIS LEAF EXTRACT･ISODONIS JAPONICUS LEAF/STALK EXTRACT･PRUNUS SPECIOSA LEAF EXTRACT･ANGELICA ACUTILOBA ROOT EXTRACT･CHAENOMELES SINENSIS FRUIT EXTRACT･RUBUS SUAVISSIMUS (RASPBERRY) LEAF EXTRACT･PINUS SYLVESTRIS CONE EXTRACT･ROSMARINUS OFFICINALIS (ROSEMARY) LEAF EXTRACT (ROSMARINUS OFFICINALIS LEAF EXTRACT)･BUPLEURUM FALCATUM ROOT EXTRACT･PRUNUS PERSICA (PEACH) LEAF EXTRACT･HYDROLYZED SILK･PEG-12 DIMETHICONE･ISOHEXADECANE･ISOSTEARIC ACID･ALCOHOL･POLYSORBATE 80･CARBOMER･POTASSIUM HYDROXIDE･SORBITAN OLEATE･POLYVINYL ALCOHOL･SODIUM METHYL STEAROYL TAURATE･SODIUM METAPHOSPHATE･DISODIUM EDTA･LINALOOL･SODIUM METABISULFITE･LIMONENE･CITRONELLOL･GERANIOL･ALPHA-ISOMETHYL IONONE･BENZYL BENZOATE･TOCOPHEROL･PHENOXYETHANOL･SODIUM BENZOATE･FRAGRANCE (PARFUM)･IRON OXIDES (CI 77492)･ <M113229-702>",
+    "primaryImage": "shiseido_product_images/future-solution-lx/restorative-ritual-set-0195106537601_1.jpg",
+    "gallery": [
+      "shiseido_product_images/future-solution-lx/restorative-ritual-set-0195106537601_1.jpg",
+      "shiseido_product_images/future-solution-lx/restorative-ritual-set-0195106537601_2.jpg",
+      "shiseido_product_images/future-solution-lx/restorative-ritual-set-0195106537601_3.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.com/us/en/future-solution-lx-restorative-ritual-set-0195106537601.html"
+  },
+  {
     "id": "0195106533665",
     "slug": "shiseido-men-cleanse-and-moisturize-set",
     "name": "Cleanse & Moisturize Set",
@@ -2616,6 +3147,102 @@
     "pdpUrl": "https://www.shiseido.com/us/en/shiseido-men-ultimune-power-infusing-serum-0768614228455.html"
   },
   {
+    "id": "0729238215498",
+    "slug": "shiseido-men-skin-empowering-cream",
+    "name": "Skin Empowering Cream",
+    "brand": "Shiseido",
+    "collection": "Shiseido Men",
+    "category": "Moisturizers",
+    "productType": "Moisturizer",
+    "routineCompleteness": "Full men's routine (own cleanser/lotion/moisturizer/eye/cream, plus cross-branded Ultimune serum and Ultimate Sun/Urban Environment/Future Solution LX sunscreens)",
+    "price": 79,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "50mL",
+        "price": 79
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [
+      "Anti-Aging"
+    ],
+    "badges": [
+      "New"
+    ],
+    "outOfStock": false,
+    "shortDescription": "Anti-aging cream for men",
+    "overview": "Shiseido Men’s ultimate aging care solution, formulated to bring back skin to its prime.\nSkin Empowering Cream visibly improves aging signs like wrinkles, firmness, and sagging in as few as 7 days. Based on 40 years of male skin research, engineered not just to combat visible wrinkles today, but also defend skin for the long term.",
+    "keyBenefits": [],
+    "howToUse": [
+      "Use every morning and night after cleansing and/or shaving face.",
+      "Take a pearl-sized drop onto fingertips and smooth evenly over the face."
+    ],
+    "ingredients": "- The result of 100 years of men’s skin research, targeting the unique qualities of male skin.\n- Combines Japanese ingredients with Shiseido’s male skin research, backed by Shiseido’s mastery of retinol-formulations to combat men’s skin concerns.\n- RETINOL ACE, a potent retinoid with anti-wrinkle properties. More potent than retinyl palmitate commonly used by competitors, yet safe and suitable for daily-use.\n- SAKURA LEAF EXTRACT, a powerful antioxidant that blocks cellular aging.\n- With Shiseido Men ULTIMUNE co-usage, experience +25% elasticity in just 7 days.\nWATER(AQUA/EAU)･DIMETHICONE･GLYCERIN･ALCOHOL･DIPROPYLENE GLYCOL･NIACINAMIDE･SILICA･AMMONIUM ACRYLOYLDIMETHYLTAURATE/VP COPOLYMER･XYLITOL･PHENOXYETHANOL･CETYL ETHYLHEXANOATE･TOCOPHERYL ACETATE･ACRYLAMIDE/SODIUM ACRYLOYLDIMETHYLTAURATE COPOLYMER･ISOHEXADECANE･POLYSORBATE 60･BUTYLENE GLYCOL･PEG-20 GLYCERYL ISOSTEARATE･FRAGRANCE (PARFUM)･AMINOPROPYL DIMETHICONE･POLYSORBATE 80･SODIUM CITRATE･ACRYLATES/C10-30 ALKYL ACRYLATE CROSSPOLYMER･DIPEPTIDE-15･DIPOTASSIUM GLYCYRRHIZATE･SORBITAN OLEATE･POTASSIUM HYDROXIDE･CITRIC ACID･SODIUM METABISULFITE･SODIUM METAPHOSPHATE･ORYZA SATIVA (RICE) GERM OIL･TITANIUM DIOXIDE (CI 77891)･LIMONENE･PAEONIA ALBIFLORA ROOT EXTRACT･HYDROGENATED LECITHIN･MENTHA PIPERITA (PEPPERMINT) LEAF EXTRACT･LINALOOL･CENTAUREA CYANUS FLOWER EXTRACT･SANGUISORBA OFFICINALIS ROOT EXTRACT･CINNAMOMUM CASSIA BARK EXTRACT･IRON OXIDES (CI 77492)･ALUMINUM HYDROXIDE･SODIUM CARBOXYMETHYL BETA-GLUCAN･FAGUS SYLVATICA BUD EXTRACT･ORYZANOL･CAMELLIA JAPONICA SEED EXTRACT･PERILLA OCYMOIDES LEAF EXTRACT･BENZOIC ACID･GLYCYRRHIZA GLABRA (LICORICE) ROOT EXTRACT･GANODERMA LUCIDUM (MUSHROOM) STEM EXTRACT･TOCOPHEROL･",
+    "primaryImage": "shiseido_product_images/shiseido-men/skin-empowering-cream-0729238215498_1.jpg",
+    "gallery": [
+      "shiseido_product_images/shiseido-men/skin-empowering-cream-0729238215498_1.jpg",
+      "shiseido_product_images/shiseido-men/skin-empowering-cream-0729238215498_2.jpg",
+      "shiseido_product_images/shiseido-men/skin-empowering-cream-0729238215498_3.jpg",
+      "shiseido_product_images/shiseido-men/skin-empowering-cream-0729238215498_4.jpg",
+      "shiseido_product_images/shiseido-men/skin-empowering-cream-0729238215498_5.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.ca/ca/en/shiseido-men-skin-empowering-cream-0729238215498.html"
+  },
+  {
+    "id": "0729238184091",
+    "slug": "shiseido-men-total-revitalizer-light-fluid",
+    "name": "Total Revitalizer Light Fluid",
+    "brand": "Shiseido",
+    "collection": "Shiseido Men",
+    "category": "Moisturizers",
+    "productType": "Moisturizer (fluid)",
+    "routineCompleteness": "Full men's routine (own cleanser/lotion/moisturizer/eye/cream, plus cross-branded Ultimune serum and Ultimate Sun/Urban Environment/Future Solution LX sunscreens)",
+    "price": 69,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "70mL",
+        "price": 69
+      }
+    ],
+    "skinTypes": [
+      "Combination",
+      "Normal",
+      "Oily"
+    ],
+    "concerns": [
+      "Anti-Aging"
+    ],
+    "badges": [],
+    "outOfStock": false,
+    "shortDescription": "Lightweight revitalizing fluid",
+    "overview": "A high performance anti-aging light fluid moisturizer formulated with Rice Bran Technology that helps improve five skin aging concerns for men including wrinkles, sagging, dullness, roughness and loss of firmness.\n*Clinically tested by 24 participants.\n\n**Tested by 31 men, ages 35-56.",
+    "keyBenefits": [
+      "48-hour hydration*",
+      "Visibly improves roughness in 4 weeks**",
+      "Ideal for normal, oily and combination skin types",
+      "Non-sticky texture that absorbs quickly",
+      "Paraben-free, mineral-oil free.",
+      "Non-comedogenic, Dermatologist-tested."
+    ],
+    "howToUse": [
+      "Use every morning and night after cleansing and/or shaving face.",
+      "Press the pump once into the palm of the hands and smooth evenly over the face."
+    ],
+    "ingredients": "- Rice Bran Technology: improves five major skin aging concerns for men including the look of wrinkles, sagging, dullness, roughness and loss of firmness.\n- Rice Bran Oil Complex: helps encourage the natural production of energy in cells that supports all cellular functions including differentiation and turnover\n- Xylitol: enhances skin moisture and barrier function\n- Nicotinamide: helps encourage the natural production of collagen\n- Cornflower Extract: helps encourage skin’s restorative power against damage\nWATER(AQUA/EAU)･DIPROPYLENE GLYCOL･GLYCERIN･NIACINAMIDE･DIMETHICONE･DIGLYCERIN･CETYL ETHYLHEXANOATE･HYDROGENATED POLYDECENE･BEHENYL ALCOHOL･SILICA･ERYTHRITOL･PEG/PPG-14/7 DIMETHYL ETHER･BEHENETH-20･PHENOXYETHANOL･BUTYLENE GLYCOL･CHLORPHENESIN･FRAGRANCE (PARFUM)･ACRYLATES/STEARETH-20 METHACRYLATE CROSSPOLYMER･XYLITOL･TOCOPHERYL ACETATE･TITANIUM DIOXIDE (CI 77891)･SODIUM CITRATE･POTASSIUM HYDROXIDE･CARBOMER･ACRYLATES/C10-30 ALKYL ACRYLATE CROSSPOLYMER･DIPEPTIDE-15･ALCOHOL･DISODIUM EDTA･LIMONENE･CITRIC ACID･SODIUM METAPHOSPHATE･MENTHOL･ORYZA SATIVA (RICE) GERM OIL･ALUMINUM HYDROXIDE･SODIUM METABISULFITE･PAEONIA ALBIFLORA ROOT EXTRACT･LINALOOL･HYDROGENATED LECITHIN･MENTHA PIPERITA (PEPPERMINT) LEAF EXTRACT･CENTAUREA CYANUS FLOWER EXTRACT･SANGUISORBA OFFICINALIS ROOT EXTRACT･SODIUM BENZOATE･CINNAMOMUM CASSIA BARK EXTRACT･TOCOPHEROL･SODIUM CARBOXYMETHYL BETA-GLUCAN･FAGUS SYLVATICA BUD EXTRACT･ORYZANOL･CAMELLIA JAPONICA SEED EXTRACT･PERILLA OCYMOIDES LEAF EXTRACT･BENZOIC ACID･GLYCYRRHIZA GLABRA (LICORICE) ROOT EXTRACT･GANODERMA LUCIDUM (MUSHROOM) STEM EXTRACT･",
+    "primaryImage": "shiseido_product_images/shiseido-men/total-revitalizer-light-fluid-0729238184091_1.jpg",
+    "gallery": [
+      "shiseido_product_images/shiseido-men/total-revitalizer-light-fluid-0729238184091_1.jpg",
+      "shiseido_product_images/shiseido-men/total-revitalizer-light-fluid-0729238184091_2.jpg",
+      "shiseido_product_images/shiseido-men/total-revitalizer-light-fluid-0729238184091_3.jpg",
+      "shiseido_product_images/shiseido-men/total-revitalizer-light-fluid-0729238184091_4.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.ca/ca/en/shiseido-men-total-revitalizer-light-fluid-0729238184091.html"
+  },
+  {
     "id": "0195106533573",
     "slug": "ultimate-sun-active-sun-protection-set",
     "name": "Active Sun Protection Set",
@@ -2976,6 +3603,48 @@
       "shiseido_product_images/ultimate-sun/ultimate-sun-protector-clear-stick-spf-60-duo-66-value-SunscreenStickDuo_1.jpg"
     ],
     "pdpUrl": "https://www.shiseido.com/us/en/ultimate-sun-protector-clear-stick-spf-60-duo-66-value-SunscreenStickDuo.html"
+  },
+  {
+    "id": "0730852146587",
+    "slug": "sports-bb-cream-spf-50-sunscreen",
+    "name": "Sports BB Cream SPF 50+ Sunscreen",
+    "brand": "Shiseido",
+    "collection": "Ultimate Sun",
+    "category": "Sunscreen",
+    "productType": "Sunscreen (tinted BB)",
+    "routineCompleteness": "Sunscreen-only line (higher-SPF/sport suncare)",
+    "price": 45,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "30mL",
+        "price": 45
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [],
+    "badges": [],
+    "outOfStock": false,
+    "shortDescription": "Sweat-resistant tinted SPF 50+",
+    "overview": "A quick-dry BB protector for non-sticky, longer-lasting beauty. It rapidly dries sweat to prevent makeup from running, while reacting with water to improve UV protection. Helps give skin a natural, healthy, contoured look for a beautiful finish that lasts in the sun all day.\nFor all Skin Types. Dermatologist-tested. Ophthalmologist-tested. Non-Comedogenic.",
+    "keyBenefits": [
+      "It quickly dries sweat and water to prolong makeup wear all-day.",
+      "WetForce Technology protects from UVA & UVB rays even when wet.",
+      "Cooling and easy to use.",
+      "30mL, 1 FL. OZ."
+    ],
+    "howToUse": [
+      "Shake well before use. Use as a last step of morning skincare routine. Pour an appropriate amount onto your palm and smooth over the face evenly."
+    ],
+    "ingredients": "Features 10 Sun Protection Technologies\n\n1. Quick Dry Technology: Quickly dries sweat, so makeup won’t wear off or get sticky no matter how much you sweat. Prevents beads of sweat from running down your skin, keeping your skin looking beautiful.\n\n2. SuperVeil UV360™: Helps formula spread tightly and evenly across skin’s contours and furrows creating optimal UV protection from every angle.\n\n3. WetForce Technology: Sunscreen’s protective veil becomes stronger as it comes into contact with water or perspiration*. Protects against UV rays.\n\n4. ProfenseCL: Protects from damage that leads to wrinkle formation and uneven skin tone. Includes Soy Lecithin for anti-wrinkle protection and Licorice extract to address the appearance of dark spots.\n\n5. Amino Acid Nutrients: PCA Derivative Oil and Aqua Holding Oil provide the ideal moisturizing ingredients for sweat-prone skin.\n\n6. Contouring Powders: Promotes a beautiful, healthy look.\n\n7. Cooling Essence: provides a cooling sensation and pleasant feel during and immediately after application.\n\n8. Harmonizing Fragrance: Wraps perspiration in a citrus floral scent to help mask unpleasant odors associated with sweating.\n\n9. Perspiration, Water & Transfer Resistant.\n\n10. SPF 50+ Broad Spectrum: Blocks both UVA & UVB rays.\n\n*To activate WetForce technology, expose the applied area to water for 15 minutes or perspiration for 30 minutes.\nACTIVE INGREDIENTS: Purpose OCTINOXATE 4.9% ･････ Sunscreen TITANIUM DIOXIDE 15.0% ･････ Sunscreen\n\nINACTIVE INGREDIENTS:DIMETHICONE･SILICA･BIS-PEG-18 METHYL ETHER DIMETHYL SILANE･ISODODECANE･TRIMETHYLSILOXYSILICATE･SD ALCOHOL 40-B･TRIMETHYLSILOXYSILICATE/DIMETHICONOL CROSSPOLYMER･ISOPROPYL MYRISTATE･ALUMINUM HYDROXIDE･PEG-9 POLYDIMETHYLSILOXYETHYL DIMETHICONE･STEARIC ACID･ISOSTEARIC ACID･DEXTRIN PALMITATE･DISTEARDIMONIUM HECTORITE･BIS-BUTYLDIMETHICONE POLYGLYCERYL-3･LAUROYL LYSINE･PEG/PPG-14/7 DIMETHYL ETHER･PCA DIMETHICONE･PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE･PHYTOSTERYL MACADAMIATE･LECITHIN･GLYCYRRHIZA GLABRA (LICORICE) ROOT EXTRACT･SUCROSE TETRASTEARATE TRIACETATE･POLYMETHYLSILSESQUIOXANE･TALC･METHYL METHACRYLATE CROSSPOLYMER･ALUMINA･POLYSILICONE-2･TRIETHOXYCAPRYLYLSILANE･HYDROGEN DIMETHICONE･TOCOPHEROL･BHT･ETHYLPARABEN･FRAGRANCE･TITANIUM DIOXIDE･IRON OXIDES･MICA･",
+    "primaryImage": "shiseido_product_images/ultimate-sun/sports-bb-cream-spf-50-sunscreen-0730852146587_1.jpg",
+    "gallery": [
+      "shiseido_product_images/ultimate-sun/sports-bb-cream-spf-50-sunscreen-0730852146587_1.jpg",
+      "shiseido_product_images/ultimate-sun/sports-bb-cream-spf-50-sunscreen-0730852146587_2.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.com/us/en/sports-bb-cream-spf-50-sunscreen-0730852146587.html"
   },
   {
     "id": "9990000000232",
@@ -3361,6 +4030,90 @@
     "pdpUrl": "https://www.shiseido.com/us/en/ultimune-power-infusing-serum-and-refill-bundle-296-value-newultimuneserumduo.html"
   },
   {
+    "id": "0195106537366",
+    "slug": "ultimune-strengthening-serum-set",
+    "name": "Strengthening Serum Set",
+    "brand": "Shiseido",
+    "collection": "Ultimune",
+    "category": "Sets & Bundles",
+    "productType": "Set",
+    "routineCompleteness": "Booster/add-on (serum family; layers onto any routine)",
+    "price": 165,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "Set",
+        "price": 165
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [],
+    "badges": [
+      "New"
+    ],
+    "outOfStock": false,
+    "shortDescription": "Serum-led strengthening set",
+    "overview": "Strengthen skin’s barrier and visibly improve radiance, texture, and wrinkles, featuring a full-size Ultimune Power Infusing Serum. A $243 value.\n\nWash away impurities with Clarifying Cleansing Foam. Help visibly correct signs of aging with Ultimune Power Infusing Serum. Deliver lifting, firming, and brightening benefits with Vital Perfection Uplifting and Firming Advanced Cream, and target eye bags, sagging, and dark circles around the eye area with Vital Perfection Uplifting and Firming Advanced Eye Cream.\nSet Includes:\n\n- Clarifying Cleansing Foam, 50mL\n- Ultimune Power Infusing Serum, 75mL (Full Size)\n- Vital Perfection Uplifting and Firming Advanced Cream, 15mL\n- Vital Perfection Uplifting and Firming Advanced Eye Cream, 3mL",
+    "keyBenefits": [],
+    "howToUse": [
+      "Clarifying Cleansing Foam: Use morning and evening as your first skincare step. Wet skin, dispense a pearl-size amount, lather between fingers, massage over face, and rinse.",
+      "Ultimune Power Infusing Serum: Use in the morning and evening after cleansing and before moisturizing. Dispense onto fingertips and smooth evenly over face and neck.",
+      "Vital Perfection Uplifting and Firming Advanced Cream: Use in the morning and evening after applying essence. Gently smooth 2 pearl-sized amounts around the face and neck.",
+      "Vital Perfection Uplifting and Firming Advanced Eye Cream: Use in the morning and evening as the last step in your skincare routine. Scoop a pearl-sized amount and gently smooth around both eye areas with fingertips as well as with the enclosed massage roller tool."
+    ],
+    "ingredients": "Ultimune Power Infusing Serum:\n- Exclusive Power Fermented Camellia+: Helps deliver 14 powerful amino acids, distilled through a proprietary Japanese bio-fermentation process with Ki-koji to absorb deep* so skin looks rejuvenated.\n- Camellia Seed Extract: Helps support collagen to help improve elasticity.\n- Camellia Leaf Extract and Camellia Flower Extract: Help calm and support the skin barrier.\n- Camellia Seed Oil: Known to support moisturization.\n- Heart Leaf and Fermented Roselle Extracts: Helps reduce dryness to maintain optimal skin condition.\n- Reishi Mushroom and Iris Root Extracts: Support skin’s defense against environmental factors.\nSHISEIDO ULTIMUNE POWER INFUSING SERUM\n\nINGREDIENTS:WATER(AQUA/EAU)･GLYCERIN･BUTYLENE GLYCOL･ALCOHOL DENAT.･DIMETHICONE･DIGLYCERIN･PEG/PPG-17/4 DIMETHYL ETHER･PEG-8･ISODECYL NEOPENTANOATE･TREHALOSE･AMMONIUM ACRYLOYLDIMETHYLTAURATE/BEHENETH-25 METHACRYLATE CROSSPOLYMER･PEG-14M･TOCOPHERYL ACETATE･PEG/PPG-14/7 DIMETHYL ETHER･ROSA DAMASCENA FLOWER WATER･PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE･ECTOIN･XYLITOL･LAURYL BETAINE･ORIGANUM MAJORANA LEAF EXTRACT･HYDROXYPROLINE･CAMELLIA JAPONICA FLOWER EXTRACT･CAMELLIA JAPONICA SEED OIL･HOUTTUYNIA CORDATA EXTRACT･SODIUM CARBOXYMETHYL BETA-GLUCAN･ASPERGILLUS FERMENT･CAMELLIA JAPONICA LEAF EXTRACT･CAMELLIA JAPONICA SEED EXTRACT･LACTOBACILLUS/HIBISCUS SABDARIFFA FLOWER FERMENT FILTRATE･IRIS FLORENTINA ROOT EXTRACT･GANODERMA LUCIDUM (MUSHROOM) STEM EXTRACT･TRIETHYLHEXANOIN･ACRYLATES/C10-30 ALKYL ACRYLATE CROSSPOLYMER･ALCOHOL･DISODIUM EDTA･POTASSIUM HYDROXIDE･SILICA･ISOCETETH-10･SODIUM METABISULFITE･BHT･SODIUM BICARBONATE･TOCOPHEROL･PHENOXYETHANOL･CHLORPHENESIN･SODIUM BENZOATE･FRAGRANCE (PARFUM)･LINALYL ACETATE･LINALOOL･CITRONELLOL･CITRUS AURANTIUM BERGAMIA (BERGAMOT) PEEL OIL･ <M147957-712>\nSHISEIDO CLARIFYING CLEANSING FOAM\n\nINGREDIENTS:WATER(AQUA/EAU)･STEARIC ACID･PEG-8･MYRISTIC ACID･GLYCERIN･POTASSIUM HYDROXIDE･DIPROPYLENE GLYCOL･LAURIC ACID･GLYCERYL STEARATE SE･SORBITOL･COCAMIDOPROPYL BETAINE･PEG-60 GLYCERYL ISOSTEARATE･SODIUM METHYL COCOYL TAURATE･PHYTOSTERYL MACADAMIATE･FRAGRANCE (PARFUM)･POLYQUATERNIUM-39･DISODIUM EDTA･ORYZA SATIVA (RICE) GERM OIL･LINALOOL･GERANIOL･CITRONELLOL･KAOLIN･SODIUM BENZOATE･BUTYLENE GLYCOL･ACRYLATES COPOLYMER･BETAINE･SILK POWDER(SERICA/POUDRE DE SOIE)･TOCOPHEROL･SODIUM ACETYLATED HYALURONATE･ARTEMISIA PRINCEPS LEAF EXTRACT･SODIUM LAURYL SULFATE･<M082659-712>\nSHISEIDO VITAL PERFECTION UPLIFTING AND FIRMING ADVANCED CREAM\n\nINGREDIENTS:WATER(AQUA/EAU)･BUTYLENE GLYCOL･GLYCERIN･DIMETHICONE･ALCOHOL･PPG-3 DIPIVALATE･GLYCERYL STEARATE SE･PENTAERYTHRITYL TETRAETHYLHEXANOATE･CETEARYL ALCOHOL･HYDROGENATED POLYDECENE･MYRISTYL MYRISTATE･PEG-100 STEARATE･SILICA･BIS-DIGLYCERYL POLYACYLADIPATE-2･POTASSIUM METHOXYSALICYLATE･MALTITOL･TOCOPHERYL ACETATE･PEG/PPG-14/7 DIMETHYL ETHER･PEG/PPG-17/4 DIMETHYL ETHER･ROSA DAMASCENA FLOWER WATER･CAFFEINE･LAVANDULA ANGUSTIFOLIA (LAVENDER) OIL･PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE･ANGELICA KEISKEI LEAF/STEM EXTRACT･CRATAEGUS MONOGYNA FLOWER EXTRACT･LAMIUM ALBUM FLOWER/LEAF/STEM EXTRACT･PANAX GINSENG ROOT EXTRACT･CAMELLIA SINENSIS LEAF EXTRACT･INOSITOL･CARTHAMUS TINCTORIUS (SAFFLOWER) FLOWER EXTRACT･ZIZIPHUS JUJUBA FRUIT EXTRACT･ROSMARINUS OFFICINALIS (ROSEMARY) LEAF EXTRACT (ROSMARINUS OFFICINALIS LEAF EXTRACT)･BUPLEURUM FALCATUM ROOT EXTRACT･BEHENYL ALCOHOL･SODIUM ACRYLATE/SODIUM ACRYLOYLDIMETHYL TAURATE COPOLYMER･STEARYL ALCOHOL･POLYVINYL ALCOHOL･ISOHEXADECANE･POLYSORBATE 80･SORBITAN TRISTEARATE･TRISODIUM EDTA･SODIUM CITRATE･SUCCINOGLYCAN･SORBITAN OLEATE･CITRIC ACID･SODIUM METAPHOSPHATE･LIMONENE･HEXYL CINNAMAL･SODIUM METABISULFITE･TOCOPHEROL･LINALOOL･CITRONELLOL･ALPINIA SPECIOSA LEAF EXTRACT･PHENOXYETHANOL･FRAGRANCE (PARFUM)･IRON OXIDES (CI 77491)･IRON OXIDES (CI 77492)･ <M110821-712>\nSHISEIDO VITAL PERFECTION UPLIFTING AND FIRMING ADVANCED EYE CREAM\n\nINGREDIENTS:WATER(AQUA/EAU)･PENTAERYTHRITYL TETRAETHYLHEXANOATE･SQUALANE･BUTYLENE GLYCOL･GLYCERIN･DIPROPYLENE GLYCOL･BEHENYL ALCOHOL･DIMETHICONE･DIPHENYLSILOXY PHENYL TRIMETHICONE･MYRISTYL MYRISTATE･POTASSIUM METHOXYSALICYLATE･HYDROGENATED POLYISOBUTENE･TOCOPHERYL ACETATE･XANTHAN GUM･ROSA DAMASCENA FLOWER WATER･RETINYL ACETATE･CAFFEINE･LAVANDULA ANGUSTIFOLIA (LAVENDER) OIL･GLUTAMIC ACID･ANGELICA KEISKEI LEAF/STEM EXTRACT･CRATAEGUS MONOGYNA FLOWER EXTRACT･SANGUISORBA OFFICINALIS ROOT EXTRACT･LAMIUM ALBUM FLOWER/LEAF/STEM EXTRACT･PANAX GINSENG ROOT EXTRACT･CAMELLIA SINENSIS LEAF EXTRACT･SODIUM ACETYLATED HYALURONATE･CARTHAMUS TINCTORIUS (SAFFLOWER) FLOWER EXTRACT･PINUS SYLVESTRIS CONE EXTRACT･ZIZIPHUS JUJUBA FRUIT EXTRACT･BUPLEURUM FALCATUM ROOT EXTRACT･EUCHEUMA SERRA/GRATELOUPIA SPARSA/SACCHARINA ANGUSTATA/ULVA LINZA/UNDARIA PINNATIFIDA EXTRACT･SACCHARINA ANGUSTATA/UNDARIA PINNATIFIDA EXTRACT･COIX LACRYMA-JOBI MA-YUEN SEED EXTRACT･STEARYL ALCOHOL･BEHENETH-20･HYDROGENATED PALM OIL･DIMETHICONE/PHENYL VINYL DIMETHICONE CROSSPOLYMER･DIMETHYLACRYLAMIDE/SODIUM ACRYLOYLDIMETHYLTAURATE CROSSPOLYMER･ELAEIS GUINEENSIS (PALM) KERNEL OIL･ELAEIS GUINEENSIS (PALM) OIL･DISODIUM EDTA･SODIUM CITRATE･HELIANTHUS ANNUUS (SUNFLOWER) SEED OIL･BHT･ALCOHOL･SODIUM METABISULFITE･CITRIC ACID･SODIUM METAPHOSPHATE･TOCOPHEROL･ALPINIA SPECIOSA LEAF EXTRACT･MELIA AZADIRACHTA LEAF EXTRACT･PHENOXYETHANOL･FRAGRANCE (PARFUM)･IRON OXIDES (CI 77492)･IRON OXIDES (CI 77491)･TETRAMETHYL ACETYLOCTAHYDRONAPHTHALENES･LIMONENE･HEXYL CINNAMAL･CITRUS AURANTIUM PEEL OIL･CITRONELLOL･CITRUS AURANTIUM BERGAMIA (BERGAMOT) PEEL OIL･LINALYL ACETATE･ <M142657-712>",
+    "primaryImage": "shiseido_product_images/ultimune/strengthening-serum-set-0195106537366_1.jpg",
+    "gallery": [
+      "shiseido_product_images/ultimune/strengthening-serum-set-0195106537366_1.jpg",
+      "shiseido_product_images/ultimune/strengthening-serum-set-0195106537366_2.jpg",
+      "shiseido_product_images/ultimune/strengthening-serum-set-0195106537366_3.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.com/us/en/ultimune-strengthening-serum-set-0195106537366.html"
+  },
+  {
+    "id": "0729238227293",
+    "slug": "ultimune-power-infusing-hand-cream",
+    "name": "Ultimune Power Infusing Hand Cream",
+    "brand": "Shiseido",
+    "collection": "Ultimune",
+    "category": "Moisturizers",
+    "productType": "Hand cream",
+    "routineCompleteness": "Booster/add-on (serum family; layers onto any routine)",
+    "price": 24,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "50mL",
+        "price": 24
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [
+      "Deeply Hydrating"
+    ],
+    "badges": [
+      "New"
+    ],
+    "outOfStock": false,
+    "shortDescription": "Strengthening hand cream",
+    "overview": "A moisturizing hand cream which defends against dryness and airborne impurities that cling for smoother, more resilient skin with the strength to resist external stress. The relaxing green floral scent inspires calmness and feelings of optimism for the future.",
+    "keyBenefits": [],
+    "howToUse": [
+      "Apply on hands morning and evening. Cream melts into skin quickly without leaving a greasy or sticky finish."
+    ],
+    "ingredients": "WATER(AQUA/EAU)･GLYCERIN ･CETYL ETHYLH EXANOATE ･DIPROPYLENE GLYCOL ･DIMETHICONE ･BUTYLENE GLYCOL ･BEHENYL ALCOHOL ･MYRISTYL MYRISTATE ･SORBITAN TRISTEARATE ･TRIISOSTEARIN ･STEARYL ALCOHOL ･PEG 40 STEARATE ･PHENOXYETHANOL ･FRAGRANCE (PARFUM) ･SODIUM PCA ･GLYCERYL STEARATE SE ･TITANIUM DIOXIDE (CI 77891) ･DIMETHYLACRYLAMIDE/SODIUM ACRYLOYLDIMETHYLTAURATE CROSSPOLYMER ･BEHENETH 20 ･MICA ･PEG/PPG 14/7 DIMETHYL ETHER ･TOCOPHERYL ACETATE ･ROSA DAMASCENA FLOWER WATER ･LINALOOL ･SODIUM CITRATE ･TRISODIUM EDTA ･ALCOHOL ･CITRIC ACID ･GERANIOL ･CITRONELLOL ･POTASSIUM･HYDROXIDE ･SODIUM METAPHOSPHATE ･LIMONENE ･ALUMINUM HYDROXIDE ･IRON OXIDES (CI 77491) ･SODIUM METABISULFITE ･GINKGO BILOBA LEAF EXTRACT ･ORIGANUM MAJORANA LEAF EXTRACT ･HOUTTUYNIA CORDATA･EXTRACT ･SANGUISORBA ･FFICINALIS ROOT EXTRACT ･SODIUM CARBOXYMETHYL BETA GLUCAN ･LACTOBACILLUS/HIBISCUS SABDARIFFA FLOWER FERMENT FILTRATE ･PERILLA OCYMOIDES LEAF EXTRACT ･TOCOPHEROL ･IRIS FLORENTINA ROOT EXTRACT ･GANODERMA LUCIDUM (MUSHROOM) STEM EXTRACT ･M099166702",
+    "primaryImage": "shiseido_product_images/ultimune/power-infusing-hand-cream-0729238227293_1.jpg",
+    "gallery": [
+      "shiseido_product_images/ultimune/power-infusing-hand-cream-0729238227293_1.jpg",
+      "shiseido_product_images/ultimune/power-infusing-hand-cream-0729238227293_2.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.ca/ca/en/ultimune-power-infusing-hand-cream-0729238227293.html"
+  },
+  {
     "id": "0195106533580",
     "slug": "urban-environment-daily-suncare-set",
     "name": "Daily Suncare Set",
@@ -3695,6 +4448,48 @@
       "shiseido_product_images/urban-environment/vita-clear-sunscreen-spf-42-0730852195479_5.jpg"
     ],
     "pdpUrl": "https://www.shiseido.com/us/en/urban-environment-vita-clear-sunscreen-spf-42-0730852195479.html"
+  },
+  {
+    "id": "0195106537649",
+    "slug": "urban-environment-daily-sun-defense-set",
+    "name": "Daily Sun Defense Set",
+    "brand": "Shiseido",
+    "collection": "Urban Environment",
+    "category": "Sets & Bundles",
+    "productType": "Set",
+    "routineCompleteness": "Sunscreen-only line (daily antioxidant suncare)",
+    "price": 52,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "Set",
+        "price": 52
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [],
+    "badges": [
+      "New"
+    ],
+    "outOfStock": false,
+    "shortDescription": "Daily SPF set",
+    "overview": "Protect against harmful UV rays while priming and mattifying skin with this suncare gift set, featuring a full-size Urban Environment Oil-Control Sunscreen SPF 40. A $107 value.\n\nWash away impurities with Clarifying Cleansing Foam and help visibly correct signs of aging with Ultimune Power Infusing Serum. Get deeply hydrated, smoothing results with Benefiance Wrinkle Smoothing Cream. Lastly, apply Urban Environment Oil-Control Sunscreen SPF 40 to protect against harmful UVA/UVB rays while priming and mattifying skin.\nSet Includes:\n\n- Clarifying Cleansing Foam, 15mL\n- Ultimune Power Infusing Serum, 10mL\n- Benefiance Wrinkle Smoothing Cream, 15mL\n- Urban Environment Oil-Control Sunscreen SPF 40, 50mL (Full Size)",
+    "keyBenefits": [],
+    "howToUse": [
+      "Clarifying Cleansing Foam: Use morning and evening as your first skincare step. Wet skin, dispense a pearl-size amount, lather between fingers, massage over face, and rinse.",
+      "Ultimune Power Infusing Serum: Use in the morning and evening after cleansing and before moisturizing. Dispense onto fingertips and smooth evenly over face and neck.",
+      "Benefiance Wrinkle Smoothing Cream: In the morning and evening, dot the cream onto the 5 points of your face. Gently smooth outward over your face. Apply an additional pearl-sized amount to your neck, and sweep the cream upward across your jawline.",
+      "Urban Environment Oil-Control Sunscreen SPF 40: Apply daily, as the last step in your morning skincare routine—before makeup application. Shake the bottle before using, then dispense and smooth evenly and generously over face and neck, at least 15 minutes before sun exposure."
+    ],
+    "ingredients": "Urban Environment Oil-Control Sunscreen SPF 40:\nSun Dual Care™ Technology:\n- Hyaluronic Acid: Known to deliver, attract, and retain moisture.\n- Spirulina Energy Essence: Helps support skin barrier function to combat dryness.\nSHISEIDO CLARIFYING CLEANSING FOAM\n\nINGREDIENTS:WATER(AQUA/EAU)･STEARIC ACID･PEG-8･MYRISTIC ACID･GLYCERIN･POTASSIUM HYDROXIDE･DIPROPYLENE GLYCOL･LAURIC ACID･GLYCERYL STEARATE SE･SORBITOL･COCAMIDOPROPYL BETAINE･PEG-60 GLYCERYL ISOSTEARATE･SODIUM METHYL COCOYL TAURATE･PHYTOSTERYL MACADAMIATE･FRAGRANCE (PARFUM)･POLYQUATERNIUM-39･DISODIUM EDTA･ORYZA SATIVA (RICE) GERM OIL･LINALOOL･GERANIOL･CITRONELLOL･KAOLIN･SODIUM BENZOATE･BUTYLENE GLYCOL･ACRYLATES COPOLYMER･BETAINE･SILK POWDER(SERICA/POUDRE DE SOIE)･TOCOPHEROL･SODIUM ACETYLATED HYALURONATE･ARTEMISIA PRINCEPS LEAF EXTRACT･SODIUM LAURYL SULFATE･ <M082659-702>\nSHISEIDO ULTIMUNE POWER INFUSING SERUM\n\nINGREDIENTS:WATER(AQUA/EAU)･GLYCERIN･BUTYLENE GLYCOL･ALCOHOL DENAT.･DIMETHICONE･DIGLYCERIN･PEG/PPG-17/4 DIMETHYL ETHER･PEG-8･ISODECYL NEOPENTANOATE･TREHALOSE･AMMONIUM ACRYLOYLDIMETHYLTAURATE/BEHENETH-25 METHACRYLATE CROSSPOLYMER･PEG-14M･TOCOPHERYL ACETATE･PEG/PPG-14/7 DIMETHYL ETHER･PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE･ROSA DAMASCENA FLOWER WATER･ECTOIN･XYLITOL･LAURYL BETAINE･ORIGANUM MAJORANA LEAF EXTRACT･HYDROXYPROLINE･CAMELLIA JAPONICA SEED OIL･CAMELLIA JAPONICA FLOWER EXTRACT･HOUTTUYNIA CORDATA EXTRACT･SODIUM CARBOXYMETHYL BETA-GLUCAN･CAMELLIA JAPONICA LEAF EXTRACT･CAMELLIA JAPONICA SEED EXTRACT･LACTOBACILLUS/HIBISCUS SABDARIFFA FLOWER FERMENT FILTRATE･IRIS FLORENTINA ROOT EXTRACT･GANODERMA LUCIDUM (MUSHROOM) STEM EXTRACT･TRIETHYLHEXANOIN･ACRYLATES/C10-30 ALKYL ACRYLATE CROSSPOLYMER･ALCOHOL･DISODIUM EDTA･POTASSIUM HYDROXIDE･SILICA･ISOCETETH-10･LINALOOL･SODIUM METABISULFITE･CITRONELLOL･ASPERGILLUS FERMENT･BHT･SODIUM BICARBONATE･TOCOPHEROL･PHENOXYETHANOL･CHLORPHENESIN･SODIUM BENZOATE･FRAGRANCE (PARFUM)･ <M128589-712>\nSHISEIDO BENEFIANCE WRINKLE SMOOTHING CREAM\n\nINGREDIENTS:WATER(AQUA/EAU)･SD ALCOHOL 40-B (ALCOHOL DENAT.)･GLYCERIN･\nDIPROPYLENE GLYCOL･NIACINAMIDE･CYCLOHEXASILOXANE･CETYL ETHYLHEXANOATE･\nHYDROGENATED POLYDECENE･PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE･\nDIMETHICONE･PPG-3 DIPIVALATE･MYRISTYL MYRISTATE･METHYL METHACRYLATE\nCROSSPOLYMER･HYDROGENATED PALM OIL･AMMONIUM ACRYLOYLDIMETHYLTAURATE/VP\nCOPOLYMER･BEHENYL ALCOHOL･POLYSORBATE 60･PEG-30 PHYTOSTEROL･\nPHENOXYETHANOL･DIMETHICONE/VINYL DIMETHICONE CROSSPOLYMER･BATYL ALCOHOL･\nALCOHOL･TOCOPHERYL ACETATE･ERYTHRITOL･PEG/PPG-14/7 DIMETHYL ETHER･PEG/PPG-\n17/4 DIMETHYL ETHER･BUTYLENE GLYCOL･FRAGRANCE (PARFUM)･CARBOMER･\nACRYLATES/C10-30 ALKYL ACRYLATE CROSSPOLYMER･POTASSIUM HYDROXIDE･CAFFEINE･\nDISODIUM EDTA･SODIUM METAPHOSPHATE･TOCOPHEROL･SAPINDUS MUKOROSSI PEEL\nEXTRACT･IRON OXIDES (CI 77492)･LINALOOL･SODIUM METABISULFITE･LIMONENE･\nCITRONELLOL･ANGELICA KEISKEI LEAF/STEM EXTRACT･GERANIOL･CAMELLIA SINENSIS LEAF\nEXTRACT･CITRUS JUNOS SEED EXTRACT･HDI/TRIMETHYLOL HEXYLLACTONE\nCROSSPOLYMER･ZIZIPHUS JUJUBA FRUIT EXTRACT･IRON OXIDES (CI 77491)･EUCHEUMA\nSERRA/GRATELOUPIA SPARSA/SACCHARINA ANGUSTATA/ULVA LINZA/UNDARIA\nPINNATIFIDA EXTRACT･CURCUMA LONGA (TURMERIC) RHIZOME EXTRACT･SACCHARINA\nANGUSTATA/UNDARIA PINNATIFIDA EXTRACT･CHLORELLA VULGARIS EXTRACT･SILICA･\nSHISEIDO URBAN ENVIRONMENT OIL-CONTROL SUNSCREEN SPF 40\n\nACTIVE INGREDIENTS: Purpose Ensulizole 1.1% ･････ Sunscreen Homosalate 13.6% ･････ Sunscreen\nOctisalate 5.0% ･････ Sunscreen Zinc Oxide 15.5% ･････ Sunscreen INACTIVE INGREDIENTS: Water･\nDimethicone･Trisiloxane･SD Alcohol 40-B･Zinc Oxide･Glycerin･Silica･PEG/PPG-14/7 Dimethyl\nEther･Lauryl PEG-9 Polydimethylsiloxyethyl Dimethicone･PEG-10 Dimethicone･Trehalose･Myristyl\nMyristate･Ethylhexyl Palmitate･Dextrin Palmitate･Isodecyl Neopentanoate･Ascorbyl\nTetraisopalmitate･Thiotaurine･Dipotassium Glycyrrhizate･Scutellaria Baicalensis Root Extract･\nPaeonia Albiflora Root Extract･Sodium Hyaluronate･Sanguisorba Officinalis Root Extract･Camellia\nSinensis Leaf Extract･Garcinia Mangostana Bark Extract･Perilla Ocymoides Leaf Extract･Spirulina\nPlatensis Extract･Triethanolamine･Triethoxycaprylylsilane･Butylene Glycol･Disodium EDTA･\nDisteardimonium Hectorite･Tocopherol･BHT･Alcohol･Isostearic Acid･Menthoxypropanediol･Sodium\nMetabisulfite･Polysilicone-2･Barium Sulfate･Sodium Citrate･Phenoxyethanol･Benzoic Acid･\nFragrance･Iron Oxides･ <M151450-811>",
+    "primaryImage": "shiseido_product_images/urban-environment/daily-sun-defense-set-0195106537649_1.jpg",
+    "gallery": [
+      "shiseido_product_images/urban-environment/daily-sun-defense-set-0195106537649_1.jpg",
+      "shiseido_product_images/urban-environment/daily-sun-defense-set-0195106537649_2.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.com/us/en/urban-environment-daily-sun-defense-set-0195106537649.html"
   },
   {
     "id": "9990000000230",
@@ -4295,5 +5090,484 @@
       "shiseido_product_images/vital-perfection/uplifting-and-firming-express-eye-mask-0729238163805_4.jpg"
     ],
     "pdpUrl": "https://www.shiseido.com/us/en/vital-perfection-uplifting-and-firming-express-eye-mask-0729238163805.html"
+  },
+  {
+    "id": "0768614228981",
+    "slug": "vital-perfection-intensive-sculptdefine-serum",
+    "name": "Intensive SculptDefine Serum",
+    "brand": "Shiseido",
+    "collection": "Vital Perfection",
+    "category": "Serums & Treatments",
+    "productType": "Serum",
+    "routineCompleteness": "Full routine (serum/eye/day-SPF/cream/spot/mask)",
+    "price": 155,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "40mL",
+        "price": 155
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [
+      "Lifting & Firming"
+    ],
+    "badges": [
+      "New"
+    ],
+    "outOfStock": false,
+    "shortDescription": "Sculpts and lifts face + neck",
+    "overview": "A transformative sculpting face and neck serum that visibly lifts, firms, and brightens skin. In just 1 week, 100% showed a visible improvement in cheek sagging, nasolabial folds, marionette lines, and neck wrinkles.*¹\nThis intensive formula improves the appearance of sagging from multiple angles, targeting deep wrinkles, facial expression lines, and age-related sagging to deliver more sculpted facial contours and a sharper-looking jawline. This serum also helps to improve the appearance of dark spots, uneven skin tone, and dullness. Powered by SHISEIDO’s cutting-edge research on skin sagging, proprietary D-AminoLift Complex™ helps elevate skin’s strength for enhanced definition and lift. Watercress Extract supports skin’s natural collagen for improved firmness.\nDiscover sculpted, defined contours.\n*¹Clinically tested on 33 women, 1 week.\n\n*²Clinical hydration study on 25 women.",
+    "keyBenefits": [
+      "100% showed a visible improvement in cheek sagging, nasolabial folds, marionette lines, and neck wrinkles in just 1 week*¹",
+      "Visibly sculpts facial contours, including a sharper-looking jawline, for a lifted and defined look",
+      "Improves the appearance of dark spots, uneven skin tone and dullness",
+      "Provides 24-hour hydration*²",
+      "Delivers instant and lasting results",
+      "Floral fragrance inspired by orchid and Japanese allspice",
+      "Dermatologist-tested. Non-comedogenic."
+    ],
+    "howToUse": [
+      "Use morning and evening, after cleansing and softening.",
+      "Pump 3 times and smooth over face and neck.",
+      "For enhanced results, follow with Vital Perfection Uplifting and Firming Advanced Cream ."
+    ],
+    "ingredients": "- D-AminoLift Complex™ (D-Aspartic Acid, Niacinamide, and SafflowerRED™): Complex with key amino acid helps improve skin’s strength for enhanced definition and lift.\n- Watercress Extract: Helps support skin’s natural collagen for improved firmness.\n- 4MSK: SHISEIDO's exclusive brightening ingredient supports a more even, radiant complexion over time and helps diminish the appearance of dark spots and dullness.\nWater(Aqua/Eau)･Dipropylene Glycol･Glycerin･Alcohol Denat.･Butylene Glycol･Dimethicone･Behenyl Alcohol･PEG-150･Hydrogenated Polyisobutene･Isododecane･Triethylhexanoin･Potassium Methoxysalicylate･PEG/PPG-14/7 Dimethyl Ether･Trimethylsiloxysilicate･VP/VA Copolymer･Phytosteryl/Octyldodecyl Lauroyl Glutamate･Tocopheryl Acetate･Sodium Polyacrylate･2-O-Ethyl Ascorbic Acid･Xanthan Gum･Caffeine･Lavandula Angustifolia (Lavender) Oil･Lauryl Betaine･Niacinamide･Glycyrrhiza Glabra (Licorice) Root Extract･Angelica Acutiloba Root Extract･Angelica Keiskei Leaf/Stem Extract･Iris Florentina Root Extract･Aspartic Acid･Crataegus Monogyna Flower Extract･Sanguisorba Officinalis Root Extract･Panax Ginseng Root Extract･Carthamus Tinctorius (Safflower) Flower Extract･Ziziphus Jujuba Fruit Extract･Rosmarinus Officinalis (Rosemary) Leaf Extract (Rosmarinus Officinalis Leaf Extract)･Bupleurum Falcatum Root Extract･Nasturtium Officinale Leaf/Stem Extract･Microcrystalline Wax(Cera Microcristallina/Cire microcristalline)･Batyl Alcohol･Behenic Acid･Polyvinyl Alcohol･PEG-60 Glyceryl Isostearate･PEG-10 Dimethicone･Disodium EDTA･Myristyl Myristate･Sodium Citrate･Isostearic Acid･Potassium Hydroxide･Citric Acid･Alcohol･Sodium Metaphosphate･Tocopherol･Sodium Metabisulfite･Alpinia Speciosa Leaf Extract･Phenoxyethanol･Sodium Benzoate･Fragrance (Parfum)･Iron Oxides (CI 77492)･Iron Oxides (CI 77491)･Tetramethyl Acetyloctahydronaphthalenes･Limonene･Citrus Aurantium Peel Oil･Hexyl Cinnamal･Citronellol･Trimethylbenzenepropanol･Citrus Aurantium Bergamia (Bergamot) Peel Oil･<M152852-712>",
+    "primaryImage": "shiseido_product_images/vital-perfection/intensive-sculptdefine-serum-0768614228981_1.jpg",
+    "gallery": [
+      "shiseido_product_images/vital-perfection/intensive-sculptdefine-serum-0768614228981_1.jpg",
+      "shiseido_product_images/vital-perfection/intensive-sculptdefine-serum-0768614228981_2.jpg",
+      "shiseido_product_images/vital-perfection/intensive-sculptdefine-serum-0768614228981_3.jpg",
+      "shiseido_product_images/vital-perfection/intensive-sculptdefine-serum-0768614228981_4.jpg",
+      "shiseido_product_images/vital-perfection/intensive-sculptdefine-serum-0768614228981_5.jpg",
+      "shiseido_product_images/vital-perfection/intensive-sculptdefine-serum-0768614228981_6.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.com/us/en/vital-perfection-intensive-sculptdefine-serum-0768614228981.html"
+  },
+  {
+    "id": "0195106537373",
+    "slug": "vital-perfection-advanced-lifting-and-firming-cream-set",
+    "name": "Advanced Lifting & Firming Cream Set",
+    "brand": "Shiseido",
+    "collection": "Vital Perfection",
+    "category": "Sets & Bundles",
+    "productType": "Set",
+    "routineCompleteness": "Full routine (serum/eye/day-SPF/cream/spot/mask)",
+    "price": 146,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "Set",
+        "price": 146
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [],
+    "badges": [
+      "New"
+    ],
+    "outOfStock": false,
+    "shortDescription": "Lifting cream routine set",
+    "overview": "Visibly lift, firm and brighten skin, featuring a full-size Vital Perfection Uplifting and Firming Advanced Cream. A $227 value.\n\nWash away impurities with Clarifying Cleansing Foam. Then, visibly brighten and boost clarity with Eudermine Activating Essence, and help visibly correct signs of aging with Ultimune Power Infusing Serum. Deliver lifting, firming, and brightening benefits with Vital Perfection Uplifting and Firming Advanced Cream, and target eye bags, sagging, and dark circles around the eye area with Vital Perfection Uplifting and Firming Advanced Eye Cream.\nSet Includes:\n\n- Clarifying Cleansing Foam, 50mL\n- Eudermine Activating Essence, 30mL\n- Ultimune Power Infusing Serum, 10mL\n- Vital Perfection Uplifting and Firming Advanced Cream, 50mL (Full Size)\n- Vital Perfection Uplifting and Firming Advanced Eye Cream, 3mL",
+    "keyBenefits": [],
+    "howToUse": [
+      "Clarifying Cleansing Foam: Use morning and evening as your first skincare step. Wet skin, dispense a pearl-size amount, lather between fingers, massage over face, and rinse.",
+      "Ultimune Power Infusing Serum: Use in the morning and evening after cleansing and before moisturizing. Dispense onto fingertips and smooth evenly over face and neck.",
+      "Eudermine Activating Essence: Use in the morning and evening after cleansing. Saturate Shiseido’s Facial Cotton with a quarter-size amount and smooth over skin. Tap gently into skin after application.",
+      "Vital Perfection Uplifting and Firming Advanced Cream: Use in the morning and evening after applying essence. Gently smooth 2 pearl-sized amounts around the face and neck.",
+      "Vital Perfection Uplifting and Firming Advanced Eye Cream: Use in the morning and evening as the last step in your skincare routine. Scoop a pearl-sized amount and gently smooth around both eye areas with fingertips as well as with the enclosed massage roller tool."
+    ],
+    "ingredients": "Vital Perfection Uplifting and Firming Advanced Cream:\n- SafflowerRED™: Exclusively grown in Japan, helps support collagen network and helps skin appear more lifted, firm, and even toned.\n- Ginseng Root Extract: Known to help support natural collagen, leaving skin firmer.\n- Ziziphus Jujuba Fruit Extract: Helps support skin health and enhanced skin barrier function.\n- Caffeine: An antioxidant that helps energize the skin and optimize skin condition.",
+    "primaryImage": "shiseido_product_images/vital-perfection/advanced-lifting-and-firming-cream-set-0195106537373_1.jpg",
+    "gallery": [
+      "shiseido_product_images/vital-perfection/advanced-lifting-and-firming-cream-set-0195106537373_1.jpg",
+      "shiseido_product_images/vital-perfection/advanced-lifting-and-firming-cream-set-0195106537373_2.jpg",
+      "shiseido_product_images/vital-perfection/advanced-lifting-and-firming-cream-set-0195106537373_3.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.com/us/en/vital-perfection-advanced-lifting-and-firming-cream-set-0195106537373.html"
+  },
+  {
+    "id": "0195106537632",
+    "slug": "vital-perfection-supreme-sculpting-cream-set",
+    "name": "Supreme Sculpting Cream Set",
+    "brand": "Shiseido",
+    "collection": "Vital Perfection",
+    "category": "Sets & Bundles",
+    "productType": "Set",
+    "routineCompleteness": "Full routine (serum/eye/day-SPF/cream/spot/mask)",
+    "price": 202,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "Set",
+        "price": 202
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [],
+    "badges": [
+      "New"
+    ],
+    "outOfStock": false,
+    "shortDescription": "Supreme cream sculpting set",
+    "overview": "Visibly sculpt and lift with this limited-edition gift set that leaves skin looking firmer and more even toned. Featuring a full-size Vital Perfection Concentrated Supreme Cream and a full-size refill. A $305 value.\nSee more sculpted, lifted, firmer and even-toned skin with Vital Perfection Concentrated Supreme Cream, a rich and comprehensive anti-aging cream that defies the look of progressive skin sagging. This limited-edition set features a full-size refill. Refills use up to 79% less plastic waste than regular packaging for the future beauty of our planet.\nSet Includes:\n\n- Vital Perfection Concentrated Supreme Cream, 50mL (Full Size)\n- Vital Perfection Concentrated Supreme Cream, 50mL (Refill)",
+    "keyBenefits": [],
+    "howToUse": [
+      "Concentrated Supreme Cream: Apply morning and evening. Evenly smooth 2 pearl-sized drops across the 5 areas of the face (cheeks, forehead, nose, and chin).",
+      "Concentrated Supreme Cream Refill: Open the cap. Hold the jar with one hand and use the other to gently pull out the refill by holding the two tabs. Insert the new refill, pushing it firmly into the jar. Discard the inner sticker and close the cap firmly."
+    ],
+    "ingredients": "Vital Perfection Concentrated Supreme Cream:\n- Sculpturist Technology powered by Burnet Extract improves the appearance of skin sagging.\n- 2x concentration of SafflowerRED™, exclusively grown in Japan, supports collagen network and intensively boosts multiple age-defying effects to help lift, firm and make skin more even-toned.\n- Ginseng Root Extract: Known to help support natural collagen, leaving skin firmer.\n- Ziziphus Jujuba Fruit Extract: Helps support skin health and enhanced skin barrier function.\n- Caffeine: An antioxidant that helps energize the skin and optimize skin condition.\n- Squalane: Known for hydrating properties to help support skin's moisture barrier.\n- Vitamin E: Helps defend against pollutants and environmental stressors.\nSHISEIDO VITAL PERFECTION CONCENTRATED SUPREME CREAM\n\nINGREDIENTS:WATER(AQUA/EAU)･BUTYLENE GLYCOL･GLYCERIN･TRIETHYLHEXANOIN･DIMETHICONE･ALCOHOL･PROPANEDIOL･PHYTOSTERYL MACADAMIATE･PPG-3 DIPIVALATE･GLYCERYL STEARATE SE･SILICA･SQUALANE･HYDROGENATED POLYDECENE･CETEARYL ALCOHOL･PEG-100 STEARATE･BEHENYL ALCOHOL･PEG/PPG-14/7 DIMETHYL ETHER･POTASSIUM METHOXYSALICYLATE･HYDROGENATED POLYISOBUTENE･TOCOPHERYL ACETATE･PEG/PPG-17/4 DIMETHYL ETHER･ROSA DAMASCENA FLOWER WATER･CAFFEINE･LAVANDULA ANGUSTIFOLIA (LAVENDER) OIL･SAPINDUS MUKOROSSI PEEL EXTRACT･CARTHAMUS TINCTORIUS (SAFFLOWER) FLOWER EXTRACT･ANGELICA KEISKEI LEAF/STEM EXTRACT･CRATAEGUS MONOGYNA FLOWER EXTRACT･SANGUISORBA OFFICINALIS ROOT EXTRACT･LAMIUM ALBUM FLOWER/LEAF/STEM EXTRACT･PANAX GINSENG ROOT EXTRACT･CAMELLIA SINENSIS LEAF EXTRACT･INOSITOL･ZIZIPHUS JUJUBA FRUIT EXTRACT･PYROLA INCARNATA EXTRACT･POTENTILLA ERECTA ROOT EXTRACT･CHLORELLA VULGARIS EXTRACT･ROSMARINUS OFFICINALIS (ROSEMARY) LEAF EXTRACT (ROSMARINUS OFFICINALIS LEAF EXTRACT)･BUPLEURUM FALCATUM ROOT EXTRACT･BUTYROSPERMUM PARKII (SHEA) BUTTER･STEARYL ALCOHOL･SODIUM ACRYLATE/SODIUM ACRYLOYLDIMETHYL TAURATE COPOLYMER･COPERNICIA CERIFERA (CARNAUBA) WAX(COPERNICIA CERIFERA CERA/CIRE DE CARNAUBA)･HYDROGENATED PALM OIL･ISOHEXADECANE･ELAEIS GUINEENSIS (PALM) KERNEL OIL･ELAEIS GUINEENSIS (PALM) OIL･POLYSORBATE 80･SORBITAN TRISTEARATE･DISODIUM EDTA･SUCCINOGLYCAN･SODIUM CITRATE･SORBITAN OLEATE･SODIUM METAPHOSPHATE･CITRIC ACID･TOCOPHEROL･SODIUM METABISULFITE･ALPINIA SPECIOSA LEAF EXTRACT･PHENOXYETHANOL･FRAGRANCE (PARFUM)･IRON OXIDES (CI 77491)･IRON OXIDES (CI 77492)･TETRAMETHYL ACETYLOCTAHYDRONAPHTHALENES･LIMONENE･HEXYL CINNAMAL･CITRUS AURANTIUM PEEL OIL･CITRONELLOL･CITRUS AURANTIUM BERGAMIA (BERGAMOT) PEEL OIL･LINALYL ACETATE･<M142717-712>\nSHISEIDO VITAL PERFECTION CONCENTRATED SUPREME CREAM (REFILL)\n\nINGREDIENTS:WATER(AQUA/EAU)･BUTYLENE GLYCOL･GLYCERIN･TRIETHYLHEXANOIN･DIMETHICONE･ALCOHOL･PROPANEDIOL･PHYTOSTERYL MACADAMIATE･PPG-3 DIPIVALATE･GLYCERYL STEARATE SE･SILICA･SQUALANE･HYDROGENATED POLYDECENE･CETEARYL ALCOHOL･PEG-100 STEARATE･BEHENYL ALCOHOL･PEG/PPG-14/7 DIMETHYL ETHER･POTASSIUM METHOXYSALICYLATE･HYDROGENATED POLYISOBUTENE･TOCOPHERYL ACETATE･PEG/PPG-17/4 DIMETHYL ETHER･ROSA DAMASCENA FLOWER WATER･CAFFEINE･LAVANDULA ANGUSTIFOLIA (LAVENDER) OIL･SAPINDUS MUKOROSSI PEEL EXTRACT･CARTHAMUS TINCTORIUS (SAFFLOWER) FLOWER EXTRACT･ANGELICA KEISKEI LEAF/STEM EXTRACT･CRATAEGUS MONOGYNA FLOWER EXTRACT･SANGUISORBA OFFICINALIS ROOT EXTRACT･LAMIUM ALBUM FLOWER/LEAF/STEM EXTRACT･PANAX GINSENG ROOT EXTRACT･CAMELLIA SINENSIS LEAF EXTRACT･INOSITOL･ZIZIPHUS JUJUBA FRUIT EXTRACT･PYROLA INCARNATA EXTRACT･POTENTILLA ERECTA ROOT EXTRACT･CHLORELLA VULGARIS EXTRACT･ROSMARINUS OFFICINALIS (ROSEMARY) LEAF EXTRACT (ROSMARINUS OFFICINALIS LEAF EXTRACT)･BUPLEURUM FALCATUM ROOT EXTRACT･BUTYROSPERMUM PARKII (SHEA) BUTTER･STEARYL ALCOHOL･SODIUM ACRYLATE/SODIUM ACRYLOYLDIMETHYL TAURATE COPOLYMER･COPERNICIA CERIFERA (CARNAUBA) WAX(COPERNICIA CERIFERA CERA/CIRE DE CARNAUBA)･HYDROGENATED PALM OIL･ISOHEXADECANE･ELAEIS GUINEENSIS (PALM) KERNEL OIL･ELAEIS GUINEENSIS (PALM) OIL･POLYSORBATE 80･SORBITAN TRISTEARATE･DISODIUM EDTA･SUCCINOGLYCAN･SODIUM CITRATE･SORBITAN OLEATE･SODIUM METAPHOSPHATE･CITRIC ACID･TOCOPHEROL･SODIUM METABISULFITE･ALPINIA SPECIOSA LEAF EXTRACT･PHENOXYETHANOL･FRAGRANCE (PARFUM)･IRON OXIDES (CI 77491)･IRON OXIDES (CI 77492)･TETRAMETHYL ACETYLOCTAHYDRONAPHTHALENES･LIMONENE･HEXYL CINNAMAL･CITRUS AURANTIUM PEEL OIL･CITRONELLOL･CITRUS AURANTIUM BERGAMIA (BERGAMOT) PEEL OIL･LINALYL ACETATE･<M142717-702>",
+    "primaryImage": "shiseido_product_images/vital-perfection/supreme-sculpting-cream-set-0195106537632_1.jpg",
+    "gallery": [
+      "shiseido_product_images/vital-perfection/supreme-sculpting-cream-set-0195106537632_1.jpg",
+      "shiseido_product_images/vital-perfection/supreme-sculpting-cream-set-0195106537632_2.jpg",
+      "shiseido_product_images/vital-perfection/supreme-sculpting-cream-set-0195106537632_3.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.com/us/en/vital-perfection-supreme-sculpting-cream-set-0195106537632.html"
+  },
+  {
+    "id": "0768614178811",
+    "slug": "satocane-pore-purifying-clay-face-mask",
+    "name": "SATOCANE Pore Purifying Scrub Mask",
+    "brand": "Shiseido",
+    "collection": "WASO",
+    "category": "Masks",
+    "productType": "Face mask (clay)",
+    "routineCompleteness": "Partial routine (plant-powered cleanser/moisturizer/masks/treatments)",
+    "price": 36,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "80mL",
+        "price": 36
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [
+      "Pore Minimizing"
+    ],
+    "badges": [],
+    "outOfStock": false,
+    "shortDescription": "Pore-purifying clay mask",
+    "overview": "This clay face mask contains vegetal exfoliants to micro-buff away dead cells and prevent clogged pores, revealing skin that feels baby-smooth. Non-drying, mud-like texture with soft scrubbing agents creates a relaxing home facial experience that feels comfortable on skin.\n*Clinically tested by 20 women.\n\n**Cap contains natural materials that may change color or texture over time. This does not affect product quality.",
+    "keyBenefits": [
+      "21% less visible pores and blackheads in a single use*",
+      "Leaves skin smoother and softer immediately*",
+      "Helps prevent future clogged pores",
+      "Outer cap is made of 30% upcycled rice husk**. Tube is made of 10% sugarcane-derived polyethylene.",
+      "Vegan. Cruelty-free. Fragrance-free.",
+      "Dermatologist-tested. Non-comedogenic."
+    ],
+    "howToUse": [
+      "Apply after cleansing, onto towel-dryed skin.",
+      "Take two cherry-sized amounts and spread evenly on face, avoiding eyes and lips.",
+      "Leave on for 5 minutes. Gently massage with wet hands and rinse.",
+      "Recommended to use twice a week for best results."
+    ],
+    "ingredients": "- Satokibi, Japanese Sugarcane from Miyakojima: Prevents sebum degradation, a key cause of clogged pores.\n- Mineral Clay: Absorbs excess sebum and minimizes the appearance of pores and blackheads.\n- Betaine (Vegetal Exfoliant): Gently removes dead skin cells and promote skin’s natural turnover without irritation.\nINGREDIENTS: WATER(AQUA/EAU)･KAOLIN･DIPROPYLENE GLYCOL･GLYCERIN･ZINC OXIDE･BETAINE･GLYCERYL STEARATE SE･BUTYLENE GLYCOL･BENTONITE･PEG-20 GLYCERYL TRIISOSTEARATE･BEHENYL ALCOHOL･STEARYL ALCOHOL･MICROCRYSTALLINE CELLULOSE･PHENOXYETHANOL･PYRUS MALUS (APPLE) FRUIT WATER･ALCOHOL･TRISODIUM EDTA･CHROMIUM OXIDE GREENS (CI 77288)･IRON OXIDES (CI 77492)･IRON OXIDES (CI 77491)･CITRUS AURANTIUM DULCIS (ORANGE) OIL･ROSMARINUS OFFICINALIS (ROSEMARY) LEAF OIL (ROSMARINUS OFFICINALIS LEAF OIL)･LAVANDULA ANGUSTIFOLIA (LAVENDER) OIL･CITRUS DEPRESSA PEEL EXTRACT･SALVIA OFFICINALIS (SAGE) OIL･SACCHARUM OFFICINARUM (SUGAR CANE) EXTRACT･",
+    "primaryImage": "shiseido_product_images/waso/satocane-pore-purifying-clay-face-mask-0768614178811_1.jpg",
+    "gallery": [
+      "shiseido_product_images/waso/satocane-pore-purifying-clay-face-mask-0768614178811_1.jpg",
+      "shiseido_product_images/waso/satocane-pore-purifying-clay-face-mask-0768614178811_2.jpg",
+      "shiseido_product_images/waso/satocane-pore-purifying-clay-face-mask-0768614178811_3.jpg",
+      "shiseido_product_images/waso/satocane-pore-purifying-clay-face-mask-0768614178811_4.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.ca/ca/en/satocane-pore-purifying-clay-face-mask-0768614178811.html"
+  },
+  {
+    "id": "0768614178798",
+    "slug": "yuzu-c-beauty-hydrating-sleeping-face-mask",
+    "name": "YUZU-C Beauty Sleeping Mask",
+    "brand": "Shiseido",
+    "collection": "WASO",
+    "category": "Masks",
+    "productType": "Face mask (sleeping)",
+    "routineCompleteness": "Partial routine (plant-powered cleanser/moisturizer/masks/treatments)",
+    "price": 36,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "50mL",
+        "price": 36
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [
+      "Brightening",
+      "Deeply Hydrating"
+    ],
+    "badges": [],
+    "outOfStock": false,
+    "shortDescription": "Overnight vitamin C glow mask",
+    "overview": "Infused with the vitality of Yuzu extract, the Waso Yuzu-C Beauty Sleeping Mask is a nighttime rejuvenator that drenches skin in intense hydration. Its luxurious formula works overnight, ensuring you awaken to a visage that exudes a radiant and plump complexion. Scientifically crafted, this mask caters to all skin types and harnesses advanced technology to deliver results after just one application. The indulgent experience is further enhanced by its ability to improve skin's overall luminosity, making it an essential addition to any skincare ritual.",
+    "keyBenefits": [],
+    "howToUse": [
+      "Use as the last step of your nighttime skincare routine, before going to bed.",
+      "Take one almond-sized amount onto fingertips and smooth evenly over face. Leave on overnight.",
+      "Recommended to use twice a week for best results."
+    ],
+    "ingredients": "- Yuzu Extract, Japanese Citrus: Replenishes and maintains skin’s moisture.\n- Vitamin C Capsules: Visibly improves the three key signs of sleep-deprived skin: lack of moisture, dryness and dullness.\nINGREDIENTS: WATER(AQUA/EAU)･DIPROPYLENE GLYCOL･ALCOHOL DENAT.･GLYCERIN･PENTAERYTHRITYL TETRAETHYLHEXANOATE･MALTITOL･DIMETHICONE･TREHALOSE･EUPHORBIA CERIFERA (CANDELILLA) WAX(CANDELILLA CERA/CIRE DE CANDELILLA)･PHENOXYETHANOL･PEG-240/HDI COPOLYMER BIS-DECYLTETRADECETH-20 ETHER･PYRUS MALUS (APPLE) FRUIT WATER･CARBOMER･ALCOHOL･POTASSIUM HYDROXIDE･PEG/PPG-17/4 DIMETHYL ETHER･LAUROYL LYSINE･BUTYLENE GLYCOL･SODIUM METAPHOSPHATE･ASCORBYL TETRAISOPALMITATE･SODIUM METABISULFITE･DISODIUM EDTA･DEXTRIN PALMITATE･ACRYLATES/C10-30 ALKYL ACRYLATE CROSSPOLYMER･PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE･ROSMARINUS OFFICINALIS (ROSEMARY) LEAF OIL (ROSMARINUS OFFICINALIS LEAF OIL)･IRON OXIDES (CI 77492)･LIMONENE･CITRUS AURANTIUM DULCIS (ORANGE) OIL･LAVANDULA ANGUSTIFOLIA (LAVENDER) OIL･TRIISOSTEARIN･CITRUS JUNOS SEED EXTRACT･TRIMETHYLOLPROPANE TRIETHYLHEXANOATE･CITRUS DEPRESSA PEEL EXTRACT･CITRUS JUNOS FRUIT EXTRACT･SALVIA OFFICINALIS (SAGE) OIL･METHICONE･BHT･TETRADECENE･TOCOPHEROL･",
+    "primaryImage": "shiseido_product_images/waso/yuzu-c-beauty-hydrating-sleeping-face-mask-0768614178798_1.jpg",
+    "gallery": [
+      "shiseido_product_images/waso/yuzu-c-beauty-hydrating-sleeping-face-mask-0768614178798_1.jpg",
+      "shiseido_product_images/waso/yuzu-c-beauty-hydrating-sleeping-face-mask-0768614178798_2.jpg",
+      "shiseido_product_images/waso/yuzu-c-beauty-hydrating-sleeping-face-mask-0768614178798_3.jpg",
+      "shiseido_product_images/waso/yuzu-c-beauty-hydrating-sleeping-face-mask-0768614178798_4.jpg",
+      "shiseido_product_images/waso/yuzu-c-beauty-hydrating-sleeping-face-mask-0768614178798_5.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.ca/ca/en/yuzu-c-beauty-hydrating-sleeping-face-mask-0768614178798.html"
+  },
+  {
+    "id": "0768614178743",
+    "slug": "shikulime-gel-to-oil-face-cleanser",
+    "name": "SHIKULIME Gel-to-Oil Cleanser",
+    "brand": "Shiseido",
+    "collection": "WASO",
+    "category": "Cleansers",
+    "productType": "Cleanser (gel-to-oil)",
+    "routineCompleteness": "Partial routine (plant-powered cleanser/moisturizer/masks/treatments)",
+    "price": 27,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "125mL",
+        "price": 27
+      }
+    ],
+    "skinTypes": [
+      "Dry"
+    ],
+    "concerns": [],
+    "badges": [],
+    "outOfStock": false,
+    "shortDescription": "Gel-to-oil cleanser + remover",
+    "overview": "This gentle cleanser starts as a cushiony gel texture to grab onto impurities and transforms into a silky oil to remove even waterproof makeup, without stripping skin of its essential moisture. Skin feels fresh, balanced, and revitalized with a radiant finish.\n*Cap contains natural materials that may change color or texture over time. This does not affect product quality.",
+    "keyBenefits": [
+      "Effortlessly removes impurities and waterproof makeup.",
+      "Reveals ultra clean, radiant skin.",
+      "Leverages the gentleness of a gel base with the cleansing power of an oil base.",
+      "Maintains moisture and does not leave skin feeling tight or dry.",
+      "Outer cap is made of 30% upcycled rice husk*. Tube is made of 10% sugarcane-derived polyethylene.",
+      "Vegan. Cruelty-free. Fragrance-free.",
+      "Dermatologist-tested. Opthamologist-tested."
+    ],
+    "howToUse": [
+      "Use daily, in the morning and evening as the first step in your skincare routine.",
+      "Apply without wetting hands or face.",
+      "Squeeze a cherry-sized drop onto fingertips and massage over dry face to remove makeup and impurities.",
+      "Rinse thoroughly with cool or lukewarm water."
+    ],
+    "ingredients": "- Shikuwasa, Japanese Lime from Okinawa: Supports skin’s moisture barrier to promote a healthy look.\n- Safflower Oil & Grape Seed Oil: Dissolves makeup and sebum while providing moisture.",
+    "primaryImage": "shiseido_product_images/waso/shikulime-gel-to-oil-face-cleanser-0768614178743_1.jpg",
+    "gallery": [
+      "shiseido_product_images/waso/shikulime-gel-to-oil-face-cleanser-0768614178743_1.jpg",
+      "shiseido_product_images/waso/shikulime-gel-to-oil-face-cleanser-0768614178743_2.jpg",
+      "shiseido_product_images/waso/shikulime-gel-to-oil-face-cleanser-0768614178743_3.jpg",
+      "shiseido_product_images/waso/shikulime-gel-to-oil-face-cleanser-0768614178743_4.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.ca/ca/en/shikulime-gel-to-oil-face-cleanser-0768614178743.html"
+  },
+  {
+    "id": "0730852178755",
+    "slug": "shikulime-mega-nourishing-and-hydrating-moisturizer",
+    "name": "SHIKULIME Mega Hydrating Moisturizer",
+    "brand": "Shiseido",
+    "collection": "WASO",
+    "category": "Moisturizers",
+    "productType": "Moisturizer",
+    "routineCompleteness": "Partial routine (plant-powered cleanser/moisturizer/masks/treatments)",
+    "price": 35,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "50mL",
+        "price": 35
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [
+      "Deeply Hydrating"
+    ],
+    "badges": [],
+    "outOfStock": false,
+    "shortDescription": "Nourishing daily moisturizer",
+    "overview": "Elevate your skincare routine with Shiseido Waso SHIKULIME Mega Hydrating Moisturizer, a luxurious cream that deeply nourishes and enhances skin plumpness and radiance. Infused with the natural vitality of shikulime extract, this moisturizer delivers long-lasting hydration, while its advanced formula supports the skin's natural resilience. Crafted through meticulous scientific research, it is suitable for all skin types and is designed to leave your complexion looking luminous and feeling velvety smooth..",
+    "keyBenefits": [],
+    "howToUse": [],
+    "ingredients": "",
+    "primaryImage": "shiseido_product_images/waso/shikulime-mega-nourishing-and-hydrating-moisturizer-0730852178755_1.jpg",
+    "gallery": [
+      "shiseido_product_images/waso/shikulime-mega-nourishing-and-hydrating-moisturizer-0730852178755_1.jpg",
+      "shiseido_product_images/waso/shikulime-mega-nourishing-and-hydrating-moisturizer-0730852178755_2.jpg",
+      "shiseido_product_images/waso/shikulime-mega-nourishing-and-hydrating-moisturizer-0730852178755_3.jpg",
+      "shiseido_product_images/waso/shikulime-mega-nourishing-and-hydrating-moisturizer-0730852178755_4.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.ca/ca/en/shikulime-mega-nourishing-and-hydrating-moisturizer-0730852178755.html"
+  },
+  {
+    "id": "SHC194523178763",
+    "slug": "shikulime-color-control-oil-free-tinted-moisturizer-spf-30",
+    "name": "SHIKULIME Color Control Oil-Free Moisturizer SPF 30",
+    "brand": "Shiseido",
+    "collection": "WASO",
+    "category": "Moisturizers",
+    "productType": "Moisturizer + Sunscreen (tinted)",
+    "routineCompleteness": "Partial routine (plant-powered cleanser/moisturizer/masks/treatments)",
+    "price": 35,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "50mL",
+        "price": 35
+      }
+    ],
+    "skinTypes": [
+      "Normal",
+      "Oily"
+    ],
+    "concerns": [],
+    "badges": [],
+    "outOfStock": false,
+    "shortDescription": "Oil-free tinted SPF 30",
+    "overview": "An oil-free, tinted moisturizer that adapts to your natural skin tone, blurs imperfections, and protects against UV rays with SPF 30.\nThis oil-free tinted moisturizer hydrates, perfects, and protects skin instantly and over time. The color-transforming formula forms a sheer tint that blurs imperfections, helps protect from UV damage and provides 8-hour hydration. Shikuwasa Lime Extract helps promote a healthy skin condition and strengthens resistance against skin concerns.\nClinically tested by 33 women.\n\n**Cap contains natural materials that may change color or texture over time. This does not affect product quality.\n\n***Free of oxybenzone and octinoxate.",
+    "keyBenefits": [
+      "Provides 8 hours of oil-free hydration",
+      "Smoothness and radiance are improved in 2 weeks*",
+      "Color-transforming formula adapts to skin tone for a natural, luminous finish",
+      "Protects against UVA/UVB rays with broad-spectrum SPF 30. Reef-friendly formula***.",
+      "Good for normal to oily skin types.",
+      "Outer cap is made of 30% upcycled rice husk**. Tube is made of 10% sugarcane-derived polyethylene.",
+      "Vegan. Cruelty-free. Fragrance-free.",
+      "Dermatologist-tested. Opthamologist-tested. Non-comedogenic."
+    ],
+    "howToUse": [
+      "Use as the last step of your morning skincare routine.",
+      "Squeeze two pearl-sized drops onto fingertips and smooth gently over face."
+    ],
+    "ingredients": "- Shikuwasa, Japanese Lime from Okinawa: Supports skin’s moisture barrier to promote a healthy look.\n- Color Change Powder: Adapts to each skin tone, creating a natural finish and even-looking complexion.\n- Anti-Pollution Powder: Absorbs excess sebum and protects against pollutants.\nACTIVE INGREDIENTS: Purpose AVOBENZONE 2.3% ･････ Sunscreen HOMOSALATE 10.0% ･････ Sunscreen OCTISALATE 5.0% ･････ Sunscreen OCTOCRYLENE 5.0% ･････ Sunscreen\n\nINACTIVE INGREDIENTS: WATER･BUTYLENE GLYCOL･CAPRYLYL METHICONE･SILICA･GLYCERIN･SD ALCOHOL 40-B･CETYL PEG/PPG-10/1 DIMETHICONE･DIPROPYLENE GLYCOL･ZEA MAYS (CORN) STARCH･POLYBUTYLENE GLYCOL/PPG-9/1 COPOLYMER･ERYTHRITOL･C30-45 ALKYL METHICONE･PEG-150･TREHALOSE･SODIUM CHLORIDE･PYRUS MALUS (APPLE) FRUIT WATER･CITRUS DEPRESSA PEEL EXTRACT･C30-45 OLEFIN･CELLULOSE GUM･TRISODIUM EDTA･BIS-BUTYLDIMETHICONE POLYGLYCERYL-3･POLYESTER-1･SILICA DIMETHYL SILYLATE･ALUMINUM HYDROXIDE･ALCOHOL･POLYSILICONE-2･SODIUM METABISULFITE･PHENOXYETHANOL･TITANIUM DIOXIDE･IRON OXIDES･MICA･",
+    "primaryImage": "shiseido_product_images/waso/shikulime-color-control-oil-free-tinted-moisturizer-spf-30-SHC194523178763_1.jpg",
+    "gallery": [
+      "shiseido_product_images/waso/shikulime-color-control-oil-free-tinted-moisturizer-spf-30-SHC194523178763_1.jpg",
+      "shiseido_product_images/waso/shikulime-color-control-oil-free-tinted-moisturizer-spf-30-SHC194523178763_2.jpg",
+      "shiseido_product_images/waso/shikulime-color-control-oil-free-tinted-moisturizer-spf-30-SHC194523178763_3.jpg",
+      "shiseido_product_images/waso/shikulime-color-control-oil-free-tinted-moisturizer-spf-30-SHC194523178763_4.jpg",
+      "shiseido_product_images/waso/shikulime-color-control-oil-free-tinted-moisturizer-spf-30-SHC194523178763_5.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.ca/ca/en/shikulime-color-control-oil-free-tinted-moisturizer-spf-30-SHC194523178763.html"
+  },
+  {
+    "id": "0768614189947",
+    "slug": "yuzu-c-eye-gel-awakening-essence",
+    "name": "YUZU-C Eye Awakening Essence",
+    "brand": "Shiseido",
+    "collection": "WASO",
+    "category": "Eye & Lip Care",
+    "productType": "Eye gel",
+    "routineCompleteness": "Partial routine (plant-powered cleanser/moisturizer/masks/treatments)",
+    "price": 29,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "20mL",
+        "price": 29
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [
+      "Brightening"
+    ],
+    "badges": [],
+    "outOfStock": false,
+    "shortDescription": "Awakening vitamin C eye gel",
+    "overview": "This eye gel essence can be used under or over makeup to instantly counteract the look of dark circles. Immediately, the eye area is hydrated and energized. In 4 weeks, dark circles and puffiness are less visible*. Lightweight texture absorbs quickly without feeling sticky.\n*Clinically tested by 31 women.",
+    "keyBenefits": [
+      "Visibly reduces dark circles and puffiness in 4 weeks*",
+      "Provides 12 hours of continuous hydration",
+      "93% of ingredients in this formula are of natural origin",
+      "Outer cap is made of 30% upcycled rice husk**. Tube is made of 10% sugarcane-derived polyethylene.",
+      "Vegan. Cruelty-free. Fragrance-free.",
+      "Dermatologist-tested. Opthamologist-tested. Non-comedogenic."
+    ],
+    "howToUse": [
+      "Use as the last step of your skincare routine. Can be used under or over makeup.",
+      "Smooth a small drop over the eye area."
+    ],
+    "ingredients": "- Yuzu Extract, Japanese Citrus from Kochi: Replenishes and maintains skin’s moisture.\n- Vitamin C & Vitamin E: Visibly brightens and boosts clarity.\n- Starfruit Extract: Targets under-eye puffiness.\n- Yuzu-C Glow Powder: Reflects light for a radiant finish.\nINGREDIENTS: WATER(AQUA/EAU)･PROPANEDIOL･GLYCERIN･BUTYLENE GLYCOL･DIPROPYLENE GLYCOL･TREHALOSE･DIPHENYLSILOXY PHENYL TRIMETHICONE･PYRUS MALUS (APPLE) FRUIT WATER･AMMONIUM ACRYLOYLDIMETHYLTAURATE/BEHENETH-25 METHACRYLATE CROSSPOLYMER･2-O-ETHYL ASCORBIC ACID･MENTHOL･TOCOPHERYL ACETATE･PHYTOSTERYL/OCTYLDODECYL LAUROYL GLUTAMATE･CITRUS JUNOS FRUIT EXTRACT･CITRUS JUNOS SEED EXTRACT･CITRUS DEPRESSA PEEL EXTRACT･AVERRHOA CARAMBOLA LEAF EXTRACT･DIMETHICONE･CARBOMER･AGAR･ALCOHOL･POTASSIUM HYDROXIDE･MAGNESIUM MYRISTATE･SUCCINOGLYCAN･PEG-10 DIMETHICONE･DISODIUM EDTA･SODIUM METAPHOSPHATE･SODIUM METABISULFITE･SYNTHETIC FLUORPHLOGOPITE･TIN OXIDE･TOCOPHEROL･PHENOXYETHANOL･IRON OXIDES (CI 77492)･TITANIUM DIOXIDE (CI 77891)･",
+    "primaryImage": "shiseido_product_images/waso/yuzu-c-eye-gel-awakening-essence-0768614189947_1.jpg",
+    "gallery": [
+      "shiseido_product_images/waso/yuzu-c-eye-gel-awakening-essence-0768614189947_1.jpg",
+      "shiseido_product_images/waso/yuzu-c-eye-gel-awakening-essence-0768614189947_2.jpg",
+      "shiseido_product_images/waso/yuzu-c-eye-gel-awakening-essence-0768614189947_3.jpg",
+      "shiseido_product_images/waso/yuzu-c-eye-gel-awakening-essence-0768614189947_4.jpg",
+      "shiseido_product_images/waso/yuzu-c-eye-gel-awakening-essence-0768614189947_5.jpg",
+      "shiseido_product_images/waso/yuzu-c-eye-gel-awakening-essence-0768614189947_6.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.ca/ca/en/yuzu-c-eye-gel-awakening-essence-0768614189947.html"
+  },
+  {
+    "id": "0768614189930",
+    "slug": "yuzu-c-glow-on-shot-oil-face-serum",
+    "name": "YUZU-C Glow-On Shot Serum",
+    "brand": "Shiseido",
+    "collection": "WASO",
+    "category": "Serums & Treatments",
+    "productType": "Facial oil",
+    "routineCompleteness": "Partial routine (plant-powered cleanser/moisturizer/masks/treatments)",
+    "price": 43,
+    "priceFrom": false,
+    "variants": [
+      {
+        "label": "20mL",
+        "price": 43
+      }
+    ],
+    "skinTypes": [
+      "All"
+    ],
+    "concerns": [
+      "Brightening"
+    ],
+    "badges": [],
+    "outOfStock": false,
+    "shortDescription": "Vitamin C glow oil serum",
+    "overview": "This bi-phase formula contains a superfood oil blend that feels nourishing and reveals more even-looking skin in 4 weeks*. This oil serum helps achieve a luminous glow instantly and over time, for a radiant complexion without or under makeup. This versatile formula can be used over entire face or on targeted areas, and before or in place of a moisturizer.\n*Clinically tested by 30 women.",
+    "keyBenefits": [
+      "Delivers an instant glow upon application",
+      "Provides 24 hours on continuous hydration",
+      "Reveals more even-looking skin in 4 weeks*",
+      "Absorbs quickly and feels fresh",
+      "98% of ingredients in this formula are of natural origin.",
+      "Vegan. Cruelty-free. Fragrance-free.",
+      "Dermatologist-tested. Non-comedogenic."
+    ],
+    "howToUse": [
+      "Apply after cleansing and before moisturizing. Can also be used alone, in place of a moisturizer.",
+      "Shake well. Spread gently over face or on targeted areas for an instant glow."
+    ],
+    "ingredients": "- Yuzu Extract, Japanese Citrus from Kochi: Replenishes and maintains skin’s moisture.\n- Superfood Oil Blend (Grapeseed Oil, Rosehip Oil, Sunflower Oil): Hydrates and soften skin for a natural glow.\n- Vitamin C Complex (Vitamin C Ethyl + Oil-Soluble Vitamin C): Provides antioxidant support to visibly brighten skin and prevent early signs of aging.\nINGREDIENTS: WATER(AQUA/EAU)･GLYCERIN･SQUALANE･BUTYLENE GLYCOL･ALCOHOL DENAT.･SODIUM PCA･TREHALOSE･PYRUS MALUS (APPLE) FRUIT WATER･SODIUM CHLORIDE･VITIS VINIFERA (GRAPE) SEED OIL･2-O-ETHYL ASCORBIC ACID･ASCORBYL TETRAISOPALMITATE･LAURYL BETAINE･ROSMARINUS OFFICINALIS (ROSEMARY) LEAF OIL (ROSMARINUS OFFICINALIS LEAF OIL)･TOCOPHERYL ACETATE･XANTHAN GUM･LAVANDULA ANGUSTIFOLIA (LAVENDER) OIL･CITRUS JUNOS FRUIT EXTRACT･CITRUS JUNOS SEED EXTRACT･SALVIA OFFICINALIS (SAGE) OIL･CITRUS DEPRESSA PEEL EXTRACT･SESAMUM INDICUM (SESAME) SEED OIL･ROSA CANINA FRUIT OIL･ASCORBYL DIPALMITATE･ALCOHOL･SODIUM CITRATE･TOCOPHEROL･SODIUM METAPHOSPHATE･DIPROPYLENE GLYCOL･HYDROXYPROPYL METHYLCELLULOSE･SODIUM METABISULFITE･CITRIC ACID･LIMONENE･CITRUS AURANTIUM DULCIS (ORANGE) OIL･LINALOOL･HELIANTHUS ANNUUS (SUNFLOWER) SEED OIL･PHENOXYETHANOL･SODIUM BENZOATE･",
+    "primaryImage": "shiseido_product_images/waso/yuzu-c-glow-on-shot-oil-face-serum-0768614189930_1.jpg",
+    "gallery": [
+      "shiseido_product_images/waso/yuzu-c-glow-on-shot-oil-face-serum-0768614189930_1.jpg",
+      "shiseido_product_images/waso/yuzu-c-glow-on-shot-oil-face-serum-0768614189930_2.jpg",
+      "shiseido_product_images/waso/yuzu-c-glow-on-shot-oil-face-serum-0768614189930_3.jpg",
+      "shiseido_product_images/waso/yuzu-c-glow-on-shot-oil-face-serum-0768614189930_4.jpg",
+      "shiseido_product_images/waso/yuzu-c-glow-on-shot-oil-face-serum-0768614189930_5.jpg",
+      "shiseido_product_images/waso/yuzu-c-glow-on-shot-oil-face-serum-0768614189930_6.jpg"
+    ],
+    "pdpUrl": "https://www.shiseido.ca/ca/en/yuzu-c-glow-on-shot-oil-face-serum-0768614189930.html"
   }
 ]

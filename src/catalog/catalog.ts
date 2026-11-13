@@ -190,6 +190,7 @@ export const SERIES_VALUES: ReadonlySet<string> = new Set<string>([
   "urban-environment",
   "ultimate-sun",
   "shiseido-men",
+  "waso",
 ]);
 
 export type ProductSubtype =
@@ -570,6 +571,8 @@ const BUNDLE_PART_ALIASES: Record<string, string> = {
   "ultimate sun protector clear stick spf 60+":
     "shiseido-men-protector-clear-stick-spf-60",
   "urban mineral sunscreen": "urban-environment-mineral-clear-sunscreen-spf-50",
+  // "Ultimate & Urban Mineral Sunscreen Bundle": the Ultimate half is the mineral lotion.
+  ultimate: "ultimate-sun-sun-protector-lotion-mineral-spf-60",
 };
 
 export function normalizeMatchText(value: string): string {
@@ -604,12 +607,24 @@ function scoreBundlePartMatch(
   const tokens = partNorm.split(/\s+/).filter((t) => t && !stop.has(t));
   if (tokens.length === 0) return 0;
 
+  // "Essential Energy Hydrating Cream" is exactly "Hydrating Cream" in the
+  // Essential Energy collection — beat longer titles that merely contain it.
+  const stripCollection = (s: string) =>
+    collectionNorm && s.startsWith(`${collectionNorm} `)
+      ? s.slice(collectionNorm.length + 1)
+      : s;
+  if (stripCollection(partNorm) === stripCollection(nameNorm)) return 95;
+
   const nameHits = tokens.filter((t) => nameNorm.includes(t)).length;
   const collectionHit = Boolean(
     collectionNorm && partNorm.includes(collectionNorm),
   );
 
-  if (nameHits === tokens.length) return 80 + tokens.length;
+  if (nameHits === tokens.length) {
+    // Prefer the closest title ("Eye Cream" over "Day Cream SPF 30 … Eye").
+    const extra = nameNorm.split(/\s+/).filter((t) => !partNorm.includes(t)).length;
+    return 80 + tokens.length - Math.min(extra, 9);
+  }
   if (collectionHit) {
     const rest = tokens.filter((t) => !collectionNorm.includes(t));
     if (rest.length > 0 && rest.every((t) => nameNorm.includes(t))) {
@@ -630,9 +645,36 @@ function resolveBundleComponentSlugs(
 ): string[] {
   if (!bundle.isBundle) return [];
 
+  // A "Set Includes:" list in the PDP copy names the real components;
+  // marketing titles ("Brightening & Smoothing Serum Set") don't.
+  const included = parseSetIncludes(bundle.overview);
+  if (included.length >= 2) {
+    const fromList = matchBundleParts(included, singles, bySlug);
+    if (fromList.length >= 2) return fromList;
+  }
+
   const parts = parseBundleTitleParts(bundle.title);
   if (parts.length < 2) return [];
+  return matchBundleParts(parts, singles, bySlug);
+}
 
+/** "- Eudermine Activating Essence, 30mL (Full Size)" → "Eudermine Activating Essence". */
+function parseSetIncludes(overview: string): string[] {
+  const at = (overview || "").search(/set includes:?/i);
+  if (at < 0) return [];
+  return overview
+    .slice(at)
+    .split("\n")
+    .filter((line) => /^\s*-\s+/.test(line))
+    .map((line) => line.replace(/^\s*-\s+/, "").split(",")[0].trim())
+    .filter((part) => part.length >= 3);
+}
+
+function matchBundleParts(
+  parts: string[],
+  singles: CatalogProduct[],
+  bySlug: Map<string, CatalogProduct>,
+): string[] {
   const resolved: string[] = [];
   const used = new Set<string>();
 

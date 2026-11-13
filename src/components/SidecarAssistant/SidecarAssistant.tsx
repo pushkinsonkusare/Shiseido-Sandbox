@@ -5213,13 +5213,35 @@ export function SidecarAssistant({
           startPolicyThread(product, prompt);
           return;
         }
+        // The page already chose the products (the cart's spend-tier pills),
+        // so show them rather than re-reading the prompt for a category.
+        const picks = detail?.picks;
+        if (picks && picks.slugs.length > 0) {
+          appendMessage({ id: nextId("shopper"), kind: "shopper_text", text: prompt });
+          const loaderId = nextId("loader");
+          appendMessage({ id: loaderId, kind: "agent_loader", variant: "answering" });
+          scheduleResponse(() => {
+            removeMessage(loaderId);
+            renderPlpCard(
+              picks.intro,
+              picks.slugs.slice(0, PLP_PAGE_SIZE),
+              picks.slugs.length > PLP_PAGE_SIZE,
+              { remainingSlugs: picks.slugs.slice(PLP_PAGE_SIZE) },
+            );
+          });
+          return;
+        }
         dispatchShopperMessage(prompt);
       });
     },
     [
+      appendMessage,
       dispatchShopperMessage,
       getProductBySlug,
       handleContextualPill,
+      removeMessage,
+      renderPlpCard,
+      scheduleResponse,
       startOpenQuestionThread,
       startPolicyThread,
     ],

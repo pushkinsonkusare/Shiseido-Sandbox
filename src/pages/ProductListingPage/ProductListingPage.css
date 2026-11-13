@@ -791,3 +791,760 @@ html[data-demo-viewport="desktop"] .figma-plp__quick-links {
 html[data-demo-viewport="desktop"] .figma-plp__top-actions {
   display: flex;
 }
+
+/* ---------- Category explainer ----------
+ * Teaches the shelf in two lines (from the Shiseido blog), then hands
+ * off to the advisor. Same aurora wash as the advisor promo in search. */
+/* While the guide is writing, the card stays plain grey; the mesh fades in with the guide. */
+.plp-explainer--loading::before,
+.plp-explainer--loading::after {
+  opacity: 0;
+}
+
+.plp-explainer--loading {
+  background: #fafafa;
+  border-color: #ececec;
+}
+
+/* Drifting mesh: each blob's center is an animatable custom property,
+ * so the five colors wander on their own clocks and never repeat in
+ * step. Browsers without @property simply show the still mesh. */
+@property --plp-ax { syntax: "<percentage>"; inherits: false; initial-value: 10%; }
+@property --plp-ay { syntax: "<percentage>"; inherits: false; initial-value: 30%; }
+@property --plp-bx { syntax: "<percentage>"; inherits: false; initial-value: 38%; }
+@property --plp-by { syntax: "<percentage>"; inherits: false; initial-value: 90%; }
+@property --plp-cx { syntax: "<percentage>"; inherits: false; initial-value: 62%; }
+@property --plp-cy { syntax: "<percentage>"; inherits: false; initial-value: 20%; }
+@property --plp-dx { syntax: "<percentage>"; inherits: false; initial-value: 88%; }
+@property --plp-dy { syntax: "<percentage>"; inherits: false; initial-value: 75%; }
+@property --plp-sheen { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+
+.plp-explainer {
+  container: plp-explainer / inline-size;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden; /* fallback */
+  overflow: clip; /* never scrollable, so focus or scrollIntoView can't shift the copy */
+  margin: -16px 0 36px;
+  padding: 20px 22px;
+  border: 1px solid rgba(120, 110, 160, 0.14);
+  border-radius: 16px;
+  background: #fbfaf8;
+}
+
+/* The mesh: apricot, rose, orchid, periwinkle, with sea glass pinned top right. */
+.plp-explainer::before {
+  content: "";
+  position: absolute;
+  inset: -30px;
+  z-index: -2;
+  background:
+    radial-gradient(34% 85% at var(--plp-ax) var(--plp-ay), rgba(255, 200, 176, 0.34), transparent 72%),
+    radial-gradient(32% 90% at var(--plp-bx) var(--plp-by), rgba(246, 186, 216, 0.28), transparent 72%),
+    radial-gradient(36% 95% at var(--plp-cx) var(--plp-cy), rgba(190, 176, 255, 0.3), transparent 72%),
+    radial-gradient(34% 90% at var(--plp-dx) var(--plp-dy), rgba(156, 190, 255, 0.3), transparent 72%),
+    radial-gradient(24% 70% at 97% 8%, rgba(172, 228, 230, 0.28), transparent 72%);
+  filter: blur(34px);
+  transition: opacity 600ms ease;
+  animation:
+    plp-mesh-a 17s ease-in-out infinite alternate,
+    plp-mesh-b 23s ease-in-out infinite alternate,
+    plp-mesh-c 19s ease-in-out infinite alternate,
+    plp-mesh-d 29s ease-in-out infinite alternate;
+}
+
+/* A pearl wash keeps the copy crisp on the left, plus a slow light sweep. */
+.plp-explainer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    conic-gradient(
+      from var(--plp-sheen) at 50% 120%,
+      transparent 0deg,
+      rgba(255, 255, 255, 0.22) 40deg,
+      transparent 90deg,
+      transparent 360deg
+    ),
+    linear-gradient(
+      90deg,
+      rgba(251, 250, 248, 0.8) 0%,
+      rgba(251, 250, 248, 0.6) 38%,
+      rgba(251, 250, 248, 0.18) 72%,
+      rgba(251, 250, 248, 0.04) 100%
+    );
+  pointer-events: none;
+  animation: plp-mesh-sheen 26s linear infinite;
+}
+
+@keyframes plp-mesh-a {
+  0% { --plp-ax: 6%; --plp-ay: 20%; }
+  50% { --plp-ax: 22%; --plp-ay: 80%; }
+  100% { --plp-ax: 30%; --plp-ay: 35%; }
+}
+@keyframes plp-mesh-b {
+  0% { --plp-bx: 30%; --plp-by: 100%; }
+  50% { --plp-bx: 52%; --plp-by: 40%; }
+  100% { --plp-bx: 44%; --plp-by: 95%; }
+}
+@keyframes plp-mesh-c {
+  0% { --plp-cx: 56%; --plp-cy: 10%; }
+  50% { --plp-cx: 74%; --plp-cy: 70%; }
+  100% { --plp-cx: 66%; --plp-cy: 25%; }
+}
+@keyframes plp-mesh-d {
+  0% { --plp-dx: 94%; --plp-dy: 85%; }
+  50% { --plp-dx: 80%; --plp-dy: 30%; }
+  100% { --plp-dx: 98%; --plp-dy: 55%; }
+}
+@keyframes plp-mesh-sheen {
+  to { --plp-sheen: 360deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plp-explainer::before,
+  .plp-explainer::after { animation: none; }
+}
+
+.plp-explainer__inner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 460px);
+  align-items: center;
+  column-gap: 16px;
+  row-gap: 16px;
+}
+
+/* Thumbnail: a photo that mirrors the shopper's situation. */
+.plp-explainer__media {
+  position: relative;
+  align-self: start;
+  flex: none;
+  width: 72px;
+  height: 72px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 0 1px rgba(120, 110, 160, 0.14);
+  color: #17171b;
+}
+
+.plp-explainer__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+  animation: plp-explainer-photo-in 520ms ease-out both;
+}
+
+/* Icon-only tile (no photo): the original sparkle square. */
+.plp-explainer__media--icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.plp-explainer__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.plp-explainer--loading .plp-explainer__media:not(.plp-explainer__media--icon) {
+  background:
+    linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.7) 50%, transparent 70%) 0 0 / 200% 100%,
+    #efefef;
+  animation: plp-skel-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes plp-explainer-photo-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+
+.plp-explainer__text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.plp-explainer__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #17171b;
+}
+
+.plp-explainer__body {
+  margin: 0;
+  max-width: 640px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #4b4b52;
+}
+
+/* Blog citation: a quiet editorial byline, not a raw link. */
+.plp-explainer__source {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #77777e;
+  text-decoration: none;
+}
+
+.plp-explainer__source-thumb {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9), 0 1px 3px rgba(40, 30, 60, 0.12);
+}
+
+.plp-explainer__source-kicker {
+  flex: none;
+}
+
+.plp-explainer__source-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-bottom: 1px;
+  font-weight: 600;
+  color: #17171b;
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+  transition: background-size 280ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.plp-explainer__source-meta {
+  flex: none;
+  padding-left: 8px;
+  border-left: 1px solid rgba(23, 23, 27, 0.14);
+}
+
+.plp-explainer__source-arrow {
+  flex: none;
+  margin-left: -2px;
+  color: #17171b;
+  transition: transform 220ms ease;
+}
+
+.plp-explainer__source:hover .plp-explainer__source-title,
+.plp-explainer__source:focus-visible .plp-explainer__source-title {
+  background-size: 100% 1px;
+}
+
+.plp-explainer__source:hover .plp-explainer__source-arrow {
+  transform: translateX(3px);
+}
+
+/* Phones: keep the article title whole; the photo + title carry the citation. */
+@media (max-width: 767.98px) {
+  .plp-explainer__source-kicker {
+    display: none;
+  }
+}
+
+html[data-demo-viewport="mobile"] .plp-explainer__source-kicker {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plp-explainer__source-title,
+  .plp-explainer__source-arrow {
+    transition: none;
+  }
+}
+
+.plp-explainer__pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plp-explainer__pill {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  backdrop-filter: blur(10px) saturate(140%);
+  box-shadow: 0 1px 2px rgba(60, 40, 90, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #17171b;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.plp-explainer__pill:hover {
+  border-color: rgba(200, 186, 244, 0.9);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.plp-explainer__pill:focus-visible,
+.plp-explainer__source:focus-visible {
+  outline: 2px solid #17171b;
+  outline-offset: 2px;
+}
+
+/* Generating state: the AI "writes" the guide, then it fades in. */
+.plp-explainer__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #8a8a8f;
+}
+
+.plp-explainer__status::after {
+  content: "";
+  width: 1.2em;
+  text-align: left;
+  animation: plp-explainer-dots 1.2s steps(4, end) infinite;
+}
+
+@keyframes plp-explainer-dots {
+  0% { content: ""; }
+  25% { content: "."; }
+  50% { content: ".."; }
+  75%, 100% { content: "..."; }
+}
+
+.plp-skel {
+  display: block;
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      100deg,
+      rgba(255, 255, 255, 0) 20%,
+      rgba(255, 255, 255, 0.85) 50%,
+      rgba(255, 255, 255, 0) 80%
+    ) -150% 0 / 60% 100% no-repeat,
+    #ececec;
+  animation: plp-skel-shimmer 1.3s ease-in-out infinite;
+}
+
+.plp-skel--line {
+  height: 12px;
+  margin: 5px 0;
+  max-width: 640px;
+}
+
+.plp-skel--source {
+  width: 260px;
+  height: 10px;
+  margin-top: 14px;
+  opacity: 0.7;
+}
+
+.plp-skel--pill {
+  height: 36px;
+  max-width: 100%;
+  background-color: #efefef;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.9);
+}
+
+@keyframes plp-skel-shimmer {
+  to { background-position: 250% 0, 0 0; }
+}
+
+.plp-explainer--loading .plp-explainer__icon {
+  animation: plp-explainer-think 1.4s ease-in-out infinite;
+}
+
+@keyframes plp-explainer-think {
+  0%, 100% { color: #17171b; }
+  50% { color: #a1a1a6; }
+}
+
+.plp-explainer--ready .plp-explainer__text {
+  animation: plp-explainer-reveal 420ms ease-out both;
+}
+
+.plp-explainer--ready .plp-explainer__pills > li {
+  animation: plp-explainer-reveal 360ms ease-out both;
+}
+
+@keyframes plp-explainer-reveal {
+  from { opacity: 0; transform: translateY(4px); filter: blur(3px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plp-skel,
+  .plp-explainer__status::after,
+  .plp-explainer--loading .plp-explainer__icon,
+  .plp-explainer--loading .plp-explainer__media,
+  .plp-explainer__photo,
+  .plp-explainer--ready .plp-explainer__text,
+  .plp-explainer--ready .plp-explainer__pills > li {
+    animation: none;
+  }
+}
+
+/* The thumbnail already shows the article's photo; don't repeat it in the byline. */
+.plp-explainer__source--same-photo .plp-explainer__source-thumb {
+  display: none;
+}
+
+@container plp-explainer (max-width: 560px) {
+  .plp-explainer__source--same-photo .plp-explainer__source-thumb {
+    display: block;
+  }
+}
+
+html[data-demo-viewport="mobile"] .plp-explainer__source--same-photo .plp-explainer__source-thumb {
+  display: block;
+}
+
+/* Medium: pills drop beneath the copy. */
+@container plp-explainer (max-width: 980px) {
+  .plp-explainer__inner {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .plp-explainer__pills {
+    grid-column: 2 / -1;
+    justify-content: flex-start;
+  }
+}
+
+/* Narrow: everything stacks; the icon sits beside the title only. */
+@container plp-explainer (max-width: 560px) {
+  .plp-explainer__media {
+    display: none;
+  }
+
+  .plp-explainer__inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .plp-explainer__pills {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .plp-explainer {
+    margin: -8px 0 24px;
+    padding: 16px;
+  }
+}
+
+html[data-demo-viewport="mobile"] .plp-explainer__inner {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+html[data-demo-viewport="mobile"] .plp-explainer {
+  margin: -8px 0 24px;
+  padding: 16px;
+}
+
+html[data-demo-viewport="mobile"] .plp-explainer__media {
+  display: none;
+}
+
+html[data-demo-viewport="mobile"] .plp-explainer__pills {
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+}
+
+/* Phones: pills ride one swipeable row instead of stacking four deep. */
+@media (max-width: 767.98px) {
+  .plp-explainer__pills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin: 0 -16px;
+    padding: 0 16px 2px;
+    scrollbar-width: none;
+  }
+  .plp-explainer__pills::-webkit-scrollbar {
+    display: none;
+  }
+  .plp-explainer__pills > li {
+    flex: none;
+  }
+}
+
+html[data-demo-viewport="mobile"] .plp-explainer__pills {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  margin: 0 -16px;
+  padding: 0 16px 2px;
+  scrollbar-width: none;
+}
+
+html[data-demo-viewport="mobile"] .plp-explainer__pills::-webkit-scrollbar {
+  display: none;
+}
+
+html[data-demo-viewport="mobile"] .plp-explainer__pills > li {
+  flex: none;
+}
+
+/* ---------- Mid-grid scroll break ----------
+ * Two rows into the grid, for shoppers scrolling without a match. Shares
+ * the explainer's mesh card; spans the full row so the grid stays aligned. */
+.plp-scroll-break {
+  container: plp-scroll-break / inline-size;
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 22px 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "lead compare"
+    "reasons ask";
+  align-items: center;
+  gap: 18px 24px;
+}
+
+.plp-scroll-break--loading {
+  grid-template-areas: "lead lead";
+}
+
+.plp-scroll-break__lead {
+  grid-area: lead;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.plp-scroll-break__icon {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgba(120, 110, 160, 0.14);
+  color: #17171b;
+}
+
+.plp-scroll-break--loading .plp-scroll-break__icon {
+  animation: plp-explainer-think 1.4s ease-in-out infinite;
+}
+
+.plp-scroll-break__copy {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.plp-scroll-break__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #17171b;
+}
+
+.plp-scroll-break__body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #4b4b52;
+}
+
+/* Children of the actions wrapper sit straight on the card's grid. */
+.plp-scroll-break__actions {
+  display: contents;
+}
+
+.plp-scroll-break__compare {
+  grid-area: compare;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px 8px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  backdrop-filter: blur(10px) saturate(140%);
+  font: inherit;
+  color: #17171b;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease;
+  animation: plp-explainer-reveal 360ms ease-out both;
+}
+
+.plp-scroll-break__compare:hover {
+  border-color: rgba(200, 186, 244, 0.9);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.plp-scroll-break__thumbs {
+  display: inline-flex;
+}
+
+.plp-scroll-break__thumbs img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: contain;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 3px rgba(120, 110, 160, 0.14);
+}
+
+.plp-scroll-break__thumbs img + img {
+  margin-left: -10px;
+}
+
+.plp-scroll-break__compare-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.plp-scroll-break__compare-title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.plp-scroll-break__compare-meta {
+  font-size: 12px;
+  line-height: 1.25;
+  color: #6b6b72;
+}
+
+.plp-scroll-break__reasons {
+  grid-area: reasons;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0 0 0 54px;
+  list-style: none;
+}
+
+.plp-scroll-break__reasons > li {
+  animation: plp-explainer-reveal 360ms ease-out both;
+}
+
+.plp-scroll-break__ask {
+  grid-area: ask;
+  justify-self: end;
+  width: min(340px, 100%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  padding: 0 4px 0 16px;
+  border: 1px solid rgba(120, 110, 160, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  animation: plp-explainer-reveal 360ms 200ms ease-out both;
+}
+
+.plp-scroll-break__ask:focus-within {
+  border-color: #17171b;
+}
+
+.plp-scroll-break__ask input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  color: #17171b;
+  outline: none;
+}
+
+.plp-scroll-break__ask input::placeholder {
+  color: #8a8a8f;
+}
+
+.plp-scroll-break__ask button {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: #17171b;
+  color: #ffffff;
+  cursor: pointer;
+  transition: opacity 160ms ease;
+}
+
+.plp-scroll-break__ask button:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.plp-scroll-break__compare:focus-visible,
+.plp-scroll-break__ask button:focus-visible {
+  outline: 2px solid #17171b;
+  outline-offset: 2px;
+}
+
+/* Narrow cards (single-column grid, small tablets): stack everything. */
+@container plp-scroll-break (max-width: 720px) {
+  .plp-scroll-break__lead,
+  .plp-scroll-break__compare,
+  .plp-scroll-break__reasons,
+  .plp-scroll-break__ask {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  .plp-scroll-break__compare {
+    justify-self: start;
+  }
+
+  .plp-scroll-break__reasons {
+    padding-left: 0;
+  }
+
+  .plp-scroll-break__ask {
+    justify-self: stretch;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plp-scroll-break--loading .plp-scroll-break__icon,
+  .plp-scroll-break__compare,
+  .plp-scroll-break__reasons > li,
+  .plp-scroll-break__ask {
+    animation: none;
+  }
+}

@@ -64,11 +64,12 @@ export function UnifiedTopHeader({
             {PRIMARY_NAV_ITEMS.map((item) => (
               <a
                 key={item.label}
-                href={ROUTES.productListing}
+                href={item.route ?? ROUTES.productListing}
                 className={item.emphasized ? "unified-top-header__sale-link" : undefined}
                 onClick={(event) => {
                   event.preventDefault();
-                  navigate(ROUTES.productListing, { category: item.category ?? null });
+                  if (item.route) navigate(item.route);
+                  else navigate(ROUTES.productListing, { category: item.category ?? null });
                 }}
               >
                 {item.label}
@@ -124,7 +125,8 @@ export function UnifiedTopHeader({
                 type="button"
                 className={item.emphasized ? "unified-top-header__mobile-drawer-link unified-top-header__mobile-drawer-link--emphasized" : "unified-top-header__mobile-drawer-link"}
                 onClick={() => {
-                  navigate(ROUTES.productListing, { category: item.category ?? null });
+                  if (item.route) navigate(item.route);
+                  else navigate(ROUTES.productListing, { category: item.category ?? null });
                   setIsMobileMenuOpen(false);
                 }}
               >

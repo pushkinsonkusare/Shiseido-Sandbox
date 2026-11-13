@@ -54,9 +54,30 @@ function shouldOpenPanelFromUrl(): boolean {
   return open === "1" || open === "true" || open === "yes";
 }
 
+/** Phone-width breakpoint, matching the storefront's mobile CSS. */
+const NARROW_SCREEN_QUERY = "(max-width: 767.98px)";
+
+/** True on a real phone or narrow window, independent of the demo switcher. */
+function useNarrowScreen() {
+  const [narrow, setNarrow] = useState(
+    () => typeof window !== "undefined" && window.matchMedia(NARROW_SCREEN_QUERY).matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia(NARROW_SCREEN_QUERY);
+    const sync = () => setNarrow(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+  return narrow;
+}
+
 export function SidecarDockLayout({ children }: Props) {
   const { viewportMode, userTestingLock, sidecarAvailable } = useAgentMode();
-  const isMobileViewport = viewportMode === "mobile";
+  const narrowScreen = useNarrowScreen();
+  /* Phones get the full-screen bottom sheet, not the side dock, even when
+   * the demo switcher is on its desktop default. */
+  const isMobileViewport = viewportMode === "mobile" || narrowScreen;
   const openFromUrl = shouldOpenPanelFromUrl();
 
   const [panelOpen, setPanelOpen] = useState(

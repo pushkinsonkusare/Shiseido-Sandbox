@@ -16,6 +16,9 @@ import bannerUltimune from "../../assets/banner-ultimune.webp";
 import bannerUltimuneMobile from "../../assets/banner-ultimune-mobile-warm-grey.png";
 import bannerMineralSunscreen from "../../assets/banner-mineral-sunscreen.webp";
 import bannerMineralSunscreenMobile from "../../assets/banner-mineral-sunscreen-mobile.png";
+import bannerAiAdvisor from "../../assets/banner-ai-advisor.webp";
+import bannerAiAdvisorMobile from "../../assets/banner-ai-advisor-mobile.webp";
+import bannerAiAdvisorSplit from "../../assets/banner-ai-advisor-split.webp";
 import bannerVitalPerfection from "../../assets/banner-vital-perfection.png";
 import categoryCleansersLifestyle from "../../assets/category-cleansers-lifestyle.png";
 import categoryTreatmentsLifestyle from "../../assets/category-treatments-lifestyle.png";
@@ -78,6 +81,21 @@ export default function StorefrontPage() {
       footnotes: [] as string[],
       onShop: () => navigateToProduct("urban-environment-mineral-clear-sunscreen-spf-50"),
     },
+    {
+      id: "ai-advisor",
+      image: bannerAiAdvisor,
+      imageMobile: bannerAiAdvisorMobile,
+      // Fade-free top crop of the portrait, for the desktop split layout.
+      imageSplit: bannerAiAdvisorSplit,
+      imageAlt: "Two women with luminous, healthy skin in warm sunlight",
+      eyebrow: "BEAUTY ADVISOR · POWERED BY AI",
+      title: "Shop with AI Assistant",
+      description:
+        "Describe your skin in your own words. Your AI advisor reads the signs, builds a routine around them and compares every formula, so your glow is matched, not guessed.",
+      footnotes: ["Always on, always learning you. Your glow, intelligently matched."],
+      ctaLabel: "GLOW WITH ME",
+      onShop: () => document.dispatchEvent(new CustomEvent("agentic:open-assistant")),
+    },
   ];
 
   const goToSlide = (next: number) =>
@@ -131,7 +149,9 @@ export default function StorefrontPage() {
                 <h1>{activeSlide.title}</h1>
                 <p>{activeSlide.description}</p>
               </div>
-              <button type="button" onClick={activeSlide.onShop}>SHOP NOW</button>
+              <button type="button" onClick={activeSlide.onShop}>
+                {"ctaLabel" in activeSlide ? activeSlide.ctaLabel : "SHOP NOW"}
+              </button>
               {activeSlide.footnotes.length > 0 && (
                 <div className="figma-storefront__hero-footnotes">
                   {activeSlide.footnotes.map((footnote) => (
@@ -151,6 +171,14 @@ export default function StorefrontPage() {
             alt={activeSlide.imageAlt}
             className="figma-storefront__hero-image figma-storefront__hero-image--mobile"
           />
+          {"imageSplit" in activeSlide && (
+            <img
+              src={activeSlide.imageSplit}
+              alt=""
+              aria-hidden="true"
+              className="figma-storefront__hero-image figma-storefront__hero-image--split"
+            />
+          )}
         </section>
 
         <section className="figma-storefront__tagline-banner" aria-label="Brand promise">

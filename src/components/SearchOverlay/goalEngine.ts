@@ -659,6 +659,17 @@ const COLLECTIONS: Record<string, CollectionInfo> = {
     compareWith: "Essentials",
     compareHint: "Men's line vs. everyday basics",
   },
+  waso: {
+    name: "WASO",
+    test: /\bwaso\b|\byuzu[-\s]?c\b|\bshikulime\b|\bsatocane\b/i,
+    goal: "hydration",
+    goalLabel: "hydrating",
+    outcome: "A gentle, plant-powered routine",
+    ask: "build a gentle, plant-powered skincare routine",
+    hint: "Japanese botanicals, vegan formulas",
+    compareWith: "Essential Energy",
+    compareHint: "Plant-powered vs. energising hydration",
+  },
 };
 
 const GOAL_KEYWORD: Record<string, string> = {

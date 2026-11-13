@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { Fragment, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useCatalog } from "../../catalog/CatalogContext";
 import { formatPrice, toProductCardProps } from "../../catalog/catalog";
 import ProductCard from "../../components/ProductCard/ProductCard";
@@ -17,6 +17,9 @@ import {
   getCategoryFacets,
   type FacetSpec,
 } from "./categoryFacets";
+import { resolvePlpExplainer } from "./plpExplainers";
+import { PlpExplainerStrip } from "./PlpExplainerStrip";
+import { PlpScrollBreak } from "./PlpScrollBreak";
 import "./ProductListingPage.css";
 
 type FilterGroupOption = {
@@ -54,6 +57,24 @@ const PRICE_BUCKETS: { min: number; max: number | null; label: string }[] = [
   { min: 1500, max: 3000, label: "$1,500 – $3,000" },
   { min: 3000, max: null, label: "$3,000+" },
 ];
+
+/** Live column count of a CSS grid, so mid-grid inserts land on a row edge. */
+function useGridColumns(ref: { current: HTMLElement | null }) {
+  const [cols, setCols] = useState(3);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || typeof ResizeObserver === "undefined") return;
+    const measure = () => {
+      const tracks = getComputedStyle(node).gridTemplateColumns.split(" ").filter(Boolean);
+      setCols(Math.max(1, tracks.length));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(node);
+    return () => ro.disconnect();
+  }, [ref]);
+  return cols;
+}
 
 export function ProductListingPage() {
   const { products: allProducts, categories, searchProducts } = useCatalog();
@@ -322,6 +343,25 @@ export function ProductListingPage() {
     });
     return compat.length > 0 ? compat : baseProducts;
   })();
+
+  // Two-line primer on the shelf in view, with advisor pills. Skipped
+  // for curated slug unions and recipe handoffs, which aren't a category.
+  const explainer =
+    slugFilteredProducts || recipeSpec
+      ? null
+      : resolvePlpExplainer({
+          category: activeCategories.length === 1 ? activeCategories[0] : null,
+          searchQuery: activeCategories.length > 1 ? "" : activeSearchQuery,
+          skinTypes: activeSubtypes,
+          concerns: activePrimaryActivities,
+        });
+
+  // Mid-grid "nothing clicking?" break: three rows in (five cards on a
+  // single column), and only when at least a row follows it.
+  const gridRef = useRef<HTMLElement | null>(null);
+  const gridCols = useGridColumns(gridRef);
+  const scrollBreakAt = Math.max(gridCols * 3, 5);
+  const showScrollBreak = products.length >= scrollBreakAt + gridCols;
 
   const matchingNavItem = activeCategory
     ? PRIMARY_NAV_ITEMS.find(
@@ -663,6 +703,8 @@ export function ProductListingPage() {
           <h1 className="figma-plp__title">{headingLabel} ({products.length})</h1>
         </header>
 
+        {explainer && <PlpExplainerStrip explainer={explainer} />}
+
         <main className="figma-plp__main">
           <aside className="figma-plp__filters" aria-label="Product filters">
             {isDrilledIn && (
@@ -814,15 +856,25 @@ export function ProductListingPage() {
             })}
           </aside>
 
-          <section className="figma-plp__grid" aria-label="Product results">
+          <section ref={gridRef} className="figma-plp__grid" aria-label="Product results">
             {products.length > 0 ? (
-              products.map((product) => (
-                <article key={product.slug} className="figma-plp__card-wrap">
-                  <ProductCard
-                    {...toProductCardProps(product)}
-                    onSelect={() => navigateToProduct(product.slug)}
-                  />
-                </article>
+              products.map((product, index) => (
+                <Fragment key={product.slug}>
+                  {showScrollBreak && index === scrollBreakAt && (
+                    <PlpScrollBreak
+                      key={`break-${headingLabel}`}
+                      shelfLabel={headingLabel}
+                      products={products}
+                      passed={products.slice(0, scrollBreakAt)}
+                    />
+                  )}
+                  <article className="figma-plp__card-wrap">
+                    <ProductCard
+                      {...toProductCardProps(product)}
+                      onSelect={() => navigateToProduct(product.slug)}
+                    />
+                  </article>
+                </Fragment>
               ))
             ) : (
               <div className="figma-plp__empty">

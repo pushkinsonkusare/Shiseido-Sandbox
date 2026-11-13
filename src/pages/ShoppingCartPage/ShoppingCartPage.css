@@ -692,6 +692,7 @@
   align-items: center;
   justify-content: center;
   padding: 8px 32px;
+  border-radius: 8px;
   cursor: pointer;
   box-shadow: var(--cart-shadow-2xs);
 }
@@ -1214,4 +1215,220 @@ html[data-demo-viewport="mobile"] .figma-cart__footer-shell {
   padding: 24px max(var(--space-page-mobile, 16px), var(--safe-area-left, 0px))
     calc(24px + var(--safe-area-bottom, 0px))
     max(var(--space-page-mobile, 16px), var(--safe-area-right, 0px));
+}
+
+/* ---------- Spend-tier nudge ----------
+ * The rewards bar, made agentic: the next reward only, then shelves that
+ * hand the advisor the cart and a budget that clears it. */
+.cart-tier {
+  container: cart-tier / inline-size;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px 22px 22px;
+  border: 1px solid rgba(120, 110, 160, 0.14);
+  border-radius: 16px;
+  background:
+    radial-gradient(60% 120% at 0% 0%, rgba(255, 214, 196, 0.28), transparent 70%),
+    radial-gradient(50% 120% at 100% 0%, rgba(196, 186, 255, 0.24), transparent 70%),
+    #fbfaf8;
+}
+
+.cart-tier--loading {
+  background: #fafafa;
+  border-color: #ececec;
+}
+
+.cart-tier__lead {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.cart-tier__icon {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgba(120, 110, 160, 0.14);
+  color: #17171b;
+}
+
+.cart-tier--loading .cart-tier__icon {
+  animation: cart-tier-think 1.4s ease-in-out infinite;
+}
+
+@keyframes cart-tier-think {
+  0%, 100% { color: #17171b; }
+  50% { color: #a1a1a6; }
+}
+
+.cart-tier__copy {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cart-tier--ready .cart-tier__copy {
+  animation: cart-tier-reveal 380ms ease-out both;
+}
+
+.cart-tier__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #17171b;
+}
+
+.cart-tier__body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #4b4b52;
+}
+
+.cart-tier__status {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #8a8a8f;
+}
+
+.cart-tier__skel {
+  display: block;
+  height: 12px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background:
+    linear-gradient(100deg, rgba(255, 255, 255, 0) 20%, rgba(255, 255, 255, 0.85) 50%, rgba(255, 255, 255, 0) 80%) -150% 0 / 60% 100% no-repeat,
+    #ececec;
+  animation: cart-tier-shimmer 1.3s ease-in-out infinite;
+}
+
+@keyframes cart-tier-shimmer {
+  to { background-position: 250% 0, 0 0; }
+}
+
+/* One meter: from the tier already earned to the next one. */
+.cart-tier__meter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 54px;
+}
+
+.cart-tier__rail {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(23, 23, 27, 0.08);
+  overflow: hidden;
+}
+
+.cart-tier__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #17171b;
+  transition: width 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.cart-tier__ends {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: #6b6b72;
+}
+
+.cart-tier__ends span:last-child {
+  font-weight: 600;
+  color: #17171b;
+}
+
+/* Next best actions: shelves that complete the routine, then "anything". */
+.cart-tier__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0 0 0 54px;
+  list-style: none;
+}
+
+.cart-tier__pills li {
+  animation: cart-tier-reveal 340ms ease-out both;
+}
+
+.cart-tier__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid rgba(23, 23, 27, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #17171b;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.cart-tier__pill:hover {
+  border-color: rgba(23, 23, 27, 0.3);
+  background: #ffffff;
+}
+
+.cart-tier__pill--any {
+  padding-left: 12px;
+  border-color: transparent;
+  background: #17171b;
+  color: #ffffff;
+}
+
+.cart-tier__pill--any:hover {
+  border-color: transparent;
+  background: #2c2c33;
+}
+
+.cart-tier__pill:focus-visible {
+  outline: 2px solid #17171b;
+  outline-offset: 2px;
+}
+
+@keyframes cart-tier-reveal {
+  from { opacity: 0; transform: translateY(4px); filter: blur(3px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+@container cart-tier (max-width: 480px) {
+  .cart-tier__meter,
+  .cart-tier__pills {
+    padding-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cart-tier--loading .cart-tier__icon,
+  .cart-tier__skel,
+  .cart-tier--ready .cart-tier__copy,
+  .cart-tier__pills li {
+    animation: none;
+  }
+
+  .cart-tier__fill {
+    transition: none;
+  }
 }
