@@ -1337,9 +1337,9 @@ html[data-demo-theme="consumer-electronics"] .search-overlay__submit:focus-visib
   outline-color: #17171b;
 }
 
-/* Ask AI: the "AI" pill. A pearl fill with a faint aurora tint sits on an
- * iridescent edge (blush, lilac, sky) that drifts slowly round the pill;
- * the sparkle twinkles now and then. All motion stops for reduced motion. */
+/* Ask AI: the "AI" pill. A borderless blush-lilac-sky aurora fill that
+ * deepens on hover; the sparkle twinkles now and then (stops for reduced
+ * motion). The header's Beauty Advisor pill wears the same treatment. */
 html[data-demo-theme="consumer-electronics"] .search-overlay__ask-ai {
   height: 36px;
   padding: 0 14px 0 12px;
@@ -1349,49 +1349,23 @@ html[data-demo-theme="consumer-electronics"] .search-overlay__ask-ai {
   font-weight: 600;
   letter-spacing: 0.01em;
   color: #17171b;
-  border: 1px solid transparent;
-  background:
-    linear-gradient(100deg, #fff7f8 0%, #fbf8ff 50%, #f5f9ff 100%) padding-box,
-    linear-gradient(
-        100deg,
-        #e6a4b4 0%,
-        #c7a6ef 25%,
-        #8fb6f0 50%,
-        #f0b7a4 75%,
-        #e6a4b4 100%
-      )
-      0% 50% / 300% 100% border-box;
+  border: none;
+  background: linear-gradient(100deg, #fbe7ed 0%, #efe7fb 25%, #e4eefc 50%, #efe7fb 75%, #fbe7ed 100%) 0% 50% / 300% 100%;
+  animation: nto-ai-pill-drift 6s ease-in-out infinite alternate;
   box-shadow: none;
-  animation: search-overlay__ask-ai-edge 6s linear infinite;
   transition: background-color 160ms ease;
 }
 
 html[data-demo-theme="consumer-electronics"] .search-overlay__ask-ai svg {
-  color: #9b3f8f;
+  color: #17171b;
   transform-origin: 50% 50%;
   animation: search-overlay__ask-ai-twinkle 4.8s ease-in-out infinite;
 }
 
 html[data-demo-theme="consumer-electronics"] .search-overlay__ask-ai:hover:not(:disabled) {
-  background:
-    linear-gradient(100deg, #ffeff2 0%, #f5efff 50%, #eaf2ff 100%) padding-box,
-    linear-gradient(
-        100deg,
-        #e6a4b4 0%,
-        #c7a6ef 25%,
-        #8fb6f0 50%,
-        #f0b7a4 75%,
-        #e6a4b4 100%
-      )
-      0% 50% / 300% 100% border-box;
+  background: linear-gradient(100deg, #f7dbe4 0%, #e6dbf8 25%, #d8e6fa 50%, #e6dbf8 75%, #f7dbe4 100%) 0% 50% / 300% 100%;
+  animation-duration: 3s;
   box-shadow: none;
-  animation-duration: 2.4s;
-}
-
-@keyframes search-overlay__ask-ai-edge {
-  to {
-    background-position: 0 0, 300% 50%;
-  }
 }
 
 @keyframes search-overlay__ask-ai-twinkle {
@@ -1409,9 +1383,37 @@ html[data-demo-theme="consumer-electronics"] .search-overlay__ask-ai:hover:not(:
   }
 }
 
+/* The header's "beauty advisor" pill shares Ask AI's pearl-aurora fill and
+ * twinkling sparkle (no border), so both entry points to the advisor match. */
+html[data-demo-theme="consumer-electronics"] .personal-assistant-nav-trigger {
+  border: none;
+  background: linear-gradient(100deg, #fbe7ed 0%, #efe7fb 25%, #e4eefc 50%, #efe7fb 75%, #fbe7ed 100%) 0% 50% / 300% 100%;
+  animation: nto-ai-pill-drift 6s ease-in-out infinite alternate;
+}
+
+html[data-demo-theme="consumer-electronics"] .personal-assistant-nav-trigger:hover {
+  background: linear-gradient(100deg, #f7dbe4 0%, #e6dbf8 25%, #d8e6fa 50%, #e6dbf8 75%, #f7dbe4 100%) 0% 50% / 300% 100%;
+  animation-duration: 3s;
+}
+
+html[data-demo-theme="consumer-electronics"] .personal-assistant-nav-trigger svg {
+  color: #17171b;
+  transform-origin: 50% 50%;
+  animation: search-overlay__ask-ai-twinkle 4.8s ease-in-out infinite;
+}
+
+/* Slow drift of the aurora fill shared by Ask AI and the Beauty Advisor pill. */
+@keyframes nto-ai-pill-drift {
+  to {
+    background-position: 100% 50%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html[data-demo-theme="consumer-electronics"] .search-overlay__ask-ai,
-  html[data-demo-theme="consumer-electronics"] .search-overlay__ask-ai svg {
+  html[data-demo-theme="consumer-electronics"] .personal-assistant-nav-trigger,
+  html[data-demo-theme="consumer-electronics"] .search-overlay__ask-ai svg,
+  html[data-demo-theme="consumer-electronics"] .personal-assistant-nav-trigger svg {
     animation: none;
   }
 }

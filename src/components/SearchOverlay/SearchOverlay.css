@@ -959,7 +959,7 @@
   justify-content: center;
   /* A quiet mark, not a button. */
   border-radius: 10px;
-  margin-right: 6px;
+  margin-right: 2px;
   border: 1px solid #e4e4e7;
   background: #ffffff;
   color: #17171b;
@@ -981,8 +981,8 @@
 
 .search-overlay__promo-text {
   min-width: 0;
-  /* Wrap the copy early so it never runs up against the prompt chips. */
-  max-width: 340px;
+  /* Fills the free column, so the copy sits on one line whenever the row
+     has room and only wraps when the chips need the space. */
   margin-right: 24px;
   display: flex;
   flex-direction: column;

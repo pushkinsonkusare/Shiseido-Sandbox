@@ -683,11 +683,11 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
 /* Positioned wrapper so the jump-to-latest button can float over the scrolling
    chat without moving as messages scroll. */
 .sidecar-assistant__chat-area {
-  --sidecar-chat-pad: 20px;
+  --sidecar-chat-pad: 16px;
   --sidecar-context-chip-width: 265px;
   /* Tracks the inline padding of `.sidecar-assistant__input-bar`, so the
      jump-to-latest button lines up with the composer's right edge. */
-  --sidecar-composer-inset: 20px;
+  --sidecar-composer-inset: 16px;
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
@@ -1327,9 +1327,9 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
   flex: 0 0 auto;
   background: rgba(250, 250, 250, 1);
   padding-top: 16px;
-  padding-right: 20px;
+  padding-right: 16px;
   padding-bottom: 20px;
-  padding-left: 20px;
+  padding-left: 16px;
   /* Mirror of the header's shadow, cast upward onto the transcript. Needs the
      same lift as the header: the chat area is positioned and comes earlier in
      the DOM, so it would otherwise paint over this. */
