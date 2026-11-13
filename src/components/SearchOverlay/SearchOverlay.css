@@ -24,7 +24,7 @@
   border: none;
   padding: 0;
   margin: 0;
-  background: rgba(15, 15, 20, 0.42);
+  background: rgba(12, 12, 16, 0.66);
   cursor: pointer;
 }
 
@@ -855,59 +855,79 @@
   padding-bottom: 24px;
 }
 
-/* ---------- Assistant promo strip ---------- */
+/* ---------- Assistant promo card ---------- */
 
+/* An invitation to the Beauty Advisor at the foot of the search dropdown:
+ * pitch on the left, one-tap starter prompts in the middle, and the main
+ * "Chat with advisor" action pinned to the right edge. A soft blush wash
+ * picks up the brand red without competing with the product imagery above.
+ * Horizontal margins mirror the `.search-overlay__body` padding tiers. */
 .search-overlay__promo {
-  /* Housed inside the dropdown body. Its horizontal margins mirror
-   * the `.search-overlay__body` padding tiers, and the 1920px cap
-   * keeps the strip aligned with the centered body content area at
-   * extra-wide viewports. Border-radius + full border turn the strip
-   * into a card (per Figma 33354:69307) instead of a flush footer
-   * band.
-   *
-   * The background is a two-layer stack: a left-to-right white→transparent
-   * gradient on top of the decorative graphic. The gradient holds solid
-   * white under the icon + copy on the left, then fades so the graphic
-   * reads clearly on the right half of the strip. Stops are tuned so the
-   * title + subtitle (~40% of the strip at the widest breakpoint) always
-   * sit on opaque white for legibility. */
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  container: search-promo / inline-size;
+  position: relative;
   margin: 0 auto 32px;
   width: calc(100% - 128px);
   max-width: calc(1920px - 128px);
-  padding: 16px 24px;
-  border: 1px solid var(--agentic-input-border, #e5e7eb);
-  border-radius: 0px;
-  /* Mirrors Figma node 33432:104871 ("Agentic Bar"). Two-layer stack:
-   *   1. A white→transparent gradient (white solid 0–33.17%, fades to
-   *      transparent at 100%), same stops as the Figma design so the
-   *      icon + title + subtitle always sit on opaque white.
-   *   2. The decorative blue-wave graphic, anchored to the bottom-right
-   *      and scaled with `cover` so the dense band of waves lands in
-   *      the trailing portion of the strip (the upper half of the
-   *      source PNG is mostly empty white, which is fine; the gradient
-   *      masks it out anyway).
-   */
-  background-color: #ffffff;
-  background-image:
-    linear-gradient(
-      to right,
-      #ffffff 0%,
-      #ffffff 33.17%,
-      rgba(255, 255, 255, 0) 100%
-    ),
-    url("/assistant-promo-bg.png");
-  background-repeat: no-repeat, no-repeat;
-  background-position: center, bottom right;
-  background-size: 100% 100%, cover;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    background-color 140ms ease,
-    border-color 140ms ease;
+  padding: 20px 20px 20px 24px;
+  box-sizing: border-box;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid #e4e4e7;
+  border-radius: var(--nto-radius-card, 12px);
+  background: #fdfcfd;
+  animation: search-overlay__content-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Aurora: soft blooms of blush, champagne, lilac and pearl blue, blurred
+ * together and drifting slowly behind the content. */
+.search-overlay__promo::before {
+  content: "";
+  position: absolute;
+  inset: -60% -20%;
+  z-index: -2;
+  background:
+    radial-gradient(28% 55% at 18% 40%, rgba(244, 190, 182, 0.55), transparent 70%),
+    radial-gradient(26% 60% at 46% 70%, rgba(236, 214, 190, 0.5), transparent 70%),
+    radial-gradient(30% 60% at 64% 30%, rgba(200, 186, 244, 0.5), transparent 70%),
+    radial-gradient(28% 55% at 86% 62%, rgba(176, 210, 244, 0.55), transparent 70%);
+  filter: blur(28px) saturate(115%);
+  animation: search-overlay__promo-aurora 22s ease-in-out infinite alternate;
+}
+
+/* A pearl veil from the left so the pitch always reads on near-white,
+ * letting the colour bloom through behind the prompts and the CTA. */
+.search-overlay__promo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.66) 0%,
+    rgba(255, 255, 255, 0.45) 30%,
+    rgba(255, 255, 255, 0.12) 70%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  pointer-events: none;
+}
+
+@keyframes search-overlay__promo-aurora {
+  0% {
+    transform: translate3d(-6%, -4%, 0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translate3d(4%, 5%, 0) rotate(6deg) scale(1.08);
+  }
+  100% {
+    transform: translate3d(8%, -3%, 0) rotate(-4deg) scale(1.02);
+  }
+}
+
+.search-overlay__promo-inner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: 16px;
 }
 
 @media (max-width: 1599.98px) {
@@ -929,65 +949,172 @@
   }
 }
 
-.search-overlay__promo:hover {
-  /* `background-color` only. Using the `background` shorthand here would
-   * wipe out the gradient + decorative image layered by `.search-overlay__promo`.
-   * The tint sits below the gradient; on the opaque-white left half it's
-   * masked, and on the right half the decorative image covers it. */
-  background-color: var(--secondary, #f7f7f8);
-  border-color: #d1d5db;
-}
-
-.search-overlay__promo:focus-visible {
-  outline: 2px solid #2f7df6;
-  outline-offset: 2px;
-}
-
+/* The advisor's own brand tile, as in its header: deepened wordmark red,
+ * rounded square, sparkle turning a quarter every few seconds. */
 .search-overlay__promo-icon {
-  flex: 0 0 auto;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 1px;
-  background: #131315;
-  color: #ffffff;
+  /* A quiet mark, not a button. */
+  border-radius: 10px;
+  margin-right: 6px;
+  border: 1px solid #e4e4e7;
+  background: #ffffff;
+  color: #17171b;
+}
+
+.search-overlay__promo-icon svg {
+  display: block;
+  transform-origin: center;
+  animation: search-overlay__promo-sparkle 16s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@keyframes search-overlay__promo-sparkle {
+  0% { transform: rotate(0deg); }
+  5%, 25% { transform: rotate(90deg); }
+  30%, 50% { transform: rotate(180deg); }
+  55%, 75% { transform: rotate(270deg); }
+  80%, 100% { transform: rotate(360deg); }
 }
 
 .search-overlay__promo-text {
-  flex: 0 1 auto;
   min-width: 0;
+  /* Wrap the copy early so it never runs up against the prompt chips. */
+  max-width: 340px;
+  margin-right: 24px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .search-overlay__promo-title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
-  color: #111827;
+  line-height: 1.25;
+  color: #17171b;
 }
 
 .search-overlay__promo-sub {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 14px;
   line-height: 1.4;
+  color: #5f5f66;
 }
 
-.search-overlay__promo-close {
-  flex: 0 0 auto;
-  width: auto;
-  min-width: 56px;
+.search-overlay__promo-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.search-overlay__promo-prompt {
   height: 36px;
   padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  backdrop-filter: blur(10px) saturate(140%);
+  box-shadow: 0 1px 2px rgba(60, 40, 90, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #17171b;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.search-overlay__promo-prompt:hover {
+  border-color: rgba(200, 186, 244, 0.9);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.search-overlay__promo-cta {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  margin-left: 32px;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border: 0;
   border-radius: 999px;
-  background: #131315;
+  background: #17171b;
   color: #ffffff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+
+.search-overlay__promo-cta svg {
+  transition: transform 160ms ease;
+}
+
+.search-overlay__promo-cta:hover {
+  background: #33333a;
+}
+
+.search-overlay__promo-cta:hover svg {
+  transform: translateX(2px);
+}
+
+.search-overlay__promo-prompt:focus-visible,
+.search-overlay__promo-cta:focus-visible {
+  outline: 2px solid #17171b;
+  outline-offset: 2px;
+}
+
+/* Medium widths: the prompts drop to their own row beneath the pitch. */
+@container search-promo (max-width: 1080px) {
+  .search-overlay__promo-inner {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    row-gap: 14px;
+  }
+
+  .search-overlay__promo-prompts {
+    grid-column: 2 / -1;
+    grid-row: 2;
+    justify-content: flex-start;
+  }
+}
+
+/* Narrow: stack everything; the CTA spans the card. */
+@container search-promo (max-width: 560px) {
+  .search-overlay__promo-inner {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .search-overlay__promo-prompts {
+    grid-column: 1 / -1;
+  }
+
+  .search-overlay__promo-cta {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-overlay__promo-cta svg {
+    transition: none;
+  }
+
+  .search-overlay__promo-icon svg,
+  .search-overlay__promo::before {
+    animation: none;
+  }
+
+  .search-overlay__promo {
+    animation: none;
+  }
 }
 
 /* Demo mobile viewport parity: force the compact overlay layout even when

@@ -6,6 +6,9 @@ import {
 } from "../../icons/StorefrontIcons";
 import "./AgentMessageCards.css";
 
+/** Star ratings are hidden on product cards for now; flip to bring them back. */
+const SHOW_RATINGS = false;
+
 export type AgentProductSwatch = {
   /** CSS color value rendered inside the swatch chip. */
   color: string;
@@ -154,7 +157,7 @@ export function AgentProductCard({
 
         <h4 className="agent-product-card__title">{title}</h4>
 
-        {typeof rating === "number" ? (
+        {SHOW_RATINGS && typeof rating === "number" ? (
           <StarRow rating={rating} reviewCount={reviewCount} />
         ) : null}
 

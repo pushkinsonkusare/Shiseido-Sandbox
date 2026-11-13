@@ -781,8 +781,8 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__backdrop {
 
 /* Full-page immersive: hold the transcript to a readable column instead of
    stretching cards across the screen. Padding rather than a max-width so the
-   scrollbar stays at the panel's edge. `--sxs-immersive-column` is 860px, the
-   card width the panel produced before it went full-bleed. */
+   scrollbar stays at the panel's edge. `--sxs-immersive-column` is 860px,
+   which fits four whole 188px carousel cards. */
 .sxs-layout__panel--detached .sidecar-assistant__chat {
   --sidecar-chat-pad-inline: max(
     20px,

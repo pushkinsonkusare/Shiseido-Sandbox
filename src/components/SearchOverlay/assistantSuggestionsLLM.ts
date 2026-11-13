@@ -5,167 +5,192 @@ import {
 } from "../../lib/openaiClient";
 import type { CatalogProduct } from "../../catalog/catalog";
 import { isBundleTrippingPhrase } from "./assistantSuggestions";
+import { MAX_GOALS, type AssistantGoal, type GoalKind } from "./goalEngine";
 
 /* =============================================================
- * LLM upgrade for the "Search with assistant" section.
+ * AI upgrade for the search overlay's advisor goals.
  *
- * One-shot OpenAI call that takes the shopper's query plus the
- * top matched products' metadata and returns 3-4 short
- * conversational prompts the shopper might want to ask the
- * assistant. Output replaces the rule-based phrases that were
- * rendered instantly so the section feels responsive while
- * upgrading to more natural language once the user pauses long
- * enough for a network round-trip.
+ * The local goal engine (`goalEngine.ts`) always renders first. Once
+ * the shopper pauses, this one-shot call asks the model to infer the
+ * shopper's underlying goal (from a product name, a situation, a
+ * concern, or plain nonsense) and return 3 sharper goals. The local
+ * goals are passed in as context so the model refines rather than
+ * starts cold, and its output is validated against the same routing
+ * rules. Anything invalid is dropped and topped up from local goals,
+ * so the section never gets worse than the local version.
  *
- * Design notes:
- *   - Reads `VITE_OPENAI_API_KEY` from env. Returns `null` when
- *     unset so the caller can keep the rule-based output without
- *     surfacing an error.
- *   - Per-query in-memory cache. A repeated query inside the
- *     same session never re-fires the network request.
- *   - Cancellable via AbortSignal: caller passes a signal that
- *     gets aborted on every keystroke or unmount, so a stale
- *     response can't overwrite fresh state.
- *   - On any error (network, parse, schema, abort) returns
- *     `null`; never throws into the caller's render path.
+ * Runs through the shared OpenAI client, which in production goes via
+ * the Cloudflare Worker proxy (no key in the browser bundle).
+ * Per-query cache, abortable, never throws.
  * ============================================================= */
 
-/** In-memory cache scoped to the page session. */
-const cache = new Map<string, string[]>();
+const cache = new Map<string, AssistantGoal[]>();
 
-/**
- * Compact metadata payload for the LLM. We deliberately pass
- * structured tokens (series, subtypes, primaryActivities) rather
- * than the full product description so the model has signal
- * without paying for description boilerplate per call.
- */
-type ProductDigest = {
-  title: string;
-  category: string;
-  series: string | null;
-  subtypes: string[];
-  primaryActivities: string[];
-  capabilities: string[];
-  tier: string;
-};
+const KINDS: ReadonlySet<GoalKind> = new Set([
+  "situation",
+  "concern",
+  "routine",
+  "compare",
+  "gift",
+  "discover",
+]);
 
-function digest(product: CatalogProduct): ProductDigest {
+/** Words the advisor's router uses to pick a curated goal recipe. */
+const ROUTING_KEYWORD =
+  /anti[-\s]?aging|wrinkl|fine lines?|firm|lift|bright|dark spots?|glow|dull|hydrat|dry|moistur|oily|pores?|acne|spf|sunscreen|\bsun\b|men'?s|routine|compare|\bvs\b|gift/i;
+
+function digest(p: CatalogProduct) {
   return {
-    title: product.title,
-    category: product.category,
-    series: product.series,
-    subtypes: product.subtypes,
-    primaryActivities: product.primaryActivities,
-    capabilities: product.capabilities,
-    tier: product.tier,
+    title: p.title,
+    category: p.category,
+    collection: p.series,
+    concerns: p.primaryActivities,
+    benefits: (p.keyBenefits ?? []).slice(0, 3),
+    price: p.price,
   };
 }
 
 const SYSTEM_PROMPT = [
-  "You generate short search-suggestion prompts for a Shiseido skincare shopping assistant.",
-  "Given a shopper's literal search query and the top product matches, return 3-4 conversational prompts the shopper might want to ask the assistant next.",
-  "Style: 2-5 words each, lowercase except for proper nouns and product names.",
-  "ROUTING RULE (critical): the downstream side-by-side classifier renders a curated multi-row recipe ONLY when a phrase matches `{verb} for {target}` where verb is one of: gear, equipment, kit, setup, essentials, accessories. Without the `for`, phrases ending in `kit` / `bundle` / `combo` (e.g. `Sensitive skin kit`, `Travel combo`) get misrouted to a 'Here are some bundle deals...' card the shopper didn't ask for. ALWAYS use the `{verb} for {target}` form for kit-style or setup-style suggestions.",
-  "Allowed examples: 'Essentials for oily skin', 'Setup for a nighttime routine', 'Kit for travel skincare', 'Compare Ultimune vs Vital Perfection', 'Brightening serums'.",
-  "Forbidden examples: 'Sensitive skin kit', 'Travel combo', 'Complete skincare kit', 'Ultimune ecosystem' (these would either trip the bundles classifier or fall through to a generic keyword search with no useful card).",
-  "Avoid restating the literal query verbatim. Avoid generic prompts like 'Help me shop'. Prefer routine-, concern-, or comparison-flavoured phrases.",
-  'Return STRICTLY valid JSON of the shape {"prompts": ["...", "...", "..."]}. No prose, no markdown, no extra keys.',
+  "You write the 'Let your advisor help' suggestions in a Shiseido skincare search dropdown.",
+  "Your job: infer the shopper's underlying GOAL from what they typed, then offer 3 goals the AI advisor can solve better than a product grid.",
+  "Infer goals from: product or collection names (Ultimune → strengthen skin and prevent early ageing; Benefiance → wrinkles; Vital Perfection → lifting and dark spots; Future Solution LX → luxury anti-aging; Ultimate Sun / Urban Environment → sun protection; Eudermine → softener prep; Essentials → simple basics; Shiseido Men → men's routine);",
+  "situations (travel → carry-on routine, in-flight hydration, SPF for the trip; wedding → glow countdown; gym → post-workout, sweat-proof SPF; winter → dry-skin rescue; late nights → revive dull skin and tired eyes; gift → gifts for her/him);",
+  "concerns (fine lines, dark spots, dryness, oiliness, sensitivity, puffy eyes); and modifiers (budget like 'under $50', age like '40s', morning/night).",
+  "If the query is vague or nonsense, offer helpful starting points (build a routine, find best-match products, best sellers explained).",
+  "Each goal has: label (outcome-first, 3-7 words, sentence case, max 48 chars, no trailing period), hint (the value the shopper gets, max 48 chars, can use ' · ' separators), prompt (the full first-person request sent to the advisor, max 160 chars), kind (one of situation, concern, routine, compare, gift, discover).",
+  "ROUTING RULES for prompt (critical): start with 'Help me' (or 'Compare X vs Y' for comparisons), and include at least one of: anti-aging, fine lines, brightening, dark spots, hydrating, dry, oily, pores, sunscreen, men's, routine. Never use the words kit, bundle, set or combo unless kind is gift.",
+  "Make the 3 goals genuinely different (different kinds or different skin goals). Do not just restate the query. Never invent product names; only reference collections listed above or in the matches.",
+  "You will receive local draft goals; improve on them, keep any that are already strong. If you change a label, write a new hint that matches it. Drafts like 'Build a routine for my skin' are generic fallbacks: replace them whenever you can infer anything specific from the query.",
+  'Return STRICTLY valid JSON: {"goals":[{"label":"","hint":"","prompt":"","kind":""}]}. No prose, no markdown.',
 ].join(" ");
 
-function buildUserMessage(query: string, products: ReadonlyArray<CatalogProduct>) {
-  const digests = products.slice(0, 5).map(digest);
+function buildUserMessage(
+  query: string,
+  products: ReadonlyArray<CatalogProduct>,
+  draft: ReadonlyArray<AssistantGoal>,
+) {
   return [
-    `Shopper query: "${query}"`,
+    `Shopper typed: "${query}"`,
     "",
-    "Top product matches (JSON):",
-    JSON.stringify(digests, null, 2),
+    products.length
+      ? `Top product matches: ${JSON.stringify(products.slice(0, 4).map(digest))}`
+      : "No products matched this query.",
+    "",
+    `Local draft goals: ${JSON.stringify(
+      draft.map(({ label, hint, prompt, kind }) => ({ label, hint, prompt, kind })),
+    )}`,
   ].join("\n");
 }
 
+function clean(s: unknown, max: number): string | null {
+  if (typeof s !== "string") return null;
+  const t = s.trim().replace(/\s+/g, " ").replace(/[.]+$/, "");
+  return t.length > 0 && t.length <= max ? t : null;
+}
+
+function validate(raw: unknown, index: number): AssistantGoal | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const label = clean(r.label, 56);
+  const hint = clean(r.hint, 60) ?? "";
+  let prompt = clean(r.prompt, 200);
+  const kind = (typeof r.kind === "string" && KINDS.has(r.kind as GoalKind)
+    ? r.kind
+    : "discover") as GoalKind;
+  if (!label || !prompt) return null;
+  // Guarantee the broad cue so the advisor curates instead of keyword-searching.
+  if (!/^(help me|compare)\b/i.test(prompt)) {
+    prompt = `Help me ${prompt.charAt(0).toLowerCase()}${prompt.slice(1)}`;
+  }
+  if (!ROUTING_KEYWORD.test(prompt)) return null;
+  if (kind !== "gift" && isBundleTrippingPhrase(prompt)) return null;
+  return {
+    id: `llm-${index}-${label.toLowerCase()}`,
+    kind,
+    label,
+    hint,
+    prompt,
+    score: 200 - index,
+    source: "llm",
+  };
+}
+
 /**
- * Fetch LLM-generated assistant suggestions for the given query.
- *
- * @returns Array of phrases on success, or `null` when no API key
- *          is configured / the request was aborted / the response
- *          couldn't be parsed. Caller should fall back to the
- *          rule-based output silently in the null case.
+ * Ask the model for sharper goals. Returns `null` (keep local goals)
+ * when unconfigured, aborted, or the response is unusable.
  */
-export async function fetchAssistantSuggestionsLLM(
+export async function fetchAssistantGoalsLLM(
   query: string,
   products: ReadonlyArray<CatalogProduct>,
+  localGoals: ReadonlyArray<AssistantGoal>,
   signal: AbortSignal,
-): Promise<string[] | null> {
+): Promise<AssistantGoal[] | null> {
   const trimmed = query.trim();
   if (!trimmed) return null;
-  if (products.length === 0) return null;
   const client = getOpenAIClient();
   if (!client) return null;
 
   const cacheKey = trimmed.toLowerCase();
   const cached = cache.get(cacheKey);
   if (cached) return cached;
-
   if (signal.aborted) return null;
 
   try {
     const response = await client.chat.completions.create(
       {
         model: getOpenAIModel(),
-        temperature: 0.4,
-        max_tokens: 160,
+        temperature: 0.5,
+        max_tokens: 420,
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: buildUserMessage(trimmed, products) },
+          { role: "user", content: buildUserMessage(trimmed, products, localGoals) },
         ],
       },
       { signal },
     );
-
     if (signal.aborted) return null;
 
     const raw = response.choices[0]?.message?.content?.trim();
     if (!raw) return null;
+    const parsed = JSON.parse(raw) as { goals?: unknown };
+    if (!Array.isArray(parsed?.goals)) return null;
 
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== "object") return null;
-    const promptsRaw = (parsed as { prompts?: unknown }).prompts;
-    if (!Array.isArray(promptsRaw)) return null;
-
-    const prompts = promptsRaw
-      .filter((p): p is string => typeof p === "string")
-      .map((p) => p.trim())
-      .filter((p) => p.length > 0 && p.length <= 60)
-      // Drop anything that would route to the bundle-deals branch.
-      // Mirrors the defensive guard in `assistantSuggestions.ts` so
-      // both rule-based and LLM paths can't surprise the shopper
-      // with a bundles card.
-      .filter((p) => !isBundleTrippingPhrase(p))
-      .slice(0, 4);
-    if (prompts.length === 0) return null;
-
-    cache.set(cacheKey, prompts);
-    return prompts;
-  } catch (error) {
-    // Abort errors are expected on every keystroke, so don't pollute
-    // the console. Log other failures once for debug parity with the
-    // existing OpenAI integration.
-    if (
-      error &&
-      typeof error === "object" &&
-      "name" in error &&
-      (error as { name?: string }).name === "AbortError"
-    ) {
-      return null;
+    // A draft's prompt under a rewritten label means the model changed
+    // the promise but not the request: the click would not deliver it.
+    const draftByPrompt = new Map(localGoals.map((g) => [g.prompt.toLowerCase(), g]));
+    const seen = new Set<string>();
+    const goals: AssistantGoal[] = [];
+    parsed.goals.forEach((g, i) => {
+      const v = validate(g, i);
+      if (!v || seen.has(v.label.toLowerCase())) return;
+      const draft = draftByPrompt.get(v.prompt.toLowerCase());
+      if (draft && draft.label.toLowerCase() !== v.label.toLowerCase()) return;
+      seen.add(v.label.toLowerCase());
+      goals.push(v);
+    });
+    // Top up with local goals so a partially-invalid response still
+    // shows a full set.
+    for (const g of localGoals) {
+      if (goals.length >= MAX_GOALS) break;
+      if (!seen.has(g.label.toLowerCase())) {
+        seen.add(g.label.toLowerCase());
+        goals.push(g);
+      }
     }
+    const result = goals.slice(0, MAX_GOALS);
+    if (result.length === 0) return null;
+    cache.set(cacheKey, result);
+    return result;
+  } catch (error) {
+    if ((error as { name?: string } | null)?.name === "AbortError") return null;
     // eslint-disable-next-line no-console
-    console.warn("[assistantSuggestionsLLM] fetch failed", error);
+    console.warn("[assistantGoalsLLM] fetch failed", error);
     return null;
   }
 }
 
-/** Whether an LLM backend is configured. Caller can short-circuit
- *  the effect entirely when this is false. */
+/** Whether an LLM backend (proxy or key) is configured. */
 export function isLlmAvailable(): boolean {
   return isLlmConfigured();
 }

@@ -22,15 +22,16 @@ import ProductCard from "../ProductCard/ProductCard";
 import PrototypeBrandLink from "../PrototypeBrandLink";
 import { SITE_BRAND } from "../../siteContent";
 import shiseidoLogo from "../../assets/shiseido-logo.png";
-import { RECENT_SEARCHES, type RecentSearch } from "./recentSearches";
+import {
+  recordRecentSearch,
+  useRecentSearches,
+  type RecentSearch,
+} from "./recentSearches";
 import { useSearchOverlay } from "./SearchOverlayContext";
 import { useAgentMode } from "../AgentModeBar/AgentModeContext";
+import { buildGoals, type AssistantGoal } from "./goalEngine";
 import {
-  buildAssistantSuggestionsRuleBased,
-  type AssistantSuggestion,
-} from "./assistantSuggestions";
-import {
-  fetchAssistantSuggestionsLLM,
+  fetchAssistantGoalsLLM,
   isLlmAvailable,
 } from "./assistantSuggestionsLLM";
 import "./SearchOverlay.css";
@@ -102,9 +103,15 @@ function highlightMatches(text: string, query: string): ReactNode {
   );
 }
 
-const PROMO_TITLE = "Shop with your personal Assistant";
+const PROMO_TITLE = "Let your AI Advisor take it from here";
 const PROMO_SUB =
-  "I can help you find the right skincare, compare formulas, and build a routine. Shop with me.";
+  "Share your skin and goals. It shortlists, explains and builds your bag for you.";
+/** One-tap starters; each opens the advisor with the prompt already asked. */
+const PROMO_PROMPTS = [
+  "Build a routine for my skin",
+  "Compare best-selling serums",
+  "Find the right SPF for me",
+];
 
 /**
  * Pick the "Bestsellers" pool rendered into the search overlay grid.
@@ -178,6 +185,7 @@ export function SearchOverlay() {
 
   const trimmedQuery = debouncedQuery;
   const isQuerying = trimmedQuery.length >= MIN_QUERY_LEN;
+  const recentSearches = useRecentSearches();
   const searchResult = useMemo(() => {
     if (!isQuerying) return null;
     return searchProducts(trimmedQuery);
@@ -196,54 +204,44 @@ export function SearchOverlay() {
   const productSuggestions = searchResult?.suggestions.products ?? [];
   const categorySuggestions = searchResult?.suggestions.categories ?? [];
 
-  // Rule-based "Search with assistant" phrases. Computed synchronously
-  // on every render so the section appears the moment the dropdown
-  // opens with results (no network, no debounce). The LLM upgrade
-  // effect below replaces these once the user pauses (when an API
-  // key is configured).
-  const ruleBasedAssistantSuggestions = useMemo<AssistantSuggestion[]>(() => {
+  // Advisor goals. The local goal engine renders instantly (works for
+  // any query, even with zero product matches); the AI upgrade below
+  // refines them once the shopper pauses.
+  const localGoals = useMemo<AssistantGoal[]>(() => {
     if (!isQuerying) return [];
-    if (gridProducts.length === 0) return [];
-    return buildAssistantSuggestionsRuleBased(trimmedQuery, gridProducts);
-  }, [isQuerying, trimmedQuery, gridProducts]);
+    return buildGoals(trimmedQuery, searchResult?.results ?? []);
+  }, [isQuerying, trimmedQuery, searchResult]);
 
-  const [assistantSuggestions, setAssistantSuggestions] = useState<
-    AssistantSuggestion[]
-  >([]);
-
-  // Sync state to the rule-based output every time the inputs change.
-  // The LLM upgrade effect below overrides this with `source: "llm"`
-  // entries when a network response lands.
+  const [assistantGoals, setAssistantGoals] = useState<AssistantGoal[]>([]);
   useEffect(() => {
-    setAssistantSuggestions(ruleBasedAssistantSuggestions);
-  }, [ruleBasedAssistantSuggestions]);
+    setAssistantGoals(localGoals);
+  }, [localGoals]);
 
-  // LLM upgrade. Fires after the debounced query stabilises and the
-  // grid has matched products. Aborted on every keystroke via the
-  // effect cleanup so a stale response can't overwrite fresh state.
-  // Gated behind `isLlmAvailable()` so dev environments without an
-  // API key silently keep the rule-based phrases.
+  // AI upgrade. Aborted on every keystroke so a stale response can't
+  // overwrite fresh state; silently keeps local goals on any failure.
   useEffect(() => {
-    if (!isQuerying) return;
-    if (gridProducts.length === 0) return;
-    if (trimmedQuery.length < 3) return;
+    if (!isQuerying || trimmedQuery.length < 3) return;
     if (!isLlmAvailable()) return;
-
     const controller = new AbortController();
-    fetchAssistantSuggestionsLLM(trimmedQuery, gridProducts, controller.signal)
-      .then((prompts) => {
-        if (controller.signal.aborted) return;
-        if (!prompts || prompts.length === 0) return;
-        setAssistantSuggestions(
-          prompts.map((label) => ({ label, source: "llm" as const })),
-        );
-      })
-      .catch(() => {
-        // Network / parse errors are already swallowed inside the
-        // module; nothing to do here.
-      });
-    return () => controller.abort();
-  }, [isQuerying, trimmedQuery, gridProducts]);
+    const timer = window.setTimeout(() => {
+      fetchAssistantGoalsLLM(
+        trimmedQuery,
+        searchResult?.results ?? [],
+        localGoals,
+        controller.signal,
+      )
+        .then((goals) => {
+          if (!controller.signal.aborted && goals && goals.length > 0) {
+            setAssistantGoals(goals);
+          }
+        })
+        .catch(() => {});
+    }, 250);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [isQuerying, trimmedQuery, searchResult, localGoals]);
 
   // Did-you-mean: only computed when the live search returned nothing.
   // Pipes the corrected query back through the engine to confirm it
@@ -314,6 +312,7 @@ export function SearchOverlay() {
     (rawQuery: string) => {
       const trimmed = rawQuery.trim();
       if (!trimmed) return;
+      recordRecentSearch({ label: trimmed, kind: "keyword" });
       navigate(ROUTES.productListing, { searchQuery: trimmed });
       closeSearchOverlay();
     },
@@ -328,48 +327,52 @@ export function SearchOverlay() {
     [query, submitSearch],
   );
 
-  const handleRecent = useCallback(
-    (item: RecentSearch) => {
-      // Recent searches now seed a real keyword search rather than
-      // dispatching to the assistant. Keeps the basic search hygienic
-      // (Enter/click on a recent search consistently lands on a PLP).
-      submitSearch(item.label);
-    },
-    [submitSearch],
-  );
-
-  const handleCategorySuggestion = useCallback(
-    (category: string) => {
-      navigate(ROUTES.productListing, { category });
-      closeSearchOverlay();
-    },
-    [navigate, closeSearchOverlay],
-  );
-
-  const handleAssistantPromo = useCallback(() => {
-    dispatchOpenAssistant();
-    closeSearchOverlay();
-  }, [closeSearchOverlay]);
-
   /**
-   * Clicking a "Search with assistant" phrase fires the same
-   * cross-cutting `agentic:ask-assistant` event the PDP NBAs and the
-   * legacy recent-search assistant rows use. Side-by-side layout
-   * picks it up, opens the panel, and seeds the prompt as a shopper
-   * turn. Closes the overlay so the assistant gets focus.
+   * Advisor asks from search (goal rows, Ask AI, promo chips) fire the
+   * cross-cutting `agentic:ask-assistant` event; side-by-side layout
+   * opens the panel and seeds the prompt as a shopper turn. Each ask is
+   * also saved to Recent Searches (sparkle icon) under its short label.
    */
   const handleAssistantSuggestion = useCallback(
-    (phrase: string) => {
+    (prompt: string, label: string = prompt) => {
       if (typeof document === "undefined") return;
+      recordRecentSearch({ label, prompt, kind: "assistant" });
       document.dispatchEvent(
         new CustomEvent("agentic:ask-assistant", {
-          detail: { prompt: phrase },
+          detail: { prompt },
         }),
       );
       closeSearchOverlay();
     },
     [closeSearchOverlay],
   );
+
+  // Recent entries replay the way they were made: keyword searches
+  // re-run on the PLP, advisor asks re-ask the advisor.
+  const handleRecent = useCallback(
+    (item: RecentSearch) => {
+      if (item.kind === "assistant") {
+        handleAssistantSuggestion(item.prompt ?? item.label, item.label);
+        return;
+      }
+      submitSearch(item.label);
+    },
+    [submitSearch, handleAssistantSuggestion],
+  );
+
+  const handleCategorySuggestion = useCallback(
+    (category: string) => {
+      if (isQuerying) recordRecentSearch({ label: trimmedQuery, kind: "keyword" });
+      navigate(ROUTES.productListing, { category });
+      closeSearchOverlay();
+    },
+    [navigate, closeSearchOverlay, isQuerying, trimmedQuery],
+  );
+
+  const handleAssistantPromo = useCallback(() => {
+    dispatchOpenAssistant();
+    closeSearchOverlay();
+  }, [closeSearchOverlay]);
 
   /** Seeds the sidecar with the typed query when present; otherwise just opens it. */
   const handleAskAi = useCallback(() => {
@@ -384,10 +387,11 @@ export function SearchOverlay() {
 
   const handleProductSelect = useCallback(
     (slug: string) => {
+      if (isQuerying) recordRecentSearch({ label: trimmedQuery, kind: "keyword" });
       navigateToProduct(slug);
       closeSearchOverlay();
     },
-    [navigateToProduct, closeSearchOverlay],
+    [navigateToProduct, closeSearchOverlay, isQuerying, trimmedQuery],
   );
 
   /**
@@ -432,7 +436,7 @@ export function SearchOverlay() {
               ref={inputRef}
               type="text"
               className="search-overlay__input"
-              placeholder="Search or tell what your goal"
+              placeholder="Search products or describe your goal"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               aria-label="Search products"
@@ -448,21 +452,11 @@ export function SearchOverlay() {
                 }}
                 aria-label="Clear search"
               >
-                Clear
+                <CloseIcon width={12} height={12} />
               </button>
             )}
             {(query.trim().length > 0 || showAssistantPromo) && (
               <div className="search-overlay__field-actions">
-                {query.trim().length > 0 && (
-                  <button
-                    type="button"
-                    className="search-overlay__submit"
-                    onClick={() => submitSearch(query)}
-                    aria-label="Search"
-                  >
-                    <LucideArrowRight size={16} strokeWidth={2} aria-hidden="true" />
-                  </button>
-                )}
                 {showAssistantPromo && (
                   <button
                     type="button"
@@ -474,6 +468,16 @@ export function SearchOverlay() {
                       <LucideSparkle size={14} strokeWidth={2} aria-hidden="true" />
                       Ask AI
                     </span>
+                  </button>
+                )}
+                {query.trim().length > 0 && (
+                  <button
+                    type="button"
+                    className="search-overlay__submit"
+                    onClick={() => submitSearch(query)}
+                    aria-label="Search"
+                  >
+                    <LucideArrowRight size={16} strokeWidth={2} aria-hidden="true" />
                   </button>
                 )}
               </div>
@@ -575,18 +579,35 @@ export function SearchOverlay() {
               </ul>
             ) : (
               <ul className="search-overlay__recent-list">
-                {RECENT_SEARCHES.map((item) => (
-                  <li key={item.label}>
+                {recentSearches.map((item) => (
+                  <li key={`${item.kind}-${item.label}`}>
                     <button
                       type="button"
-                      className="search-overlay__recent-item"
+                      className={
+                        "search-overlay__recent-item" +
+                        (item.kind === "assistant" ? " search-overlay__recent-item--assistant" : "")
+                      }
                       onClick={() => handleRecent(item)}
+                      aria-label={
+                        item.kind === "assistant"
+                          ? `Ask the advisor again: ${item.label}`
+                          : `Search again: ${item.label}`
+                      }
                     >
-                      <HistoryIcon
-                        className="search-overlay__recent-icon"
-                        width={16}
-                        height={16}
-                      />
+                      {item.kind === "assistant" ? (
+                        <LucideSparkle
+                          className="search-overlay__recent-icon"
+                          width={16}
+                          height={16}
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <HistoryIcon
+                          className="search-overlay__recent-icon"
+                          width={16}
+                          height={16}
+                        />
+                      )}
                       <span className="search-overlay__recent-label">
                         {item.label}
                       </span>
@@ -595,18 +616,18 @@ export function SearchOverlay() {
                 ))}
               </ul>
             )}
-            {showAssistantPromo && isQuerying && assistantSuggestions.length > 0 && (
+            {showAssistantPromo && isQuerying && assistantGoals.length > 0 && (
               <div className="search-overlay__assistant-section">
                 <h3 className="search-overlay__heading search-overlay__heading--assistant">
-                  Search with assistant
+                  Shop with assistant
                 </h3>
                 <ul className="search-overlay__assistant-list">
-                  {assistantSuggestions.map((sugg) => (
-                    <li key={sugg.label}>
+                  {assistantGoals.map((goal) => (
+                    <li key={goal.id}>
                       <button
                         type="button"
                         className="search-overlay__assistant-row"
-                        onClick={() => handleAssistantSuggestion(sugg.label)}
+                        onClick={() => handleAssistantSuggestion(goal.prompt, goal.label)}
                       >
                         <LucideSparkle
                           className="search-overlay__assistant-row-icon"
@@ -615,7 +636,7 @@ export function SearchOverlay() {
                           aria-hidden="true"
                         />
                         <span className="search-overlay__assistant-row-label">
-                          {sugg.label}
+                          {goal.label}
                         </span>
                       </button>
                     </li>
@@ -645,6 +666,7 @@ export function SearchOverlay() {
                   key={product.slug}
                   {...toProductCardProps(product)}
                   showStars={false}
+                  selectable={false}
                   onSelect={() => handleProductSelect(product.slug)}
                 />
               ))}
@@ -686,11 +708,8 @@ export function SearchOverlay() {
         </div>
 
         {showAssistantPromo && (
-          <button
-            type="button"
-            className="search-overlay__promo"
-            onClick={handleAssistantPromo}
-          >
+          <section className="search-overlay__promo" aria-label="Beauty Advisor">
+            <div className="search-overlay__promo-inner">
             <span className="search-overlay__promo-icon" aria-hidden="true">
               <SparkleIcon width={20} height={20} />
             </span>
@@ -698,10 +717,29 @@ export function SearchOverlay() {
               <span className="search-overlay__promo-title">{PROMO_TITLE}</span>
               <span className="search-overlay__promo-sub">{PROMO_SUB}</span>
             </span>
-            <span className="search-overlay__promo-close" aria-hidden="true">
-              <LucideArrowRight size={16} strokeWidth={2} />
-            </span>
-          </button>
+            <ul className="search-overlay__promo-prompts" aria-label="Ask the advisor">
+              {PROMO_PROMPTS.map((prompt) => (
+                <li key={prompt}>
+                  <button
+                    type="button"
+                    className="search-overlay__promo-prompt"
+                    onClick={() => handleAssistantSuggestion(prompt)}
+                  >
+                    {prompt}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              className="search-overlay__promo-cta"
+              onClick={handleAssistantPromo}
+            >
+              Chat with advisor
+              <LucideArrowRight size={16} strokeWidth={2} aria-hidden="true" />
+            </button>
+            </div>
+          </section>
         )}
       </div>
     </div>

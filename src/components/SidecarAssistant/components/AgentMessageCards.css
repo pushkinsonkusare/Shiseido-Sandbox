@@ -1263,7 +1263,9 @@ html[data-demo-theme="consumer-electronics"] .agent-plp__carousel--list .agent-p
 }
 
 .agent-plp__carousel:not(.agent-plp__carousel--list) .agent-plp__track > * {
-  width: calc((100cqi + 24px - 2 * 12px) / 2.1);
+  /* Capped so the wide full-page advisor shows more cards at a normal
+     size instead of two giant ones; the docked panel still fits 2.1. */
+  width: min(calc((100cqi + 24px - 2 * 12px) / 2.1), 188px);
 }
 
 .agent-plp__carousel:not(.agent-plp__carousel--list) .agent-product-card {

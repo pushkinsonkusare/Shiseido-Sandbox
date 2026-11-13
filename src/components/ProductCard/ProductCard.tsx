@@ -25,6 +25,8 @@ export type ProductCardProps = {
   swatches?: string[];
   selectedSwatch?: number;
   showStars?: boolean;
+  /** Show the "select for the assistant" checkbox (default true). */
+  selectable?: boolean;
   onSelect?: () => void;
 };
 
@@ -53,6 +55,7 @@ export function ProductCard({
   swatches = [],
   selectedSwatch = 0,
   showStars = true,
+  selectable = true,
   onSelect,
 }: ProductCardProps) {
   const { productSelection, selectedProductSlugs, setSelectedProductSlugs } =
@@ -113,7 +116,7 @@ export function ProductCard({
           <img className="figma-product-card__image" src={currentImage} alt={imageAlt} />
         </div>
         <div className="figma-product-card__badge-row">
-          {onSelect && productSelection && slug ? (
+          {selectable && onSelect && productSelection && slug ? (
             <button
               type="button"
               className={
@@ -140,7 +143,9 @@ export function ProductCard({
               </span>
             </button>
           ) : null}
-          <div className="figma-product-card__badge" aria-hidden="true">{badgeLabel}</div>
+          {badgeLabel ? (
+            <div className="figma-product-card__badge" aria-hidden="true">{badgeLabel}</div>
+          ) : null}
         </div>
         <div className="figma-product-card__actions" aria-hidden="true">
           <span className="figma-product-card__icon-btn">
