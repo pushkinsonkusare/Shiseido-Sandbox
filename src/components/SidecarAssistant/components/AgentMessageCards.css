@@ -564,6 +564,10 @@
   align-items: stretch;
   gap: 12px;
   overflow-x: auto;
+  /* overflow-x alone makes the y axis "auto" too, so sub-pixel card heights
+     let the track wobble vertically while swiping sideways. */
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
   scroll-behavior: smooth;
   scroll-snap-type: x mandatory;
   scroll-padding-left: 20px;
@@ -1248,6 +1252,56 @@ html[data-demo-theme="consumer-electronics"] .agent-plp__carousel--list .agent-p
   font-family: var(--font-family-base);
   cursor: pointer;
   transition: border-color 260ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* In the horizontal carousel, size cards off the track so 2.1 show at once:
+   two whole cards plus a sliver of the next one hinting there's more. The
+   track's left padding sits before the first card and its right padding is
+   visible space, so 100cqi + right padding - two gaps = 2.1 cards. */
+.agent-plp__carousel:not(.agent-plp__carousel--list) .agent-plp__track {
+  container: agent-plp-track / inline-size;
+}
+
+.agent-plp__carousel:not(.agent-plp__carousel--list) .agent-plp__track > * {
+  width: calc((100cqi + 24px - 2 * 12px) / 2.1);
+}
+
+.agent-plp__carousel:not(.agent-plp__carousel--list) .agent-product-card {
+  height: auto;
+  min-height: 0;
+}
+
+/* The show-more card matches the product cards' height instead of setting it. */
+.agent-plp__carousel:not(.agent-plp__carousel--list) .agent-product-card--show-more {
+  justify-content: center;
+  padding: 16px;
+}
+
+.agent-plp__carousel:not(.agent-plp__carousel--list) .agent-product-card__show-more-title {
+  margin-top: 12px;
+  font-size: 16px;
+}
+
+.agent-plp__carousel:not(.agent-plp__carousel--list) .agent-product-card__gallery {
+  padding: 8px;
+}
+
+.agent-plp__carousel:not(.agent-plp__carousel--list) .agent-product-card__store-btn {
+  left: 4px;
+  top: 4px;
+}
+
+.agent-plp__carousel:not(.agent-plp__carousel--list) .agent-product-card__content {
+  gap: 6px;
+  padding: 12px;
+}
+
+.agent-plp__carousel:not(.agent-plp__carousel--list) .agent-product-card__title {
+  font-size: 14px;
+}
+
+.agent-plp__carousel:not(.agent-plp__carousel--list) .agent-product-card__price-footer {
+  margin-top: auto;
 }
 
 @media (hover: hover) {
