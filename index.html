@@ -3,6 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      /* iOS Safari zooms the page in when a text field takes focus. On iOS
+       * maximum-scale stops only that auto-zoom (pinch-zoom still works),
+       * so it is set there alone; other browsers would lose pinch-zoom. */
+      (function () {
+        var ua = navigator.userAgent;
+        var iOS = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+        if (!iOS) return;
+        var meta = document.querySelector('meta[name="viewport"]');
+        if (meta) meta.setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0");
+      })();
+    </script>
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=5" />
     <link rel="shortcut icon" href="/favicon.ico?v=5" />
     <link rel="apple-touch-icon" href="/favicon.png?v=5" />

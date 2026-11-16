@@ -1026,6 +1026,7 @@
   .search-overlay__promo {
     width: calc(100% - 32px);
     margin-bottom: 24px;
+    padding: 16px;
   }
 }
 
@@ -1074,6 +1075,10 @@
   font-weight: 600;
   line-height: 1.25;
   color: #17171b;
+}
+
+.search-overlay__promo-title--short {
+  display: none;
 }
 
 .search-overlay__promo-sub {
@@ -1179,6 +1184,67 @@
     grid-column: 1 / -1;
     grid-row: 3;
     justify-content: center;
+  }
+}
+
+/* Phones: a compact card. One descriptive heading beside the tile, the
+ * starters in a single row that scrolls sideways (bleeding to the card
+ * edges), and the CTA under them. */
+@container search-promo (max-width: 480px) {
+  .search-overlay__promo-inner {
+    column-gap: 12px;
+    row-gap: 12px;
+  }
+
+  .search-overlay__promo-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    margin-right: 0;
+  }
+
+  .search-overlay__promo-text {
+    margin-right: 0;
+  }
+
+  .search-overlay__promo-title--full,
+  .search-overlay__promo-sub {
+    display: none;
+  }
+
+  .search-overlay__promo-title--short {
+    display: block;
+    font-size: 15px;
+    text-wrap: balance;
+  }
+
+  .search-overlay__promo-prompts {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 16px;
+    scrollbar-width: none;
+    /* Run to the card's edges so chips scroll out under the border. */
+    margin: 0 -16px;
+    padding: 2px 16px;
+  }
+
+  .search-overlay__promo-prompts::-webkit-scrollbar {
+    display: none;
+  }
+
+  .search-overlay__promo-prompts > li {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
+
+  /* A touch larger than desktop so the chips are easy to tap. */
+  .search-overlay__promo-prompt {
+    height: 42px;
+    padding: 0 18px;
+    font-size: 14.5px;
   }
 }
 
@@ -1291,4 +1357,107 @@ html[data-demo-viewport="mobile"] .search-overlay__grid .figma-product-card__pri
 html[data-demo-viewport="mobile"] .search-overlay__promo {
   width: calc(100% - 32px);
   margin-bottom: 24px;
+  padding: 16px;
+}
+
+/* ---------- Phones: header row, then the search field below it ----------
+ * Brand and close share a slim header row, the way the page header looks,
+ * and the field gets the full width on its own row under it, instead of
+ * all three squeezed into one line. Last in the file so it outranks the
+ * base brand / field rules above. */
+@media (max-width: 767.98px) {
+  .search-overlay__input-row {
+    flex-wrap: wrap;
+    row-gap: 4px;
+    column-gap: 12px;
+    flex-shrink: 0;
+    height: auto;
+    min-height: 0;
+    padding: 0 max(16px, var(--safe-area-right, 0px)) 14px
+      max(16px, var(--safe-area-left, 0px));
+  }
+
+  .search-overlay__brand {
+    display: inline-flex;
+    order: 1;
+    min-height: 56px;
+  }
+
+  .search-overlay__close {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .search-overlay__field {
+    order: 3;
+    flex: 1 0 100%;
+    width: 100%;
+    max-width: none;
+    min-height: 48px;
+  }
+}
+
+html[data-demo-viewport="mobile"] .search-overlay__input-row {
+  flex-wrap: wrap;
+  row-gap: 4px;
+  column-gap: 12px;
+  flex-shrink: 0;
+  height: auto;
+  min-height: 0;
+  padding: 0 16px 14px;
+}
+
+html[data-demo-viewport="mobile"] .search-overlay__brand {
+  display: inline-flex;
+  order: 1;
+  min-height: 56px;
+}
+
+html[data-demo-viewport="mobile"] .search-overlay__close {
+  order: 2;
+  margin-left: auto;
+}
+
+html[data-demo-viewport="mobile"] .search-overlay__field {
+  order: 3;
+  flex: 1 0 100%;
+  width: 100%;
+  min-height: 48px;
+}
+
+/* Phones: one scroll for the whole dropdown, so the advisor promo follows
+ * the bestsellers instead of sitting pinned over half the screen. The
+ * header with the field stays put at the top. */
+@media (max-width: 767.98px) {
+  .search-overlay__panel {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .search-overlay__input-row {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .search-overlay__body {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+}
+
+html[data-demo-viewport="mobile"] .search-overlay__panel {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+html[data-demo-viewport="mobile"] .search-overlay__input-row {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+html[data-demo-viewport="mobile"] .search-overlay__body {
+  flex: 0 0 auto;
+  overflow: visible;
 }

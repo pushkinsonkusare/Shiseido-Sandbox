@@ -3,12 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      /* iOS Safari zooms the page in when a text field takes focus. On iOS
+       * maximum-scale stops only that auto-zoom (pinch-zoom still works),
+       * so it is set there alone; other browsers would lose pinch-zoom. */
+      (function () {
+        var ua = navigator.userAgent;
+        var iOS = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+        if (!iOS) return;
+        var meta = document.querySelector('meta[name="viewport"]');
+        if (meta) meta.setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0");
+      })();
+    </script>
     <link rel="icon" type="image/png" sizes="32x32" href="/Shiseido-Sandbox/favicon.png?v=5" />
     <link rel="shortcut icon" href="/Shiseido-Sandbox/favicon.ico?v=5" />
     <link rel="apple-touch-icon" href="/Shiseido-Sandbox/favicon.png?v=5" />
     <title>shopper agent</title>
-    <script type="module" crossorigin src="/Shiseido-Sandbox/assets/index-DRl6kizX.js"></script>
-    <link rel="stylesheet" crossorigin href="/Shiseido-Sandbox/assets/index-CHczMgag.css">
+    <script type="module" crossorigin src="/Shiseido-Sandbox/assets/index-Ih2ctj2N.js"></script>
+    <link rel="stylesheet" crossorigin href="/Shiseido-Sandbox/assets/index-CqLK8T6R.css">
   </head>
   <body>
     <div id="root"></div>

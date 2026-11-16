@@ -104,6 +104,8 @@ function highlightMatches(text: string, query: string): ReactNode {
 }
 
 const PROMO_TITLE = "Let your AI Advisor take it from here";
+/** Phones drop the subline, so the heading carries what it does. */
+const PROMO_TITLE_SHORT = "Not sure what to pick? Ask your AI Advisor";
 const PROMO_SUB =
   "Share your skin and goals. It shortlists, explains and builds your bag for you.";
 /** One-tap starters; each opens the advisor with the prompt already asked. */
@@ -714,7 +716,12 @@ export function SearchOverlay() {
               <SparkleIcon width={20} height={20} />
             </span>
             <span className="search-overlay__promo-text">
-              <span className="search-overlay__promo-title">{PROMO_TITLE}</span>
+              <span className="search-overlay__promo-title search-overlay__promo-title--full">
+                {PROMO_TITLE}
+              </span>
+              <span className="search-overlay__promo-title search-overlay__promo-title--short">
+                {PROMO_TITLE_SHORT}
+              </span>
               <span className="search-overlay__promo-sub">{PROMO_SUB}</span>
             </span>
             <ul className="search-overlay__promo-prompts" aria-label="Ask the advisor">
