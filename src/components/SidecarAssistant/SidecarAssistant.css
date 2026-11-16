@@ -2045,11 +2045,6 @@ html[data-demo-viewport="mobile"] .sidecar-assistant__fab {
     background: #ffffff;
   }
 
-  .sidecar-assistant__header-icon,
-  html[data-demo-viewport="mobile"] .sidecar-assistant__header-icon {
-    display: none;
-  }
-
   .sidecar-assistant__header-label,
   html[data-demo-viewport="mobile"] .sidecar-assistant__header-label {
     font-size: 18px;
