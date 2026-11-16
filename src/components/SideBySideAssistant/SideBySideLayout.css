@@ -730,6 +730,8 @@ html[data-demo-viewport="mobile"] .sxs-shell:has(.sxs-layout--mobile) .sxs-layou
  * on-screen keyboard. Expand (immersive) is desktop-only. */
 html:not([data-demo-viewport="mobile"]) .sxs-layout__panel--mobile {
   width: 100% !important;
+  top: var(--sxs-mobile-vtop, 0px) !important;
+  bottom: auto !important;
   height: var(--sxs-mobile-vh, 100dvh) !important;
   display: flex !important;
   flex-direction: column !important;
@@ -756,6 +758,7 @@ html:not([data-demo-viewport="mobile"]) .sxs-layout__panel--mobile {
 /* `#root >` (the portal target) outranks the frame and chrome variants. */
 #root > .sxs-layout__panel--mobile.sxs-layout__panel--half {
   top: auto !important;
+  bottom: 0 !important;
   height: 58% !important;
   min-height: 0 !important;
   max-height: none !important;

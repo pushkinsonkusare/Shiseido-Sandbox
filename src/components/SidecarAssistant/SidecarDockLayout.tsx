@@ -47,7 +47,7 @@ const SHEET_FLICK_UP_PX = 48;
 const SHEET_FLICK_DOWN_PX = 110;
 
 /** Inline styles that let a drag override the sheet's stop heights. */
-const SHEET_DRAG_PROPS = ["height", "top", "min-height", "max-height", "transition"] as const;
+const SHEET_DRAG_PROPS = ["height", "top", "bottom", "min-height", "max-height", "transition"] as const;
 
 /** True when the touch began inside something already scrolled down. */
 function startedInScrolledArea(target: EventTarget | null, panel: HTMLElement): boolean {
@@ -152,6 +152,7 @@ export function SidecarDockLayout({ children }: Props) {
     startY: number;
     scale: number;
     startHeight: number;
+    startBottom: number;
     maxHeight: number;
     lastY: number;
     lastT: number;
@@ -287,14 +288,20 @@ export function SidecarDockLayout({ children }: Props) {
     const syncViewport = () => {
       const viewportHeight = vv?.height ?? window.innerHeight;
       root.style.setProperty("--sxs-mobile-vh", `${Math.round(viewportHeight)}px`);
+      // With the keyboard up, iOS can scroll the visible area down the page;
+      // the sheet follows it so its header never slides off the top.
+      root.style.setProperty("--sxs-mobile-vtop", `${Math.round(vv?.offsetTop ?? 0)}px`);
     };
     syncViewport();
     vv?.addEventListener("resize", syncViewport);
+    vv?.addEventListener("scroll", syncViewport);
     window.addEventListener("resize", syncViewport);
     return () => {
       vv?.removeEventListener("resize", syncViewport);
+      vv?.removeEventListener("scroll", syncViewport);
       window.removeEventListener("resize", syncViewport);
       root.style.removeProperty("--sxs-mobile-vh");
+      root.style.removeProperty("--sxs-mobile-vtop");
     };
   }, [isMobileViewport]);
 
@@ -375,6 +382,7 @@ export function SidecarDockLayout({ children }: Props) {
       startY: event.clientY,
       scale,
       startHeight: el.offsetHeight,
+      startBottom: parseFloat(getComputedStyle(el).bottom) || 0,
       maxHeight: (rect.bottom - frameTop) / scale - statusBar,
       lastY: event.clientY,
       lastT: event.timeStamp,
@@ -403,6 +411,8 @@ export function SidecarDockLayout({ children }: Props) {
     const height = Math.min(drag.maxHeight, Math.max(80, drag.startHeight - dy));
     el.style.setProperty("transition", "none", "important");
     el.style.setProperty("top", "auto", "important");
+    // Hold the bottom edge where it was, so only the top moves.
+    el.style.setProperty("bottom", `${drag.startBottom}px`, "important");
     el.style.setProperty("min-height", "0", "important");
     el.style.setProperty("max-height", "none", "important");
     el.style.setProperty("height", `${Math.round(height)}px`, "important");
@@ -432,6 +442,7 @@ export function SidecarDockLayout({ children }: Props) {
     el.style.removeProperty("min-height");
     el.style.removeProperty("max-height");
     el.style.removeProperty("top");
+    el.style.removeProperty("bottom");
     if (next === "closed") closePanel();
     else setSheetStop(next);
   };

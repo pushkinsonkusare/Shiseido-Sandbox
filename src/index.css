@@ -384,3 +384,14 @@ html[data-demo-viewport="mobile"] #root {
   object-fit: contain;
   object-position: left center;
 }
+
+/* iPhone Safari zooms the whole page in when a field under 16px takes
+ * focus, which crops the advisor sheet and leaves the page showing under
+ * it. Touch screens get 16px fields so focusing never zooms. */
+@media (hover: none) and (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: max(16px, 1em) !important;
+  }
+}
