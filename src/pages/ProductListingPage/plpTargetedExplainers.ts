@@ -50,7 +50,7 @@ export const TARGETED: Partial<Record<string, PlpExplainer>> = {
     title: "Gentle is the whole point",
     body:
       "Reactive skin does best with a mild, fragrance-free cleanser and lukewarm water. Skip harsh exfoliants and strong acids at this step; let the rest of the routine do the work.",
-    source: DRY_SRC,
+    image: { src: "/blog/why-is-my-skin-so-dry.jpg", alt: "" },
     pills: [
       { label: "Fragrance-free options", prompt: "I have sensitive skin. Show me gentle, fragrance-free cleansers." },
       { label: "Calm redness", prompt: "My skin gets red easily. Which cleanser won't irritate it?" },
@@ -112,7 +112,7 @@ export const TARGETED: Partial<Record<string, PlpExplainer>> = {
     title: "Soothe first, then treat",
     body:
       "Skip alcohol-heavy toners on reactive skin. A gentle softener hydrates and calms, and pressing it in with your palms is kinder than rubbing with a pad.",
-    source: DRY_SRC,
+    image: { src: "/blog/why-is-my-skin-so-dry.jpg", alt: "" },
     pills: [
       { label: "Alcohol-free options", prompt: "I have sensitive skin. Show me gentle softeners without alcohol." },
       { label: "Calm redness", prompt: "Which softener will calm redness on sensitive skin?" },
@@ -174,7 +174,7 @@ export const TARGETED: Partial<Record<string, PlpExplainer>> = {
     title: "Strengthen before you correct",
     body:
       "Strong acids and harsh actives can tip sensitive skin over. Start with a strengthening serum that supports the skin's own defenses, and add targeted treatments slowly.",
-    source: DRY_SRC,
+    image: { src: "/blog/why-is-my-skin-so-dry.jpg", alt: "" },
     pills: [
       { label: "Strengthening serum", prompt: "I have sensitive skin. Help me find a serum that strengthens it." },
       { label: "Gentle anti-aging", prompt: "Help me find a gentle anti-aging serum for sensitive skin." },
@@ -186,7 +186,7 @@ export const TARGETED: Partial<Record<string, PlpExplainer>> = {
     title: "One serum, two needs",
     body:
       "Combination skin does well with a light, hydrating serum all over. Pick it by your main concern, then adjust the moisturizer instead: lighter on the T-zone, richer on the cheeks.",
-    source: JBEAUTY_SRC,
+    image: { src: "/blog/japanese-skincare-routine.jpg", alt: "" },
     pills: [
       { label: "Lightweight hydration", prompt: "I have combination skin. Help me find a light, hydrating serum." },
       { label: "Even my tone", prompt: "Help me find a serum to even tone on combination skin." },
@@ -364,7 +364,7 @@ export const SKIN_GUIDES: Partial<Record<SkinProfile, PlpExplainer>> = {
     title: "Fewer, gentler, steadier",
     body:
       "Reactive skin does best with a short routine of mild, fragrance-light products, soothing ingredients and mineral sunscreen. Introduce one new product at a time so you know what agrees with you.",
-    source: MOIST_SRC,
+    image: { src: "/blog/moisturizer-guide.jpg", alt: "" },
     pills: [
       { label: "Build a gentle routine", prompt: "I have sensitive skin. Build me a gentle routine." },
       { label: "Calm redness", prompt: "My skin gets red and irritated. What can help?" },
@@ -376,7 +376,7 @@ export const SKIN_GUIDES: Partial<Record<SkinProfile, PlpExplainer>> = {
     title: "Two skin types, one routine",
     body:
       "An oily T-zone with normal or dry cheeks is the most common skin there is. Gentle cleansing, a regular softener and a light moisturizer suit most of it; adjust only where you need to.",
-    source: JBEAUTY_SRC,
+    source: MOIST_SRC,
     pills: [
       { label: "Build my routine", prompt: "I have combination skin. Build me a complete routine." },
       { label: "Balance my T-zone", prompt: "Help me control my oily T-zone without drying my cheeks." },

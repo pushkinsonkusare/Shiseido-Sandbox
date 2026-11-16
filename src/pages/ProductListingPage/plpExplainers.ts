@@ -50,7 +50,7 @@ const MOISTURIZERS: PlpExplainer = {
   title: "Even oily skin needs moisture",
   body:
     "It's a blend of oil, water and nourishing ingredients that restores moisture and locks it in. Oily skin needs it too: skin that's too dry makes even more oil.",
-  source: { label: "Moisturizer guide", slug: "moisturizer-guide" },
+  source: { label: "How to choose a moisturizer", slug: "moisturizer-guide" },
   pills: [
     { label: "Right for my skin type", prompt: "Help me find the right moisturizer for my skin type." },
     { label: "Day cream with SPF", prompt: "Help me pick a day cream with SPF so I can moisturize and protect in one step." },
@@ -64,7 +64,7 @@ const SERUMS: PlpExplainer = {
   title: "Where the targeted work happens",
   body:
     "A serum treats one concern, like fine lines, dark spots or lost firmness, with concentrated ingredients. It goes on after cleansing and softening, before moisturizer, and you can layer more than one.",
-  source: { label: "The Japanese skincare routine", slug: "japanese-skincare-routine" },
+  image: { src: "/blog/anti-aging-skincare.jpg", alt: "" },
   pills: [
     { label: "Smooth fine lines", prompt: "Help me find a serum to smooth fine lines and wrinkles." },
     { label: "Fade dark spots", prompt: "Help me find a serum that fades dark spots and evens my skin tone." },
@@ -78,7 +78,7 @@ const CLEANSERS: PlpExplainer = {
   title: "Everything works better on clean skin",
   body:
     "Cleansing clears away makeup, dirt and oil so the rest of your routine can work, without stripping moisture. Wear long-wear makeup? Dissolve it first with a remover or oil, then follow with a foam.",
-  source: { label: "The Japanese skincare routine", slug: "japanese-skincare-routine" },
+  image: { src: "/blog/how-to-care-for-oily-skin.jpg", alt: "" },
   pills: [
     { label: "Takes off waterproof makeup", prompt: "Help me find a cleanser that takes off waterproof and long-wear makeup." },
     { label: "Gentle for dry skin", prompt: "My skin feels tight after washing. Help me find a gentle cleanser for dry skin." },
@@ -106,7 +106,7 @@ const EYE_LIP: PlpExplainer = {
   title: "The first place skin shows tiredness",
   body:
     "The skin around your eyes is thinner and more delicate, so it shows lines, puffiness and tiredness first. Creams care for it every day; eye masks give a 10-minute boost.",
-  source: { label: "How to tighten skin", slug: "how-to-tighten-skin" },
+  image: { src: "/blog/how-to-tighten-skin.jpg", alt: "" },
   pills: [
     { label: "Puffiness and dark circles", prompt: "I have puffiness and dark circles. Help me find the right eye treatment." },
     { label: "Fine lines and crow's feet", prompt: "Help me smooth fine lines and crow's feet around my eyes." },
@@ -120,7 +120,7 @@ const MASKS: PlpExplainer = {
   title: "A ten-minute boost when skin needs it",
   body:
     "A mask is a concentrated boost on top of your routine: minutes to firm, clear pores or recharge overnight. A lifting face-and-neck mask works in about 10 minutes, right before your serum.",
-  source: { label: "How to tighten skin", slug: "how-to-tighten-skin" },
+  image: { src: "/blog/why-is-my-skin-so-dry.jpg", alt: "" },
   pills: [
     { label: "Glow before an event", prompt: "I have an event tomorrow. Help me pick a mask for a quick glow." },
     { label: "Clear my pores", prompt: "Help me find a mask that clears my pores." },
@@ -134,7 +134,7 @@ const SETS: PlpExplainer = {
   title: "A complete routine, already matched",
   body:
     "Sets pair products that are made to work together, so you get a full routine, or a ready-made gift, for less than buying each one. Each is built around a goal, from lifting to sun protection.",
-  source: { label: "The Japanese skincare routine", slug: "japanese-skincare-routine" },
+  image: { src: "/blog/japanese-skincare-routine.jpg", alt: "" },
   pills: [
     { label: "A gift for someone special", prompt: "Help me choose a skincare gift set for someone special." },
     { label: "Start a full routine", prompt: "Help me start a full skincare routine with one set." },

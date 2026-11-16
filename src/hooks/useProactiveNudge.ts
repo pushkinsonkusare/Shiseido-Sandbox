@@ -68,6 +68,14 @@ export function acknowledgeProactive(): boolean {
   return true;
 }
 
+/** Clears the badge without handing its product over (the advisor was opened another way). */
+export function dismissProactiveBadge() {
+  const slug = state.badgeSlug;
+  if (!slug) return;
+  acknowledged.add(slug);
+  setState({ badgeSlug: null });
+}
+
 /** The advisor calls this once it has picked up the handed-over product. */
 export function consumeProactivePending() {
   if (state.pendingSlug) setState({ pendingSlug: null });

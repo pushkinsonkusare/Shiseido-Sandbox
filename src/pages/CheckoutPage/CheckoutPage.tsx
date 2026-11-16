@@ -17,7 +17,7 @@ function ExpressCheckout() {
   return (
     <section className="figma-checkout__panel figma-checkout__express" aria-labelledby="express-checkout-title">
       <p id="express-checkout-title" className="figma-checkout__express-title">
-        Express Checkout
+        Express checkout
       </p>
       <div className="figma-checkout__express-grid">
         <button type="button" className="figma-checkout__pay-btn figma-checkout__pay-btn--google" aria-label="Google Pay">
@@ -69,12 +69,12 @@ function ContactInformationSection() {
   return (
     <section className="figma-checkout__panel figma-checkout__section">
       <header className="figma-checkout__section-header">
-        <h2>Contact Information</h2>
+        <h2>Contact information</h2>
       </header>
       <div className="figma-checkout__contact-fields">
         <label className="figma-checkout__field">
-          <span className="figma-checkout__label">Email Address*</span>
-          <input type="email" placeholder="hello@shiseido-demo.com" aria-label="Email Address" />
+          <span className="figma-checkout__label">Email address*</span>
+          <input type="email" placeholder="hello@shiseido-demo.com" aria-label="Email address" />
         </label>
         <div className="figma-checkout__phone-row">
           <label className="figma-checkout__field figma-checkout__field--code">
@@ -85,14 +85,14 @@ function ContactInformationSection() {
             </button>
           </label>
           <label className="figma-checkout__field figma-checkout__field--phone">
-            <span className="figma-checkout__label">Phone Number*</span>
-            <input type="tel" placeholder="(000) 000-0000" aria-label="Phone Number" />
+            <span className="figma-checkout__label">Phone number*</span>
+            <input type="tel" placeholder="(000) 000-0000" aria-label="Phone number" />
           </label>
         </div>
       </div>
       <div className="figma-checkout__section-action">
         <button type="button" className="figma-checkout__primary-btn">
-          Continue to Shipping Address
+          Continue to shipping
         </button>
       </div>
     </section>
@@ -138,7 +138,7 @@ function OrderSummary() {
     <aside className="figma-checkout__panel figma-checkout__summary">
       <div className="figma-checkout__summary-group">
         <header className="figma-checkout__summary-header">
-          <h2>Order Summary</h2>
+          <h2>Order summary</h2>
         </header>
         <div className="figma-checkout__summary-lines">
           <div className="figma-checkout__summary-line">
@@ -181,7 +181,7 @@ function OrderSummary() {
       </div>
       <div className="figma-checkout__section-action">
         <button type="button" className="figma-checkout__primary-btn" onClick={() => navigate(ROUTES.orderConfirmation)}>
-          Place Order
+          Place order
         </button>
       </div>
       <div className="figma-checkout__summary-items">
@@ -236,8 +236,8 @@ export default function CheckoutPage() {
             <ExpressCheckout />
             <Divider />
             <ContactInformationSection />
-            <UpcomingSection title="Shipping Address" />
-            <UpcomingSection title="Shipping Method" />
+            <UpcomingSection title="Shipping address" />
+            <UpcomingSection title="Shipping method" />
             <UpcomingSection title="Payment" />
           </div>
           <OrderSummary />

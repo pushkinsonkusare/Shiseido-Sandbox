@@ -10,6 +10,7 @@ import {
 } from "../../components/icons/StorefrontIcons";
 import { UnifiedTopHeader } from "../../components/UnifiedTopHeader/UnifiedTopHeader";
 import { useSearchOverlay } from "../../components/SearchOverlay/SearchOverlayContext";
+import { usePrototypeNavigation } from "../../prototypeRoutes";
 import { SITE_ADDRESS, SITE_BRAND, SITE_FOOTER_COPY } from "../../siteContent";
 import "./OrderConfirmationPage.css";
 
@@ -96,14 +97,14 @@ export default function OrderConfirmationPage() {
               <h2>Arriving by next week</h2>
             </div>
             <div className="figma-order-confirmation__fulfillment-column">
-              <h2>Shipping Address</h2>
+              <h2>Shipping address</h2>
               <p>Shiseido Member</p>
               <p>{SITE_ADDRESS}</p>
               <p>United States</p>
             </div>
             <div className="figma-order-confirmation__fulfillment-column">
-              <h2>Shipping Method</h2>
-              <p>Free | Priority Shipping</p>
+              <h2>Shipping method</h2>
+              <p>Free · Priority shipping</p>
             </div>
           </section>
 
@@ -172,7 +173,7 @@ export default function OrderConfirmationPage() {
           </section>
 
           <section className="figma-order-confirmation__card figma-order-confirmation__recommendations-card">
-            <h2 className="figma-order-confirmation__recommendations-title">You May Also Like</h2>
+            <h2 className="figma-order-confirmation__recommendations-title">You may also like</h2>
             <div className="figma-order-confirmation__recommendations-carousel">
               <button
                 type="button"

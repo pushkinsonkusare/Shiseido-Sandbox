@@ -20,6 +20,7 @@ import {
 import { resolvePlpExplainer } from "./plpExplainers";
 import { PlpExplainerStrip } from "./PlpExplainerStrip";
 import { PlpScrollBreak } from "./PlpScrollBreak";
+import { findHumanFilter, type HumanFilter } from "./plpHumanFilters";
 import "./ProductListingPage.css";
 
 type FilterGroupOption = {
@@ -326,7 +327,7 @@ export function ProductListingPage() {
   // Skipped when an explicit slug union is active: the broad-card
   // "Show all" handoff is already a curated subset; further compat
   // narrowing would only drop legitimate picks.
-  const products = (() => {
+  const shelfProducts = (() => {
     if (searchResultProducts) return baseProducts;
     if (slugFilteredProducts) return baseProducts;
     if (!activeCompatibleWith) return baseProducts;
@@ -343,6 +344,17 @@ export function ProductListingPage() {
     });
     return compat.length > 0 ? compat : baseProducts;
   })();
+
+  // Plain-language filter picked in the mid-grid break. Kept on this page
+  // only, keyed to the shelf it was picked on, so changing category or
+  // facets drops it.
+  const shelfKey = shelfProducts.map((p) => p.slug).join(",");
+  const [humanPick, setHumanPick] = useState<{ id: string; shelfKey: string } | null>(null);
+  const humanFilter =
+    humanPick && humanPick.shelfKey === shelfKey
+      ? findHumanFilter(shelfProducts, humanPick.id)
+      : null;
+  const products = humanFilter ? shelfProducts.filter(humanFilter.test) : shelfProducts;
 
   // Two-line primer on the shelf in view, with advisor pills. Skipped
   // for curated slug unions and recipe handoffs, which aren't a category.
@@ -361,7 +373,18 @@ export function ProductListingPage() {
   const gridRef = useRef<HTMLElement | null>(null);
   const gridCols = useGridColumns(gridRef);
   const scrollBreakAt = Math.max(gridCols * 3, 5);
-  const showScrollBreak = products.length >= scrollBreakAt + gridCols;
+  const showScrollBreak = !humanFilter && products.length >= scrollBreakAt + gridCols;
+
+  const applyHumanFilter = (filter: HumanFilter) => {
+    setHumanPick({ id: filter.id, shelfKey });
+    // Bring the shopper back to the top of the narrowed grid.
+    window.requestAnimationFrame(() => {
+      const grid = gridRef.current;
+      if (!grid) return;
+      const top = grid.getBoundingClientRect().top + window.scrollY - 140;
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    });
+  };
 
   const matchingNavItem = activeCategory
     ? PRIMARY_NAV_ITEMS.find(
@@ -658,15 +681,34 @@ export function ProductListingPage() {
         },
       ];
 
+  // Phones start with every group collapsed; desktop keeps them all open.
+  // Follows the viewport (and the demo frame toggle), so switching from
+  // phone to desktop opens them again.
+  const filterTitlesKey = filters.map((group) => group.title).join("|");
   useEffect(() => {
-    if (hasInitializedMobileCollapseRef.current) return;
-    const isViewportMobile = window.matchMedia("(max-width: 767px)").matches;
-    const isDemoMobile =
-      document.documentElement.getAttribute("data-demo-viewport") === "mobile";
-    if (!isViewportMobile && !isDemoMobile) return;
-    setCollapsedGroups(new Set(filters.map((group) => group.title)));
-    hasInitializedMobileCollapseRef.current = true;
-  }, [filters]);
+    const media = window.matchMedia("(max-width: 767px)");
+    const root = document.documentElement;
+    const isPhone = () =>
+      media.matches || root.getAttribute("data-demo-viewport") === "mobile";
+    let wasPhone: boolean | null = hasInitializedMobileCollapseRef.current
+      ? isPhone()
+      : null;
+    const sync = () => {
+      const phone = isPhone();
+      if (phone === wasPhone) return;
+      wasPhone = phone;
+      hasInitializedMobileCollapseRef.current = true;
+      setCollapsedGroups(phone ? new Set(filterTitlesKey.split("|")) : new Set());
+    };
+    sync();
+    media.addEventListener("change", sync);
+    const observer = new MutationObserver(sync);
+    observer.observe(root, { attributes: true, attributeFilter: ["data-demo-viewport"] });
+    return () => {
+      media.removeEventListener("change", sync);
+      observer.disconnect();
+    };
+  }, [filterTitlesKey]);
 
   return (
     <div className="figma-plp">
@@ -700,7 +742,10 @@ export function ProductListingPage() {
               </>
             )}
           </nav>
-          <h1 className="figma-plp__title">{headingLabel} ({products.length})</h1>
+          <h1 className="figma-plp__title">
+            {headingLabel}{" "}
+            <span className="figma-plp__title-count">({shelfProducts.length})</span>
+          </h1>
         </header>
 
         {explainer && <PlpExplainerStrip explainer={explainer} />}
@@ -857,15 +902,30 @@ export function ProductListingPage() {
           </aside>
 
           <section ref={gridRef} className="figma-plp__grid" aria-label="Product results">
+            {humanFilter && (
+              <p className="plp-filter-note" role="status">
+                <span className="plp-filter-note__label">{humanFilter.heading}</span>
+                <span className="plp-filter-note__count">
+                  {products.length} of {shelfProducts.length}
+                </span>
+                <button
+                  type="button"
+                  className="plp-filter-note__clear"
+                  onClick={() => setHumanPick(null)}
+                >
+                  Show all
+                </button>
+              </p>
+            )}
             {products.length > 0 ? (
               products.map((product, index) => (
                 <Fragment key={product.slug}>
                   {showScrollBreak && index === scrollBreakAt && (
                     <PlpScrollBreak
                       key={`break-${headingLabel}`}
-                      shelfLabel={headingLabel}
                       products={products}
                       passed={products.slice(0, scrollBreakAt)}
+                      onFilter={applyHumanFilter}
                     />
                   )}
                   <article className="figma-plp__card-wrap">

@@ -1,8 +1,7 @@
 import { useCatalog } from "../../catalog/CatalogContext";
 import { toProductCardProps } from "../../catalog/catalog";
 import ProductCard from "../../components/ProductCard/ProductCard";
-import { OpenPersonalAssistantNavButton } from "../../components/OpenPersonalAssistantNavButton/OpenPersonalAssistantNavButton";
-import PrototypeBrandLink from "../../components/PrototypeBrandLink";
+import { UnifiedTopHeader } from "../../components/UnifiedTopHeader/UnifiedTopHeader";
 import { useSearchOverlay } from "../../components/SearchOverlay/SearchOverlayContext";
 import {
   ArrowRightIcon,
@@ -17,7 +16,6 @@ import {
   LogOutIcon,
   MapPinIcon,
   SearchIcon,
-  ShoppingCartIcon,
   SparkleIcon,
   StarIcon,
   TableOfContentsIcon,
@@ -26,7 +24,7 @@ import {
   YoutubeIcon,
 } from "../../components/icons/StorefrontIcons";
 import { ROUTES, usePrototypeNavigation } from "../../prototypeRoutes";
-import { PRIMARY_NAV_ITEMS, SITE_ADDRESS, SITE_BRAND, SITE_FOOTER_COPY } from "../../siteContent";
+import { SITE_ADDRESS, SITE_BRAND, SITE_FOOTER_COPY } from "../../siteContent";
 import "./OverviewPage.css";
 
 const sidebarSections = [
@@ -75,39 +73,7 @@ function OverviewPage() {
 
   return (
     <div className="figma-overview">
-      <header className="figma-overview__top-nav">
-        <div className="figma-overview__top-nav-inner">
-          <PrototypeBrandLink className="figma-overview__brand">{SITE_BRAND}</PrototypeBrandLink>
-          <nav className="figma-overview__main-nav" aria-label="Primary">
-            {PRIMARY_NAV_ITEMS.map((item) => (
-              <a
-                key={item.label}
-                href={item.route ?? ROUTES.productListing}
-                className={item.emphasized ? "figma-overview__sale-link" : undefined}
-                onClick={(event) => {
-                  event.preventDefault();
-                  if (item.route) navigate(item.route);
-                  else navigate(ROUTES.productListing, { category: item.category ?? null });
-                }}
-              >
-                {item.label}
-              </a>
-            ))}
-          </nav>
-          <div className="figma-overview__top-actions">
-            <OpenPersonalAssistantNavButton />
-            <button type="button" aria-label="Search" onClick={openSearchOverlay}>
-              <SearchIcon width={16} height={16} />
-            </button>
-            <button type="button" aria-label="Account" onClick={() => navigate(ROUTES.account)}>
-              <UserIcon width={16} height={16} />
-            </button>
-            <button type="button" aria-label="Cart" onClick={() => navigate(ROUTES.cart)}>
-              <ShoppingCartIcon width={16} height={16} />
-            </button>
-          </div>
-        </div>
-      </header>
+      <UnifiedTopHeader navigate={navigate} openSearchOverlay={openSearchOverlay} />
 
       <div className="figma-overview__page">
         <div className="figma-overview__page-title">

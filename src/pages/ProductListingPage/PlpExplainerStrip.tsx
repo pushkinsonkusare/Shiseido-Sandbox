@@ -145,46 +145,31 @@ export function PlpExplainerStrip({ explainer }: PlpExplainerStripProps) {
               >
                 {explainer.title}
               </h2>
-              <p className="plp-explainer__body">{explainer.body}</p>
-              {explainer.source && (
-                <a
-                  className={
-                    explainer.image
-                      ? "plp-explainer__source"
-                      : "plp-explainer__source plp-explainer__source--same-photo"
-                  }
-                  href={`${ROUTES.blog}/${explainer.source.slug}`}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    navigateToBlogArticle(explainer.source!.slug);
-                  }}
-                >
-                  <img
-                    className="plp-explainer__source-thumb"
-                    src={blogPhotoUrl(explainer.source.slug)}
-                    alt=""
-                    onError={(event) => {
-                      event.currentTarget.hidden = true;
-                    }}
-                    style={{
-                      objectPosition: getBlogArticle(explainer.source.slug)?.photoPosition,
-                    }}
-                  />
-                  <span className="plp-explainer__source-kicker">From the Skincare Blog</span>
-                  <span className="plp-explainer__source-title">{explainer.source.label}</span>
-                  {getBlogArticle(explainer.source.slug) && (
-                    <span className="plp-explainer__source-meta">
-                      {getBlogArticle(explainer.source.slug)!.readMinutes} min read
-                    </span>
-                  )}
-                  <ChevronRightSlimIcon
-                    className="plp-explainer__source-arrow"
-                    width={14}
-                    height={14}
-                    aria-hidden="true"
-                  />
-                </a>
-              )}
+              <p className="plp-explainer__body">
+                {explainer.body}
+                {explainer.source && (
+                  <>
+                    {" "}
+                    <a
+                      className="plp-explainer__source-inline"
+                      href={`${ROUTES.blog}/${explainer.source.slug}`}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        navigateToBlogArticle(explainer.source!.slug);
+                      }}
+                    >
+                      Read: {explainer.source.label}
+                      {getBlogArticle(explainer.source.slug) && (
+                        <span className="plp-explainer__source-inline-meta">
+                          {" "}
+                          · {getBlogArticle(explainer.source.slug)!.readMinutes} min
+                        </span>
+                      )}
+                      <ChevronRightSlimIcon width={12} height={12} aria-hidden="true" />
+                    </a>
+                  </>
+                )}
+              </p>
             </div>
             <ul className="plp-explainer__pills" aria-label="Ask the advisor">
               {explainer.pills.map((pill, i) => (

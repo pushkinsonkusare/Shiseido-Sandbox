@@ -56,6 +56,8 @@ export function AgentModeBar() {
     setSuggestionsType,
     colourPicker,
     setColourPicker,
+    contextualNbas,
+    setContextualNbas,
     pdpInlineWidget,
     setPdpInlineWidget,
     pdpInlineWidgetType,
@@ -478,6 +480,17 @@ export function AgentModeBar() {
                   />
                   <span className="agent-mode-bar__feature-label">
                     Colour picker
+                  </span>
+                </label>
+                <label className="agent-mode-bar__feature">
+                  <input
+                    type="checkbox"
+                    className="agent-mode-bar__feature-checkbox"
+                    checked={contextualNbas}
+                    onChange={(event) => setContextualNbas(event.target.checked)}
+                  />
+                  <span className="agent-mode-bar__feature-label">
+                    Contextual NBAs
                   </span>
                 </label>
                 <label className="agent-mode-bar__feature">

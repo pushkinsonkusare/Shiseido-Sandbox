@@ -19,6 +19,7 @@ import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { useFabInvite } from "../../hooks/useFabInvite";
 import { useNarrowScreen } from "../../hooks/useNarrowScreen";
 import { acknowledgeProactive, useProactiveBadge } from "../../hooks/useProactiveNudge";
+import { FabQuestionChips } from "./FabQuestionChips";
 import { SidecarAssistant, type PendingAsk } from "./SidecarAssistant";
 import type { AskAssistantEventDetail } from "../../pages/ProductDetailPage/PdpNbaPanel";
 // Reuse the SideBySide docking shell CSS for desktop grid + mobile overlay.
@@ -645,6 +646,7 @@ export function SidecarDockLayout({ children }: Props) {
         {desktopPanel}
       </div>
       {mobilePanel}
+      <FabQuestionChips active={fabVisible && sidecarAvailable && !panelOpen} />
       {fabVisible && sidecarAvailable ? (
         <button
           type="button"

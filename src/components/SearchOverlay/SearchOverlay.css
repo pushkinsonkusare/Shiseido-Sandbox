@@ -966,10 +966,10 @@
   inset: -60% -20%;
   z-index: -2;
   background:
-    radial-gradient(28% 55% at 18% 40%, rgba(244, 190, 182, 0.55), transparent 70%),
+    radial-gradient(28% 55% at 18% 40%, rgba(240, 176, 170, 0.5), transparent 70%),
     radial-gradient(26% 60% at 46% 70%, rgba(236, 214, 190, 0.5), transparent 70%),
-    radial-gradient(30% 60% at 64% 30%, rgba(200, 186, 244, 0.5), transparent 70%),
-    radial-gradient(28% 55% at 86% 62%, rgba(176, 210, 244, 0.55), transparent 70%);
+    radial-gradient(30% 60% at 64% 30%, rgba(226, 40, 52, 0.16), transparent 70%),
+    radial-gradient(28% 55% at 86% 62%, rgba(238, 216, 184, 0.6), transparent 70%);
   filter: blur(28px) saturate(115%);
   animation: search-overlay__promo-aurora 22s ease-in-out infinite alternate;
 }
@@ -1105,7 +1105,7 @@
   background: rgba(255, 255, 255, 0.55);
   -webkit-backdrop-filter: blur(10px) saturate(140%);
   backdrop-filter: blur(10px) saturate(140%);
-  box-shadow: 0 1px 2px rgba(60, 40, 90, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: 0 1px 2px rgba(90, 40, 36, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
   font: inherit;
   font-size: 13px;
   font-weight: 500;
@@ -1116,7 +1116,7 @@
 }
 
 .search-overlay__promo-prompt:hover {
-  border-color: rgba(200, 186, 244, 0.9);
+  border-color: rgba(214, 110, 104, 0.5);
   background: rgba(255, 255, 255, 0.85);
 }
 

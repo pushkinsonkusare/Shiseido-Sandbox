@@ -25,30 +25,70 @@ import categoryTreatmentsLifestyle from "../../assets/category-treatments-lifest
 import shiseidoLogo from "../../assets/shiseido-logo.png";
 import "./StorefrontPage.css";
 
-/** Category tiles (not SKUs): lifestyle art + PLP deep-links. */
-const CATEGORY_PROMO_CARDS = [
+/** The two-step ritual: lifestyle art, the step's best sellers and a PLP deep-link. */
+const RITUAL_STEPS = [
   {
     id: "cleansers",
-    title: "Cleansers",
+    step: "01",
+    verb: "Cleanse",
+    title: "Begin with a clean canvas",
     description:
-      "Start every ritual with a clean canvas — foams, oils, and milks for every skin type.",
+      "Foams, oils and milks that lift the day away without leaving skin tight, so everything after works harder.",
     image: categoryCleansersLifestyle,
     imageAlt: "Woman gently cleansing her face with a foaming cleanser",
     category: "Cleansers",
+    catalogCategory: "Cleansers",
+    cta: "Shop cleansers",
   },
   {
     id: "serums-treatments",
-    title: "Serums & Treatments",
+    step: "02",
+    verb: "Treat",
+    title: "Then give skin what it's asking for",
     description:
-      "Targeted concentrates for firmness, radiance, and everyday skin resilience.",
+      "Concentrated serums for firmness, radiance and resilience, pressed in while skin is still soft from cleansing.",
     image: categoryTreatmentsLifestyle,
     imageAlt: "Woman applying serum to her cheek in soft morning light",
     category: "Serums",
+    catalogCategory: "Serums & Treatments",
+    cta: "Shop serums",
+  },
+] as const;
+
+/** Collection banners: campaign photography, each opening its PLP collection. */
+const COLLECTION_BANNERS = [
+  {
+    series: "ultimune",
+    name: "Ultimune",
+    line: "The serum skin leans on when it's had a long week.",
+    image: "shiseido_product_images/ultimune/future-power-shot-0729238213098_8.jpg",
+    position: "center 40%",
+  },
+  {
+    series: "waso",
+    name: "Waso",
+    line: "Fresh yuzu, picked for a quick hit of glow.",
+    image: "shiseido_product_images/waso/yuzu-c-beauty-hydrating-sleeping-face-mask-0768614178798_5.jpg",
+    position: "center",
+  },
+  {
+    series: "benefiance",
+    name: "Benefiance",
+    line: "For the first fine lines, and the ones after.",
+    image: "shiseido_product_images/benefiance/brightening-gel-cream-0730852149328_6.jpg",
+    position: "center 30%",
+  },
+  {
+    series: "shiseido-men",
+    name: "Shiseido Men",
+    line: "Three steps, two minutes, no fuss.",
+    image: "shiseido_product_images/shiseido-men/energizing-moisturizer-extra-light-fluid-0729238171541_5.jpg",
+    position: "center 42%",
   },
 ] as const;
 
 export default function StorefrontPage() {
-  const { featuredProducts, promoProducts, spotlightProducts } = useCatalog();
+  const { featuredProducts, spotlightProducts, products } = useCatalog();
   const { navigate, navigateToProduct } = usePrototypeNavigation();
   const { openSearchOverlay } = useSearchOverlay();
   const [isPlaying, setIsPlaying] = useState(true);
@@ -188,7 +228,7 @@ export default function StorefrontPage() {
         </section>
 
         <section className="figma-storefront__section">
-          <h2>Featured Skincare</h2>
+          <h2>Loved right now</h2>
           <div className="figma-storefront__featured-grid">
             {featuredProducts.map((product) => (
               <ProductCard key={product.slug} {...toProductCardProps(product)} onSelect={() => navigateToProduct(product.slug)} />
@@ -231,23 +271,43 @@ export default function StorefrontPage() {
           </div>
         </section>
 
-        <section className="figma-storefront__promo-grid" aria-label="Shiseido category highlights">
-          {promoProducts.map((product) => (
-            <article key={product.slug} className="figma-storefront__promo-card">
-              <div className="figma-storefront__promo-card-image-shell">
-                <img src={product.imageUrl} alt={product.imageAlt} />
-              </div>
-              <div className="figma-storefront__promo-card-body">
-                <h3>{product.title}</h3>
-                <p>{product.shortDescription}</p>
-                <button type="button" onClick={() => navigateToProduct(product.slug)}>VIEW PRODUCT</button>
-              </div>
-            </article>
-          ))}
+        <section className="figma-storefront__section" aria-labelledby="home-collections-title">
+          <h2 id="home-collections-title">Find your collection</h2>
+          <div className="home-collections">
+            {COLLECTION_BANNERS.map((banner, index) => {
+              const count = products.filter((p) => (p.series as string | null) === banner.series).length;
+              return (
+                <a
+                  key={banner.series}
+                  href={ROUTES.productListing}
+                  className={`home-collections__tile home-collections__tile--${index + 1}`}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    navigate(ROUTES.productListing, { series: [banner.series] });
+                  }}
+                >
+                  <img
+                    src={`${import.meta.env.BASE_URL}${banner.image}`}
+                    alt=""
+                    loading="lazy"
+                    style={{ objectPosition: banner.position }}
+                  />
+                  <span className="home-collections__copy">
+                    <span className="home-collections__name">{banner.name}</span>
+                    <span className="home-collections__line">{banner.line}</span>
+                    <span className="home-collections__cta">
+                      Shop {count > 0 ? `${count} products` : "the collection"}
+                      <ArrowRightIcon width={14} height={14} />
+                    </span>
+                  </span>
+                </a>
+              );
+            })}
+          </div>
         </section>
 
         <section className="figma-storefront__section">
-          <h2>Bestselling Rituals</h2>
+          <h2>The rituals people come back to</h2>
           <p className="figma-storefront__subtitle">Explore Shiseido favorites for cleansing, treating, and protecting your skin.</p>
           <div className="figma-storefront__steps-grid">
             {spotlightProducts.map((product) => (
@@ -275,26 +335,57 @@ export default function StorefrontPage() {
           </div>
         </section>
 
-        <section className="figma-storefront__promo-grid" aria-label="More Shiseido recommendations">
-          {CATEGORY_PROMO_CARDS.map((card) => (
-            <article key={card.id} className="figma-storefront__promo-card">
-              <div className="figma-storefront__promo-card-image-shell figma-storefront__promo-card-image-shell--lifestyle">
-                <img src={card.image} alt={card.imageAlt} />
-              </div>
-              <div className="figma-storefront__promo-card-body">
-                <h3>{card.title}</h3>
-                <p>{card.description}</p>
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate(ROUTES.productListing, { category: card.category })
-                  }
-                >
-                  DISCOVER MORE
-                </button>
-              </div>
-            </article>
-          ))}
+        <section className="home-ritual" aria-labelledby="home-ritual-title">
+          <header className="home-ritual__header">
+            <h2 id="home-ritual-title">A ritual in two steps</h2>
+            <p>Most good skin days start the same way. Here's where to begin.</p>
+          </header>
+          {RITUAL_STEPS.map((step, index) => {
+            const picks = products
+              .filter((p) => p.category === step.catalogCategory && p.imageUrl)
+              .sort((x, y) => (y.reviewCount ?? 0) * (y.rating ?? 0) - (x.reviewCount ?? 0) * (x.rating ?? 0))
+              .slice(0, 3);
+            const openShelf = () => navigate(ROUTES.productListing, { category: step.category });
+            return (
+              <article
+                key={step.id}
+                className={`home-ritual__row${index % 2 ? " home-ritual__row--flip" : ""}`}
+              >
+                <div className="home-ritual__media">
+                  <img src={step.image} alt={step.imageAlt} loading="lazy" />
+                  <span className="home-ritual__verb">
+                    <span>{step.step}</span>
+                    {step.verb}
+                  </span>
+                </div>
+                <div className="home-ritual__panel">
+                  <h3>{step.title}</h3>
+                  <p>{step.description}</p>
+                  {picks.length > 0 && (
+                    <ul className="home-ritual__picks" aria-label={`Best-loved ${step.verb.toLowerCase()} picks`}>
+                      {picks.map((p) => (
+                        <li key={p.slug}>
+                          <button type="button" onClick={() => navigateToProduct(p.slug)}>
+                            <span className="home-ritual__pick-image">
+                              <img src={p.imageUrl} alt="" loading="lazy" />
+                            </span>
+                            <span className="home-ritual__pick-name">{p.title}</span>
+                            {p.priceFormatted && (
+                              <span className="home-ritual__pick-price">{p.priceFormatted}</span>
+                            )}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <button type="button" className="home-ritual__cta" onClick={openShelf}>
+                    {step.cta}
+                    <ArrowRightIcon width={14} height={14} />
+                  </button>
+                </div>
+              </article>
+            );
+          })}
         </section>
       </main>
 

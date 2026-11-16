@@ -11,6 +11,10 @@ html[data-demo-theme="consumer-electronics"] {
   --nto-radius-btn: 8px;
   --nto-radius-chip: 8px;
   --nto-radius-pill: 999px;
+  /* Shiseido radius scale: one value for every card, banner and image
+     surface, one for anything nested inside one. Controls stay pills. */
+  --shi-radius-surface: 16px;
+  --shi-radius-inset: 10px;
   --nto-shadow-card: 0 8px 24px rgba(16, 24, 40, 0.08);
   --nto-shadow-soft: 0 2px 10px rgba(16, 24, 40, 0.06);
   --nto-teal: #077fb4;
@@ -1049,7 +1053,7 @@ html[data-demo-theme="consumer-electronics"] .figma-pdp__paypal {
 }
 
 html[data-demo-theme="consumer-electronics"] .figma-pdp__hero-image {
-  border-radius: 16px;
+  border-radius: var(--shi-radius-surface, 16px);
 }
 
 html[data-demo-theme="consumer-electronics"] .figma-pdp__thumb {
@@ -1086,10 +1090,10 @@ html[data-demo-theme="consumer-electronics"] .pdp-nba::before {
   inset: -20% -60%;
   z-index: -2;
   background:
-    radial-gradient(55% 28% at 30% 14%, rgba(244, 190, 182, 0.55), transparent 70%),
+    radial-gradient(55% 28% at 30% 14%, rgba(240, 176, 170, 0.5), transparent 70%),
     radial-gradient(60% 26% at 72% 38%, rgba(236, 214, 190, 0.5), transparent 70%),
-    radial-gradient(60% 30% at 34% 64%, rgba(200, 186, 244, 0.5), transparent 70%),
-    radial-gradient(55% 28% at 66% 88%, rgba(176, 210, 244, 0.55), transparent 70%);
+    radial-gradient(60% 30% at 34% 64%, rgba(226, 40, 52, 0.16), transparent 70%),
+    radial-gradient(55% 28% at 66% 88%, rgba(238, 216, 184, 0.6), transparent 70%);
   filter: blur(28px) saturate(115%);
   animation: pdp-nba-aurora 22s ease-in-out infinite alternate;
   pointer-events: none;
@@ -1185,7 +1189,7 @@ html[data-demo-theme="consumer-electronics"] .pdp-nba__regen {
   border-radius: var(--nto-radius-pill);
   -webkit-backdrop-filter: blur(10px) saturate(140%);
   backdrop-filter: blur(10px) saturate(140%);
-  box-shadow: 0 1px 2px rgba(60, 40, 90, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: 0 1px 2px rgba(90, 40, 36, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
   font-size: 14px;
   font-weight: 500;
   line-height: 20px;
@@ -1195,9 +1199,9 @@ html[data-demo-theme="consumer-electronics"] .pdp-nba__regen {
 
 html[data-demo-theme="consumer-electronics"] .pdp-nba__pill:hover,
 html[data-demo-theme="consumer-electronics"] .pdp-nba__regen:hover {
-  border-color: rgba(200, 186, 244, 0.9);
+  border-color: rgba(214, 110, 104, 0.5);
   background: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 1px 2px rgba(60, 40, 90, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: 0 1px 2px rgba(90, 40, 36, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 html[data-demo-theme="consumer-electronics"] .pdp-nba__pill:disabled:hover,
@@ -1526,7 +1530,7 @@ html[data-demo-theme="consumer-electronics"] .search-overlay__ask-ai {
   letter-spacing: 0.01em;
   color: #17171b;
   border: none;
-  background: linear-gradient(100deg, #fbe7ed 0%, #efe7fb 25%, #e4eefc 50%, #efe7fb 75%, #fbe7ed 100%) 0% 50% / 300% 100%;
+  background: linear-gradient(100deg, #fbe9e6 0%, #f6e3d6 25%, #fcf2ea 50%, #f6e3d6 75%, #fbe9e6 100%) 0% 50% / 300% 100%;
   animation: nto-ai-pill-drift 6s ease-in-out infinite alternate;
   box-shadow: none;
   transition: background-color 160ms ease;
@@ -1539,7 +1543,7 @@ html[data-demo-theme="consumer-electronics"] .search-overlay__ask-ai svg {
 }
 
 html[data-demo-theme="consumer-electronics"] .search-overlay__ask-ai:hover:not(:disabled) {
-  background: linear-gradient(100deg, #f7dbe4 0%, #e6dbf8 25%, #d8e6fa 50%, #e6dbf8 75%, #f7dbe4 100%) 0% 50% / 300% 100%;
+  background: linear-gradient(100deg, #f6d8d3 0%, #f0d8c6 25%, #f8e7da 50%, #f0d8c6 75%, #f6d8d3 100%) 0% 50% / 300% 100%;
   animation-duration: 3s;
   box-shadow: none;
 }
@@ -1563,12 +1567,12 @@ html[data-demo-theme="consumer-electronics"] .search-overlay__ask-ai:hover:not(:
  * twinkling sparkle (no border), so both entry points to the advisor match. */
 html[data-demo-theme="consumer-electronics"] .personal-assistant-nav-trigger {
   border: none;
-  background: linear-gradient(100deg, #fbe7ed 0%, #efe7fb 25%, #e4eefc 50%, #efe7fb 75%, #fbe7ed 100%) 0% 50% / 300% 100%;
+  background: linear-gradient(100deg, #fbe9e6 0%, #f6e3d6 25%, #fcf2ea 50%, #f6e3d6 75%, #fbe9e6 100%) 0% 50% / 300% 100%;
   animation: nto-ai-pill-drift 6s ease-in-out infinite alternate;
 }
 
 html[data-demo-theme="consumer-electronics"] .personal-assistant-nav-trigger:hover {
-  background: linear-gradient(100deg, #f7dbe4 0%, #e6dbf8 25%, #d8e6fa 50%, #e6dbf8 75%, #f7dbe4 100%) 0% 50% / 300% 100%;
+  background: linear-gradient(100deg, #f6d8d3 0%, #f0d8c6 25%, #f8e7da 50%, #f0d8c6 75%, #f6d8d3 100%) 0% 50% / 300% 100%;
   animation-duration: 3s;
 }
 
@@ -1689,3 +1693,2037 @@ html[data-demo-theme="consumer-electronics"] .figma-overview__top-actions .perso
 }
 
 /* Experience switcher (.agent-mode-bar) stays Market Street chrome. */
+
+/* -------------------------------------------------------------------------- */
+/* PLP premium pass: quieter chrome so the product leads. Borderless cards on  */
+/* a soft tinted image tile, calmer type, hairline filters, hover-only tools.  */
+/* -------------------------------------------------------------------------- */
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) {
+  --plp-tile: #f4f2ef;
+  --plp-ink: #131315;
+  --plp-ink-muted: #71717a;
+  --plp-hairline: #ebe9e6;
+}
+
+/* Header: lighter, larger title; the count steps back. */
+html[data-demo-theme="consumer-electronics"] .figma-plp__breadcrumbs {
+  font-size: 13px;
+  color: var(--plp-ink-muted);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-plp__title {
+  font-size: 36px;
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--plp-ink);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-plp__title-count {
+  font-weight: 400;
+  color: #a1a1aa;
+  letter-spacing: -0.01em;
+}
+
+/* Filters: flat sections divided by hairlines instead of boxed cards. */
+html[data-demo-theme="consumer-electronics"] .figma-plp__filters {
+  gap: 0;
+  align-self: flex-start;
+  position: sticky;
+  top: 96px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-plp .figma-plp__filter-group {
+  border: 0;
+  border-bottom: 1px solid var(--plp-hairline);
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 18px 0;
+  gap: 14px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-plp .figma-plp__filter-group:first-of-type {
+  padding-top: 4px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-plp__filter-group--collapsed {
+  gap: 0;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-plp__filter-group h2 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--plp-ink);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-plp__filter-group label {
+  color: #3f3f46;
+  font-size: 14px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-plp__filter-group input {
+  accent-color: var(--plp-ink);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-plp__filter-toggle {
+  color: var(--plp-ink-muted);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-plp .figma-plp__price-field {
+  border: 1px solid var(--plp-hairline);
+  border-radius: 999px;
+  box-shadow: none;
+  background: #ffffff;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-plp .figma-plp__price-field:focus-within {
+  border-color: var(--plp-ink);
+}
+
+/* Cards: no box; the image tile carries the shape. */
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  overflow: visible;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card--interactive:hover,
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card--interactive:focus-visible {
+  box-shadow: none;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card--interactive:focus-visible {
+  outline: 2px solid var(--plp-ink);
+  outline-offset: 4px;
+  border-radius: var(--shi-radius-surface, 16px);
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__gallery {
+  border-radius: var(--shi-radius-surface, 16px);
+  overflow: hidden;
+  background: var(--plp-tile);
+  isolation: isolate;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__image-wrap {
+  aspect-ratio: 4 / 5;
+  background: var(--plp-tile);
+  padding: 6% 8%;
+}
+
+/* Packshots sit on white; multiply melts the white into the tile. */
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__image {
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card--interactive:hover .figma-product-card__image {
+  transform: scale(1.04);
+}
+
+/* Badge: a quiet white tag rather than a coloured sticker. */
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__badge {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--plp-ink);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  padding: 5px 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__badge-row {
+  left: 14px;
+  top: 14px;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__actions {
+  right: 14px;
+  top: 14px;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__icon-btn,
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__hover-checkbox,
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__carousel-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  color: var(--plp-ink);
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__hover-checkbox-box {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  border-color: #a1a1aa;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__hover-cta {
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  height: 40px;
+  border-radius: 999px;
+  background: rgba(19, 19, 21, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-size: 14px;
+  font-weight: 500;
+  transform: translateY(6px);
+  transition:
+    opacity 240ms ease,
+    transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card--interactive:hover .figma-product-card__hover-cta,
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card--interactive:focus-visible .figma-product-card__hover-cta {
+  transform: translateY(0);
+}
+
+/* Compare and wishlist appear on hover where the device has one. */
+@media (hover: hover) {
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__hover-checkbox:not(.figma-product-card__hover-checkbox--selected),
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__actions {
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card--interactive:hover .figma-product-card__hover-checkbox,
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card--interactive:hover .figma-product-card__actions,
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card--interactive:focus-within .figma-product-card__hover-checkbox,
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card--interactive:focus-within .figma-product-card__actions {
+    opacity: 1;
+  }
+}
+
+/* Text block: tighter, calmer, monochrome stars. */
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__content {
+  padding: 16px 4px 0;
+  gap: 6px;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__meta {
+  gap: 0;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__meta p {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--plp-ink-muted);
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__meta p:first-child {
+  display: none;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__title {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--plp-ink);
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__stars {
+  color: var(--plp-ink);
+  font-size: 11px;
+  gap: 2px;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__stars .figma-product-card__star-muted {
+  color: #d4d4d8;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__reviews {
+  margin-left: 4px;
+  color: var(--plp-ink-muted);
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__price {
+  margin-top: 2px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--plp-ink);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-plp .figma-plp__grid {
+  gap: 48px 28px;
+}
+
+/* Phones: two columns, smaller tiles and type, filters as a flat list. */
+@media (max-width: 767.98px) {
+  html[data-demo-theme="consumer-electronics"] .figma-plp__title {
+    font-size: 28px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-plp__filters {
+    position: static;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-plp .figma-plp__filter-group,
+  html[data-demo-theme="consumer-electronics"] .figma-plp .figma-plp__filter-group:first-of-type {
+    padding: 0;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-plp .figma-plp__filter-group h2 {
+    min-height: 52px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-plp .figma-plp__filter-group:not(.figma-plp__filter-group--collapsed) {
+    padding-bottom: 16px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-plp .figma-plp__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px 12px;
+    margin-top: 0;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-plp .figma-plp__main {
+    gap: 28px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__gallery {
+    border-radius: var(--shi-radius-surface, 16px);
+  }
+
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__image-wrap {
+    padding: 8% 6%;
+  }
+
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__badge {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__badge-row,
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__actions {
+    top: 8px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__badge-row {
+    left: 8px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__actions {
+    right: 8px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__icon-btn,
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__hover-checkbox {
+    width: 30px;
+    height: 30px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__content {
+    padding: 12px 2px 0;
+    gap: 4px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__meta p {
+    font-size: 12px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__title {
+    font-size: 14px;
+    line-height: 19px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__price {
+    font-size: 14px;
+  }
+}
+
+html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .figma-plp__title {
+  font-size: 28px;
+}
+
+html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .figma-plp__filters {
+  position: static;
+}
+
+html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .figma-plp .figma-plp__filter-group {
+  padding: 0;
+}
+
+html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .figma-plp .figma-plp__filter-group h2 {
+  min-height: 52px;
+}
+
+html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .figma-plp .figma-plp__filter-group:not(.figma-plp__filter-group--collapsed) {
+  padding-bottom: 16px;
+}
+
+html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .figma-plp .figma-plp__grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px 12px;
+  margin-top: 0;
+}
+
+html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .figma-plp .figma-plp__main {
+  gap: 28px;
+}
+
+html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__title {
+  font-size: 14px;
+  line-height: 19px;
+}
+
+html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__price {
+  font-size: 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__image,
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card__hover-cta {
+    transition: none;
+  }
+
+  html[data-demo-theme="consumer-electronics"] :is(.figma-plp, .figma-storefront, .figma-pdp) .figma-product-card--interactive:hover .figma-product-card__image {
+    transform: none;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* PLP advisor widgets (top guide + in-grid break), modern pass: rounder,      */
+/* roomier, larger type, one quiet "Beauty Advisor" attribution, and solid     */
+/* white controls on the same subtle mesh.                                     */
+/* -------------------------------------------------------------------------- */
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer {
+  border: 0;
+  border-radius: var(--shi-radius-surface, 16px);
+  padding: 28px 32px;
+  background: #f7f5f2;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer:not(.plp-scroll-break) {
+  margin: -8px 0 40px;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer::after {
+  background:
+    conic-gradient(
+      from var(--plp-sheen) at 50% 120%,
+      transparent 0deg,
+      rgba(255, 255, 255, 0.22) 40deg,
+      transparent 90deg,
+      transparent 360deg
+    ),
+    linear-gradient(
+      90deg,
+      rgba(247, 245, 242, 0.85) 0%,
+      rgba(247, 245, 242, 0.62) 40%,
+      rgba(247, 245, 242, 0.2) 75%,
+      rgba(247, 245, 242, 0.05) 100%
+    );
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer--loading {
+  background: #f7f5f2;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer__inner {
+  column-gap: 24px;
+  row-gap: 20px;
+}
+
+/* The one AI attribution: small, sentence case, sits above the title. */
+html[data-demo-theme="consumer-electronics"] .plp-ai-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  color: #71717a;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-ai-kicker svg {
+  color: #131315;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer__media {
+  width: 104px;
+  height: 104px;
+  border-radius: var(--shi-radius-inset, 10px);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: none;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer__media--icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer__text {
+  gap: 6px;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer__title,
+html[data-demo-theme="consumer-electronics"] .plp-scroll-break__title {
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #131315;
+  text-wrap: balance;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer__body,
+html[data-demo-theme="consumer-electronics"] .plp-scroll-break__body {
+  max-width: 58ch;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #52525b;
+  text-wrap: pretty;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer__source {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #71717a;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer__source-meta {
+  border-left-color: rgba(19, 19, 21, 0.12);
+}
+
+/* Pills: solid white with a hairline, a touch larger, lift on hover. */
+html[data-demo-theme="consumer-electronics"] .plp-explainer__pills {
+  gap: 10px;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer__pill {
+  height: 40px;
+  padding: 0 18px;
+  border: 1px solid rgba(19, 19, 21, 0.08);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 1px 2px rgba(19, 19, 21, 0.04);
+  font-size: 14px;
+  font-weight: 500;
+  color: #131315;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 200ms ease;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer__pill:hover {
+  border-color: rgba(19, 19, 21, 0.18);
+  background: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(19, 19, 21, 0.06);
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-skel--pill {
+  height: 40px;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-skel--line {
+  height: 14px;
+}
+
+/* Compact header strip: no kicker, the blog link rides at the end of the
+ * copy, and the copy uses the full width so it settles in two lines. */
+html[data-demo-theme="consumer-electronics"] .plp-explainer:not(.plp-scroll-break) {
+  padding: 20px 24px;
+  border-radius: var(--shi-radius-surface, 16px);
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer:not(.plp-scroll-break) .plp-explainer__inner {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  column-gap: 20px;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer:not(.plp-scroll-break) .plp-explainer__media {
+  align-self: center;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--shi-radius-inset, 10px);
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer:not(.plp-scroll-break) .plp-explainer__text {
+  gap: 4px;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer__title {
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer__body {
+  max-width: none;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer__source-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: #131315;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer__source-inline:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer__source-inline-meta {
+  color: #a1a1aa;
+  font-weight: 400;
+  white-space: pre;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer:not(.plp-scroll-break) .plp-explainer__pills {
+  max-width: 440px;
+  gap: 8px;
+}
+
+html[data-demo-theme="consumer-electronics"] .plp-explainer:not(.plp-scroll-break) .plp-explainer__pill {
+  height: 36px;
+  padding: 0 16px;
+}
+
+@container plp-explainer (max-width: 980px) {
+  html[data-demo-theme="consumer-electronics"] .plp-explainer:not(.plp-scroll-break) .plp-explainer__inner {
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: 14px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .plp-explainer:not(.plp-scroll-break) .plp-explainer__pills {
+    max-width: none;
+  }
+}
+
+@container plp-explainer (max-width: 560px) {
+  html[data-demo-theme="consumer-electronics"] .plp-explainer:not(.plp-scroll-break) .plp-explainer__inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .plp-explainer:not(.plp-scroll-break) .plp-explainer__inner {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* In-grid break: a heading and a row of plain-language filters. */
+html[data-demo-theme="consumer-electronics"] .plp-scroll-break {
+  padding: 32px;
+  gap: 20px;
+}
+
+
+
+html[data-demo-theme="consumer-electronics"] .plp-scroll-break__reasons {
+  padding-left: 0;
+  gap: 10px;
+}
+
+
+
+
+
+
+
+
+
+
+
+@media (max-width: 767.98px) {
+  html[data-demo-theme="consumer-electronics"] .plp-explainer {
+    padding: 22px 20px;
+    border-radius: var(--shi-radius-surface, 16px);
+  }
+
+  html[data-demo-theme="consumer-electronics"] .plp-explainer__title,
+  html[data-demo-theme="consumer-electronics"] .plp-scroll-break__title {
+    font-size: 19px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .plp-explainer__body,
+  html[data-demo-theme="consumer-electronics"] .plp-scroll-break__body {
+    font-size: 14.5px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .plp-explainer__pills {
+    justify-content: flex-start;
+    margin: 0 -20px;
+    padding: 0 20px 2px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .plp-explainer:not(.plp-scroll-break) {
+    margin-bottom: 28px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .plp-scroll-break {
+    gap: 18px;
+  }
+
+
+
+
+  html[data-demo-theme="consumer-electronics"] .plp-scroll-break__reasons {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin: 0 -20px;
+    padding: 0 20px 2px;
+    scrollbar-width: none;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .plp-scroll-break__reasons::-webkit-scrollbar {
+    display: none;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .plp-scroll-break__reasons > li {
+    flex: none;
+  }
+}
+
+html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .plp-explainer {
+  padding: 22px 20px;
+  border-radius: var(--shi-radius-surface, 16px);
+}
+
+html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .plp-explainer__title,
+html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .plp-scroll-break__title {
+  font-size: 19px;
+}
+
+html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .plp-explainer__pills {
+  justify-content: flex-start;
+  margin: 0 -20px;
+  padding: 0 20px 2px;
+}
+
+html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .plp-scroll-break__reasons {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  margin: 0 -20px;
+  padding: 0 20px 2px;
+  scrollbar-width: none;
+}
+
+html[data-demo-theme="consumer-electronics"][data-demo-viewport="mobile"] .plp-scroll-break__reasons > li {
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-demo-theme="consumer-electronics"] .plp-explainer__pill {
+    transition: none;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .plp-explainer__pill:hover {
+    transform: none;
+  }
+}
+
+/* Homepage premium pass: same language as the PLP. No boxes or shadows; the   */
+/* tinted tile carries the shape, editorial headings, ink pills, no coral.     */
+html[data-demo-theme="consumer-electronics"] .figma-storefront {
+  --home-tile: #f4f2ef;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__section h2 {
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: #131315;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__subtitle {
+  margin-top: -20px;
+  color: #71717a;
+  font-size: 15px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__tagline-banner {
+  border-bottom: 0;
+  justify-content: center;
+  padding-top: 28px;
+  padding-bottom: 28px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__tagline-banner-text {
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #71717a;
+  text-align: center;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__promo-card,
+html[data-demo-theme="consumer-electronics"] .figma-storefront__step-card {
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__promo-card-image-shell,
+html[data-demo-theme="consumer-electronics"] .figma-storefront__promo-card-image-shell--lifestyle {
+  background: var(--home-tile);
+  border-radius: var(--shi-radius-surface, 16px);
+  overflow: hidden;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__promo-card-image-shell img,
+html[data-demo-theme="consumer-electronics"] .figma-storefront__step-card-image-shell img {
+  mix-blend-mode: multiply;
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__promo-card-image-shell--lifestyle img {
+  mix-blend-mode: normal;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__promo-card-body {
+  padding: 20px 4px 0;
+  gap: 8px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__promo-card h3 {
+  font-size: 22px;
+  color: #131315;
+  letter-spacing: -0.02em;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__promo-card p {
+  color: #71717a;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__hero-overlay button,
+html[data-demo-theme="consumer-electronics"] .figma-storefront__promo-card button,
+html[data-demo-theme="consumer-electronics"] .figma-storefront__featured-banner-cta {
+  background: #131315;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__promo-card button {
+  margin-top: 8px;
+  height: 40px;
+  padding: 0 20px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__hero-overlay button:hover,
+html[data-demo-theme="consumer-electronics"] .figma-storefront__promo-card button:hover,
+html[data-demo-theme="consumer-electronics"] .figma-storefront__featured-banner-cta:hover {
+  background: #2c2c30;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__step-card {
+  height: auto;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__step-card-image-shell {
+  flex: 0 0 auto;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  background: var(--home-tile);
+  border-radius: var(--shi-radius-surface, 16px);
+  overflow: hidden;
+  padding: 32px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__step-card-link {
+  height: auto;
+  padding: 14px 2px 0;
+  justify-content: space-between;
+  text-align: left;
+  color: #131315;
+  font-size: 15px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__step-card-link svg {
+  color: #a1a1aa;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+@media (hover: hover) {
+  html[data-demo-theme="consumer-electronics"] .figma-storefront__promo-card:hover .figma-storefront__promo-card-image-shell img,
+  html[data-demo-theme="consumer-electronics"] .figma-storefront__step-card:hover .figma-storefront__step-card-image-shell img {
+    transform: scale(1.03);
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-storefront__step-card:hover .figma-storefront__step-card-link svg {
+    color: #131315;
+    transform: translateX(3px);
+  }
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__newsletter {
+  box-shadow: none;
+  border: 0;
+  border-radius: var(--shi-radius-surface, 16px);
+  background: #131315;
+  padding: 48px 24px;
+  gap: 10px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__newsletter h3 {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__newsletter p {
+  color: #a1a1aa;
+  font-size: 15px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__newsletter form {
+  margin-top: 10px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__newsletter input {
+  border-radius: 999px;
+  height: 44px;
+  padding: 0 18px;
+  width: 260px;
+  box-shadow: none;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__newsletter button,
+html[data-demo-theme="consumer-electronics"] .figma-storefront__newsletter button:hover {
+  background: #ffffff;
+  color: #131315;
+  border-radius: 999px;
+  height: 44px;
+  padding: 0 22px;
+  font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-demo-theme="consumer-electronics"] .figma-storefront__promo-card-image-shell img,
+  html[data-demo-theme="consumer-electronics"] .figma-storefront__step-card-image-shell img,
+  html[data-demo-theme="consumer-electronics"] .figma-storefront__step-card-link svg {
+    transition: none;
+    transform: none !important;
+  }
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-storefront__newsletter {
+  width: auto;
+  margin: 0 var(--space-page-desktop, 64px) 24px;
+}
+
+@media (max-width: 767.98px) {
+  html[data-demo-theme="consumer-electronics"] .figma-storefront__steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px 12px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-storefront__step-card-image-shell {
+    padding: 16px;
+    border-radius: var(--shi-radius-surface, 16px);
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-storefront__step-card-link {
+    font-size: 13px;
+    align-items: flex-start;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-storefront__step-card-link svg {
+    display: none;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-storefront__promo-card-image-shell--lifestyle {
+    padding: 0;
+    border-radius: var(--shi-radius-surface, 16px);
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-storefront__newsletter {
+    margin: 0 16px 16px;
+    padding: 36px 20px;
+    border-radius: var(--shi-radius-surface, 16px);
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-storefront__section h2 {
+    font-size: 26px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-storefront__newsletter input {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+}
+
+html[data-demo-viewport="mobile"][data-demo-theme="consumer-electronics"] .figma-storefront__newsletter {
+  margin: 0 16px 16px;
+  padding: 36px 20px;
+  border-radius: var(--shi-radius-surface, 16px);
+}
+
+html[data-demo-viewport="mobile"][data-demo-theme="consumer-electronics"] .figma-storefront__section h2 {
+  font-size: 26px;
+}
+
+html[data-demo-viewport="mobile"][data-demo-theme="consumer-electronics"] .figma-storefront__newsletter input {
+  width: auto;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* PDP premium pass: the product on a soft tinted tile, calmer type, ink    */
+/* controls in place of coral, and hairline sections in place of boxes.     */
+html[data-demo-theme="consumer-electronics"] .figma-pdp {
+  --pdp-tile: #f4f2ef;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__hero-image-wrap {
+  background: var(--pdp-tile);
+  border-radius: var(--shi-radius-surface, 16px);
+  overflow: hidden;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__hero-image {
+  border-radius: 0;
+  mix-blend-mode: multiply;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__gallery-arrow {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: none;
+  width: 40px;
+  height: 40px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__gallery-arrow:hover {
+  background: #ffffff;
+  box-shadow: none;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__thumbs {
+  margin-top: 4px;
+  gap: 12px;
+  padding: 3px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__thumb {
+  width: 88px;
+  height: 88px;
+  border-radius: var(--shi-radius-inset, 10px);
+  background: var(--pdp-tile);
+  opacity: 0.6;
+  transition: opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__thumb:hover {
+  opacity: 0.9;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__thumb.is-active {
+  opacity: 1;
+  box-shadow: 0 0 0 1.5px #131315;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__brand {
+  color: #71717a;
+  font-size: 13px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__info h1 {
+  font-size: 32px;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #131315;
+  margin-bottom: 10px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__sku {
+  color: #a1a1aa;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__stars {
+  color: #52525b;
+  font-size: 13px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__price {
+  font-size: 22px;
+  font-weight: 500;
+  color: #131315;
+  margin: 14px 0 22px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__field label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #52525b;
+  margin-bottom: 8px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__chips {
+  gap: 8px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__chips button {
+  background: #ffffff;
+  color: #131315;
+  border: 1px solid #e4e4e7;
+  border-radius: 999px;
+  box-shadow: none;
+  height: 36px;
+  padding: 0 16px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__chips button:hover {
+  border-color: #131315;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__chips .is-active,
+html[data-demo-theme="consumer-electronics"] .figma-pdp__chips .is-active:hover {
+  background: #131315;
+  border-color: #131315;
+  color: #ffffff;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__field input {
+  border: 1px solid #e4e4e7;
+  border-radius: 12px;
+  box-shadow: none;
+  height: 40px;
+  padding: 0 12px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__shipping-row {
+  gap: 10px;
+  margin: 20px 0;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__shipping-row > div {
+  background: var(--pdp-tile);
+  border: 0;
+  border-radius: var(--shi-radius-inset, 10px);
+  box-shadow: none;
+  padding: 14px 16px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__shipping-row p {
+  font-weight: 500;
+  color: #131315;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__shipping-row small {
+  color: #71717a;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__cta {
+  background: #131315;
+  border-color: #131315;
+  box-shadow: none;
+  height: 48px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__cta:hover {
+  background: #2c2c30;
+  border-color: #2c2c30;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__or,
+html[data-demo-theme="consumer-electronics"] .figma-pdp__pay-note {
+  color: #a1a1aa;
+  font-size: 12px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__apple-pay,
+html[data-demo-theme="consumer-electronics"] .figma-pdp__paypal {
+  box-shadow: none;
+  height: 44px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__benefits {
+  gap: 0;
+  border-top: 1px solid #ececec;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__benefits article {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #ececec;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 18px 2px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__benefits h3 {
+  font-size: 16px;
+  font-weight: 500;
+  color: #131315;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__detail-body {
+  color: #52525b;
+}
+
+@media (max-width: 767.98px) {
+  html[data-demo-theme="consumer-electronics"] .figma-pdp__hero-image-wrap {
+    border-radius: var(--shi-radius-surface, 16px);
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-pdp__thumb {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-pdp__info h1 {
+    font-size: 26px;
+  }
+}
+
+html[data-demo-viewport="mobile"][data-demo-theme="consumer-electronics"] .figma-pdp__hero-image-wrap {
+  border-radius: 20px;
+}
+
+html[data-demo-viewport="mobile"][data-demo-theme="consumer-electronics"] .figma-pdp__thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+}
+
+html[data-demo-viewport="mobile"][data-demo-theme="consumer-electronics"] .figma-pdp__info h1 {
+  font-size: 26px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-demo-theme="consumer-electronics"] .figma-pdp__thumb,
+  html[data-demo-theme="consumer-electronics"] .figma-pdp__chips button {
+    transition: none;
+  }
+}
+
+html[data-demo-viewport="mobile"][data-demo-theme="consumer-electronics"] .figma-storefront__steps-grid {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px 12px;
+}
+
+html[data-demo-viewport="mobile"][data-demo-theme="consumer-electronics"] .figma-storefront__step-card-image-shell {
+  padding: 16px;
+  border-radius: var(--shi-radius-surface, 16px);
+}
+
+html[data-demo-viewport="mobile"][data-demo-theme="consumer-electronics"] .figma-storefront__step-card-link {
+  font-size: 13px;
+  align-items: flex-start;
+}
+
+html[data-demo-viewport="mobile"][data-demo-theme="consumer-electronics"] .figma-storefront__step-card-link svg {
+  display: none;
+}
+
+html[data-demo-viewport="mobile"][data-demo-theme="consumer-electronics"] .figma-storefront__promo-card-image-shell--lifestyle {
+  padding: 0;
+  border-radius: 20px;
+}
+
+/* ---------------------------------------------------------------------------
+ * Radius scale: older surfaces brought onto the two-step scale.
+ * ------------------------------------------------------------------------- */
+html[data-demo-theme="consumer-electronics"] .figma-storefront__featured-banner,
+html[data-demo-theme="consumer-electronics"] .pdp-nba,
+html[data-demo-theme="consumer-electronics"] .search-overlay__promo,
+html[data-demo-theme="consumer-electronics"] .search-overlay .figma-product-card {
+  border-radius: var(--shi-radius-surface);
+}
+
+html[data-demo-theme="consumer-electronics"] .search-overlay__promo-icon,
+html[data-demo-theme="consumer-electronics"] .search-overlay__recent-item {
+  border-radius: var(--shi-radius-inset);
+}
+
+/* ---------------------------------------------------------------------------
+ * Cart premium pass: hairline-separated rows on tinted image tiles, a tinted
+ * summary panel and an ink checkout pill, in step with the home page and PDP.
+ * ------------------------------------------------------------------------- */
+html[data-demo-theme="consumer-electronics"] .figma-cart {
+  --cart-tile: #f4f2ef;
+  --cart-ink: #131315;
+  --cart-ink-muted: #6b6b70;
+  --cart-hairline: rgba(19, 19, 21, 0.08);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__title-strip {
+  padding-top: 40px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__title-strip h1 {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--cart-ink);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__count {
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--cart-ink-muted);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__section-card {
+  padding: 0;
+  gap: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__section-head {
+  align-items: center;
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--cart-hairline);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__section-head-main {
+  align-items: center;
+  gap: 14px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__section-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--cart-tile);
+  color: var(--cart-ink);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__section-title {
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--cart-ink);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__section-title strong {
+  font-weight: 600;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__section-count {
+  color: var(--cart-ink-muted);
+  font-weight: 400;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__section-sub {
+  font-size: 14px;
+  color: var(--cart-ink-muted);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__change-store {
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--cart-hairline);
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: none;
+  color: var(--cart-ink);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__change-store:hover {
+  border-color: rgba(19, 19, 21, 0.24);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__items {
+  gap: 0;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__item {
+  align-items: stretch;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--cart-hairline);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__item-thumb {
+  display: grid;
+  place-items: center;
+  width: 140px;
+  height: 140px;
+  padding: 0;
+  border-radius: var(--shi-radius-inset);
+  background: var(--cart-tile);
+  overflow: hidden;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__item-image {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  background: transparent;
+  mix-blend-mode: multiply;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__item-details {
+  padding: 0 0 0 24px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__item-content {
+  gap: 4px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__item-category {
+  margin: 0;
+  font-size: 13px;
+  color: var(--cart-ink-muted);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__item-content h3 {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--cart-ink);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__item-meta p {
+  font-size: 14px;
+  color: var(--cart-ink-muted);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__item-actions {
+  margin-top: 12px;
+  gap: 16px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__item-actions button {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--cart-ink-muted);
+  text-decoration: underline;
+  text-decoration-color: rgba(19, 19, 21, 0.2);
+  text-underline-offset: 3px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__item-actions button:hover {
+  color: var(--cart-ink);
+  text-decoration-color: currentColor;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__qty-label {
+  font-size: 13px;
+  color: var(--cart-ink-muted);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__qty-field {
+  height: 40px;
+  border: 1px solid var(--cart-hairline);
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: none;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__qty-select {
+  padding-left: 16px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__price-current {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--cart-ink);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__price-old {
+  font-size: 13px;
+  color: var(--cart-ink-muted);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__savings-badge {
+  align-self: flex-end;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(240, 176, 170, 0.28);
+  color: #8a3a33;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__gift-box {
+  border: 1px solid rgba(19, 19, 21, 0.2);
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__gift-text {
+  font-size: 13px;
+  color: var(--cart-ink-muted);
+}
+
+/* Summary: one tinted panel, no inner rules except above the total. */
+html[data-demo-theme="consumer-electronics"] .figma-cart__summary {
+  top: 96px;
+  width: 360px;
+  border: 0;
+  border-radius: var(--shi-radius-surface);
+  background: var(--cart-tile);
+  box-shadow: none;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__main-wrap {
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 48px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__summary-header {
+  padding: 24px 24px 8px;
+  border: 0;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__summary-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--cart-ink);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__summary-lines {
+  padding: 8px 24px;
+  border: 0;
+  font-size: 15px;
+  color: #5a5a60;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__line--total {
+  margin-top: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--cart-hairline);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--cart-ink);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__promo-block {
+  padding: 8px 24px 16px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__promo span,
+html[data-demo-theme="consumer-electronics"] .figma-cart__promo-chevron {
+  color: var(--cart-ink);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__promo span {
+  font-size: 14px;
+  text-decoration: underline;
+  text-decoration-color: rgba(19, 19, 21, 0.2);
+  text-underline-offset: 3px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__promo-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--cart-ink);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__summary-footer {
+  padding: 8px 24px 16px;
+  border: 0;
+  gap: 10px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__btn-checkout {
+  height: 52px;
+  border-radius: 999px;
+  background: var(--cart-ink);
+  box-shadow: none;
+  font-size: 15px;
+  font-weight: 500;
+  transition: background 200ms ease;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__btn-checkout:hover {
+  background: #2a2a2e;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__express {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__express button {
+  height: 44px;
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__express button:last-child {
+  grid-column: 1 / -1;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__perks {
+  list-style: none;
+  margin: 0;
+  padding: 8px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--cart-ink-muted);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__perks li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-cart__perks li::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #e2283a;
+}
+
+@container cart-page (max-width: 860px) {
+  html[data-demo-theme="consumer-electronics"] .figma-cart__summary {
+    width: 100%;
+  }
+}
+
+@container cart-items (max-width: 680px) {
+  html[data-demo-theme="consumer-electronics"] .figma-cart__item-thumb {
+    width: 112px;
+    height: 112px;
+    padding: 0;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-cart__item-details {
+    padding: 0 0 0 16px;
+    gap: 14px;
+  }
+
+  /* Quantity and price share one line; savings and gift wrap sit under them. */
+  html[data-demo-theme="consumer-electronics"] .figma-cart__item-right {
+    width: 100%;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 10px 12px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-cart__qty {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    width: auto;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-cart__qty-field {
+    width: 84px;
+    height: 36px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-cart__badges-price {
+    display: contents;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-cart__pricing {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-cart__savings-badge {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+    align-self: center;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-cart__gift-btn {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-cart__item-actions {
+    margin-top: 8px;
+  }
+}
+
+@container cart-items (max-width: 420px) {
+  html[data-demo-theme="consumer-electronics"] .figma-cart__item-thumb {
+    width: 88px;
+    height: 88px;
+    padding: 0;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-cart__item-details {
+    padding: 0 0 0 14px;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-cart__item-content h3 {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 1100px) {
+  html[data-demo-theme="consumer-electronics"] .figma-cart__main-wrap {
+    grid-template-columns: 1fr;
+  }
+
+  html[data-demo-theme="consumer-electronics"] .figma-cart__summary {
+    width: 100%;
+  }
+}
+
+@media (max-width: 767.98px) {
+  html[data-demo-theme="consumer-electronics"] .figma-cart__title-strip h1 {
+    font-size: 26px;
+  }
+}
+
+html[data-demo-viewport="mobile"][data-demo-theme="consumer-electronics"] .figma-cart__title-strip h1 {
+  font-size: 26px;
+}
+
+/* ─── All-pages pass: one 16 / 10 radius scale, ink pills, no shadows ─── */
+
+/* Header icon buttons are round, like every other icon control. */
+html[data-demo-theme="consumer-electronics"] .unified-top-header__top-actions button,
+html[data-demo-theme="consumer-electronics"] .unified-top-header__action--account,
+html[data-demo-theme="consumer-electronics"] .unified-top-header__mobile-menu-trigger,
+html[data-demo-theme="consumer-electronics"] .unified-top-header__mobile-drawer-close,
+html[data-demo-theme="consumer-electronics"] .search-overlay__close {
+  border-radius: 999px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-plp__filter-toggle {
+  border-radius: 999px;
+}
+
+html[data-demo-theme="consumer-electronics"] .pdp-nba__header-icon,
+html[data-demo-theme="consumer-electronics"] .blog-product__media {
+  border-radius: var(--shi-radius-inset, 10px);
+}
+
+html[data-demo-theme="consumer-electronics"] .blog-card__media,
+html[data-demo-theme="consumer-electronics"] .blog-article__hero,
+html[data-demo-theme="consumer-electronics"] .blog-article__tip {
+  border-radius: var(--shi-radius-surface, 16px);
+}
+
+/* Account page product cards match the shelf tiles. */
+html[data-demo-theme="consumer-electronics"] .figma-overview .figma-product-card {
+  border: 0;
+  border-radius: var(--shi-radius-surface, 16px);
+  box-shadow: none;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-overview .figma-product-card__badge {
+  border-radius: 999px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-overview :is(.figma-product-card__icon-btn, .figma-product-card__carousel-btn) {
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-product-card__hover-checkbox {
+  border-radius: 999px;
+}
+
+/* Checkout and order confirmation: the cart's quieter surfaces. */
+html[data-demo-theme="consumer-electronics"] .figma-checkout__panel,
+html[data-demo-theme="consumer-electronics"] .figma-order-confirmation__card {
+  border: 1px solid rgba(19, 19, 21, 0.08);
+  border-radius: var(--shi-radius-surface, 16px);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-checkout__summary {
+  background: #f4f2ef;
+  border-color: transparent;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-order-confirmation__summary-item,
+html[data-demo-theme="consumer-electronics"] .figma-order-confirmation__recommendation-card {
+  border: 0;
+  border-radius: var(--shi-radius-surface, 16px);
+  box-shadow: none;
+  background: #f4f2ef;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-checkout__summary-image, .figma-checkout__summary-thumb, .figma-order-confirmation__summary-thumb) {
+  border-radius: var(--shi-radius-inset, 10px);
+  overflow: hidden;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-checkout__section-header {
+  border-bottom: 1px solid rgba(19, 19, 21, 0.08);
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-checkout__panel, .figma-order-confirmation__card) h2 {
+  color: #131315;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-checkout__label {
+  color: #6b6b70;
+  font-size: 13px;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-checkout__field input, .figma-checkout__select, .figma-checkout__promo-entry input, .figma-order-confirmation__signup-field input) {
+  height: 44px;
+  border: 1px solid rgba(19, 19, 21, 0.14);
+  border-radius: var(--shi-radius-inset, 10px);
+  box-shadow: none;
+  color: #131315;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-checkout__field input, .figma-checkout__promo-entry input, .figma-order-confirmation__signup-field input):focus {
+  outline: none;
+  border-color: #131315;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-checkout__primary-btn, .figma-order-confirmation__primary-button) {
+  min-height: 48px;
+  border: 0;
+  border-radius: 999px;
+  background: #131315;
+  color: #fff;
+  box-shadow: none;
+  font-weight: 500;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-checkout__primary-btn, .figma-order-confirmation__primary-button):hover {
+  background: #2a2a2e;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-checkout__secondary-btn, .figma-order-confirmation__secondary-button) {
+  min-height: 44px;
+  border: 1px solid rgba(19, 19, 21, 0.14);
+  border-radius: 999px;
+  background: #fff;
+  color: #131315;
+  box-shadow: none;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-checkout__pay-btn {
+  height: 44px;
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-checkout__express-title {
+  color: #6b6b70;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-checkout__promo-toggle, .figma-checkout a, .figma-order-confirmation a) {
+  color: #131315;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-checkout__badge {
+  border-radius: 999px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-order-confirmation__carousel-arrow {
+  border-radius: 999px;
+  box-shadow: none;
+  border: 1px solid rgba(19, 19, 21, 0.14);
+  background: #fff;
+}
+
+/* About: tinted 16px image tiles, editorial headings, ink pills. */
+html[data-demo-theme="consumer-electronics"] .figma-about__page-title h1 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-about__intro h2, .figma-about__story-copy h3, .figma-about__contact-copy h3, .figma-about__values-head h3, .figma-about__closing-copy h3) {
+  color: #131315;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-about__story-card,
+html[data-demo-theme="consumer-electronics"] .figma-about__closing-card {
+  background: #f4f2ef;
+  border-radius: var(--shi-radius-surface, 16px);
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-about__story-card img {
+  height: 420px;
+  object-fit: cover;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-about__story-copy {
+  padding: 28px 32px 32px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-about__feature-image img {
+  border-radius: var(--shi-radius-surface, 16px);
+  box-shadow: none;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-about__closing-card {
+  overflow: hidden;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-about__closing-card img {
+  height: 100%;
+  min-height: 460px;
+  object-fit: cover;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-about__closing-copy {
+  padding: 40px 48px 40px 0;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-about__feature-image img {
+  height: auto;
+  aspect-ratio: 20 / 9;
+  object-fit: cover;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-about__contact-band {
+  background: transparent;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-about__contact-card {
+  background: #f4f2ef;
+  border-radius: var(--shi-radius-surface, 16px);
+  padding: 24px;
+  min-height: 0;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-about__contact-phone {
+  color: #131315;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-about__field-group span {
+  color: #6b6b70;
+  font-size: 13px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-about__field-group--message span span {
+  color: inherit;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-about__field-group input, .figma-about__field-group textarea) {
+  border: 1px solid rgba(19, 19, 21, 0.12);
+  border-radius: var(--shi-radius-inset, 10px);
+  background: #fff;
+  padding: 10px 14px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-about__field-group input {
+  height: 44px;
+}
+
+html[data-demo-theme="consumer-electronics"] :is(.figma-about__field-group input, .figma-about__field-group textarea):focus {
+  outline: none;
+  border-color: #131315;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-about__primary-button {
+  height: 46px;
+  padding: 0 24px;
+  border-radius: 999px;
+  background: #131315;
+  color: #fff;
+  box-shadow: none;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-about__primary-button:hover {
+  background: #2a2a2e;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-about__submit {
+  align-self: flex-start;
+  margin-top: 8px;
+}
+
+@media (max-width: 767.98px) {
+  html[data-demo-theme="consumer-electronics"] .figma-about__story-card img,
+  html[data-demo-theme="consumer-electronics"] .figma-about__closing-card img {
+    height: 260px;
+    min-height: 0;
+  }
+  html[data-demo-theme="consumer-electronics"] .figma-about__closing-copy {
+    padding: 24px;
+  }
+  html[data-demo-theme="consumer-electronics"] .figma-about__contact-card {
+    padding: 8px;
+  }
+}
+
+html[data-demo-viewport="mobile"][data-demo-theme="consumer-electronics"] .figma-about__story-card img,
+html[data-demo-viewport="mobile"][data-demo-theme="consumer-electronics"] .figma-about__closing-card img {
+  height: 260px;
+  min-height: 0;
+}
+
+html[data-demo-viewport="mobile"][data-demo-theme="consumer-electronics"] .figma-about__closing-copy {
+  padding: 24px;
+}
+
+html[data-demo-viewport="mobile"][data-demo-theme="consumer-electronics"] .figma-about__contact-card {
+  padding: 8px;
+}
+
+html[data-demo-theme="consumer-electronics"] .figma-pdp__field input {
+  border-radius: var(--shi-radius-inset, 10px);
+}
+
+@media (max-width: 767.98px) {
+  html[data-demo-theme="consumer-electronics"] .figma-checkout__express-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  html[data-demo-theme="consumer-electronics"] .figma-checkout__express-grid > :last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+html[data-demo-viewport="mobile"][data-demo-theme="consumer-electronics"] .figma-checkout__express-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+html[data-demo-viewport="mobile"][data-demo-theme="consumer-electronics"] .figma-checkout__express-grid > :last-child {
+  grid-column: 1 / -1;
+}

@@ -76,7 +76,10 @@ export default function ProductDetailPage() {
   const relatedProducts = getRelatedProducts(product.slug, 15);
   /* Size chips only when there is something to choose. A single listed
    * size is not a picker. */
-  const sizeOptions = product.variants.filter((variant) => Boolean(variant.label));
+  const sizeOptions = product.variants.filter(
+    (variant, index, all) =>
+      Boolean(variant.label) && all.findIndex((v) => v.label === variant.label) === index,
+  );
   const showSizePicker = sizeOptions.length >= 2;
   const selectedVariant = showSizePicker
     ? sizeOptions[Math.min(selectedVariantIndex, sizeOptions.length - 1)]

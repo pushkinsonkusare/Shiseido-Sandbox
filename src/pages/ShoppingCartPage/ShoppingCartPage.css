@@ -1229,11 +1229,11 @@ html[data-demo-viewport="mobile"] .figma-cart__footer-shell {
   flex-direction: column;
   gap: 18px;
   padding: 20px 22px 22px;
-  border: 1px solid rgba(120, 110, 160, 0.14);
-  border-radius: 16px;
+  border: 1px solid rgba(150, 100, 90, 0.14);
+  border-radius: var(--shi-radius-surface, 16px);
   background:
     radial-gradient(60% 120% at 0% 0%, rgba(255, 214, 196, 0.28), transparent 70%),
-    radial-gradient(50% 120% at 100% 0%, rgba(196, 186, 255, 0.24), transparent 70%),
+    radial-gradient(50% 120% at 100% 0%, rgba(226, 40, 52, 0.08), transparent 70%),
     #fbfaf8;
 }
 
@@ -1255,9 +1255,9 @@ html[data-demo-viewport="mobile"] .figma-cart__footer-shell {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 50%;
   background: #ffffff;
-  box-shadow: 0 0 0 1px rgba(120, 110, 160, 0.14);
+  box-shadow: 0 0 0 1px rgba(150, 100, 90, 0.14);
   color: #17171b;
 }
 

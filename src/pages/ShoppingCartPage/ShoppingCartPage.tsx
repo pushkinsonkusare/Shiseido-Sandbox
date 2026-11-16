@@ -54,11 +54,13 @@ function CartItemRow({ item, onRemove, onQuantityChange }: { item: CartItem } & 
       </div>
       <div className="figma-cart__item-details">
         <div className="figma-cart__item-content">
+          <p className="figma-cart__item-category">{item.color}</p>
           <h3>{item.name}</h3>
-          <div className="figma-cart__item-meta">
-            <p>Color: {item.color}</p>
-            <p>Size: {item.size}</p>
-          </div>
+          {item.size ? (
+            <div className="figma-cart__item-meta">
+              <p>{item.size}</p>
+            </div>
+          ) : null}
           <div className="figma-cart__item-actions">
             <button type="button" onClick={() => onRemove(item.id)} aria-label={`Remove ${item.name}`}>
               Remove
@@ -70,13 +72,13 @@ function CartItemRow({ item, onRemove, onQuantityChange }: { item: CartItem } & 
               onClick={() => setSaved((value) => !value)}
             >
               {saved ? <HeartIcon width={14} height={14} aria-hidden="true" /> : null}
-              {saved ? "Saved to Wishlist" : "Add to Wishlist"}
+              {saved ? "Saved for later" : "Save for later"}
             </button>
           </div>
         </div>
         <div className="figma-cart__item-right">
           <div className="figma-cart__qty">
-            <label className="figma-cart__qty-label" htmlFor={qtyId}>Quantity:</label>
+            <label className="figma-cart__qty-label" htmlFor={qtyId}>Qty</label>
             <div className="figma-cart__qty-field">
               <select
                 id={qtyId}
@@ -110,7 +112,7 @@ function CartItemRow({ item, onRemove, onQuantityChange }: { item: CartItem } & 
                 {gift ? <CheckIcon width={12} height={12} /> : null}
               </span>
               <span className="figma-cart__gift-text">
-                This is a gift. <span className="figma-cart__gift-learn">Learn more</span>
+                Gift wrap it
               </span>
             </button>
           </div>
@@ -148,7 +150,7 @@ function CartSection({
         </div>
         {showChangeStore ? (
           <div className="figma-cart__change-store-wrap">
-            <button type="button" className="figma-cart__change-store">Change Store</button>
+            <button type="button" className="figma-cart__change-store">Change store</button>
           </div>
         ) : null}
       </header>
@@ -201,6 +203,7 @@ export default function ShoppingCartPage() {
   const promo = resolveCartPromo(subtotalValue, cartPromo);
   const promotionValue = cartPromoDiscount(subtotalValue, promo);
   const totalValue = Math.max(0, subtotalValue - promotionValue);
+  const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <div className="figma-cart">
@@ -210,7 +213,12 @@ export default function ShoppingCartPage() {
           them as a single column-1 item beside the assistant panel. */}
       <div className="figma-cart__page-inner">
         <div className="figma-cart__title-strip">
-          <h1>Cart ({cartItems.reduce((sum, item) => sum + item.quantity, 0)} items)</h1>
+          <h1>
+            Your cart
+            <span className="figma-cart__count">
+              {itemCount} {itemCount === 1 ? "item" : "items"}
+            </span>
+          </h1>
         </div>
 
         <div className="figma-cart__main-wrap">
@@ -229,9 +237,9 @@ export default function ShoppingCartPage() {
               icon={<StoreIcon width={20} height={20} />}
               title={(
                 <>
-                  <span>Pickup at </span>
+                  <span>Pick up at </span>
                   <strong>Shiseido Boutique</strong>
-                  <span> - {pickupItems.length} items</span>
+                  <span className="figma-cart__section-count"> · {pickupItems.length} {pickupItems.length === 1 ? "item" : "items"}</span>
                 </>
               )}
               subtitle={SITE_ADDRESS}
@@ -242,7 +250,12 @@ export default function ShoppingCartPage() {
             />
             <CartSection
               icon={<TruckIcon width={20} height={20} />}
-              title={`Delivery - ${deliveryItems.length} items`}
+              title={(
+                <>
+                  <span>Delivery</span>
+                  <span className="figma-cart__section-count"> · {deliveryItems.length} {deliveryItems.length === 1 ? "item" : "items"}</span>
+                </>
+              )}
               subtitle={SITE_ADDRESS}
               items={deliveryItems}
               onRemove={removeLine}
@@ -253,7 +266,7 @@ export default function ShoppingCartPage() {
                 <h2 className="figma-cart__section-title">Your cart is empty</h2>
                 <p className="figma-cart__section-sub">Items you add will show up here.</p>
                 <button type="button" className="figma-cart__btn-checkout" onClick={() => navigate(ROUTES.home)}>
-                  Continue Shopping
+                  Continue shopping
                 </button>
               </section>
             ) : null}
@@ -261,21 +274,20 @@ export default function ShoppingCartPage() {
 
           <aside className="figma-cart__summary">
             <div className="figma-cart__summary-header">
-              <h2>Order Summary</h2>
+              <h2>Order summary</h2>
             </div>
             <div className="figma-cart__summary-lines">
               <div className="figma-cart__line"><span>Subtotal</span><span>{formatPrice(subtotalValue)}</span></div>
               {promo ? (
                 <div className="figma-cart__line"><span>Coupon {promo.code}</span><span>-{formatPrice(promotionValue)}</span></div>
               ) : null}
-              <div className="figma-cart__line"><span>Promotions</span><span>-</span></div>
-              <div className="figma-cart__line"><span>Shipping</span><span>{subtotalValue >= 150 ? "$0.00" : "Calculated at checkout"}</span></div>
+              <div className="figma-cart__line"><span>Shipping</span><span>{subtotalValue >= 150 ? "Free" : "Calculated at checkout"}</span></div>
               <div className="figma-cart__line"><span>Tax</span><span>Calculated at checkout</span></div>
               <div className="figma-cart__line figma-cart__line--total"><span>Total</span><span>{formatPrice(totalValue)}</span></div>
             </div>
             <div className="figma-cart__promo-block">
               <button type="button" className="figma-cart__promo">
-                <span>Do you have a promo code?</span>
+                <span>Have a promo code?</span>
                 <ChevronDownIcon width={24} height={24} className="figma-cart__promo-chevron" />
               </button>
               {promo ? (
@@ -286,7 +298,7 @@ export default function ShoppingCartPage() {
               ) : null}
             </div>
             <div className="figma-cart__summary-footer">
-              <button type="button" className="figma-cart__btn-checkout" onClick={() => navigate(ROUTES.checkout)}>Continue to Checkout</button>
+              <button type="button" className="figma-cart__btn-checkout" onClick={() => navigate(ROUTES.checkout)}>Continue to checkout</button>
               <div className="figma-cart__express">
                 <button type="button" className="figma-cart__btn-gpay">
                   <span className="figma-cart__brand-gpay">
@@ -314,6 +326,11 @@ export default function ShoppingCartPage() {
                 </button>
               </div>
             </div>
+            <ul className="figma-cart__perks">
+              <li>Two complimentary samples with every order</li>
+              <li>Free shipping on orders over $150</li>
+              <li>Free returns within 30 days</li>
+            </ul>
           </aside>
         </div>
       </div>
