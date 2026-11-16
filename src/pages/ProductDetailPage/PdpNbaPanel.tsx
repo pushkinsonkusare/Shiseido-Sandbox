@@ -393,7 +393,12 @@ export function PdpNbaPanel({
         aria-label="Suggested questions"
         aria-disabled={busy || undefined}
       >
-        {pills.map((pill) => {
+        {/* Two rows so phones can scroll them sideways at their natural
+            widths; on wider screens the rows are `display: contents` and the
+            chips wrap as one list. */}
+        {[pills.slice(0, Math.ceil(pills.length / 2)), pills.slice(Math.ceil(pills.length / 2))].map((row, rowIndex, rows) => (
+        <div key={rowIndex} className="pdp-nba__pill-row">
+        {row.map((pill) => {
           const showArrow = pill.kind !== "open";
           return (
             <button
@@ -415,6 +420,7 @@ export function PdpNbaPanel({
             </button>
           );
         })}
+        {rowIndex === rows.length - 1 ? (
         <button
           type="button"
           className="pdp-nba__regen"
@@ -424,6 +430,9 @@ export function PdpNbaPanel({
         >
           <RefreshCcwIcon width={16} height={16} />
         </button>
+        ) : null}
+        </div>
+        ))}
       </div>
     </section>
   );

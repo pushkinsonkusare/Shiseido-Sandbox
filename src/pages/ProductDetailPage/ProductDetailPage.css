@@ -418,6 +418,12 @@ html[data-demo-viewport="mobile"] .figma-pdp__page-inner {
   width: 100%;
 }
 
+/* Row wrappers only matter for the phone scroller; elsewhere the chips wrap
+ * as one list. */
+.pdp-nba__pill-row {
+  display: contents;
+}
+
 .pdp-nba__pill {
   display: inline-flex;
   align-items: center;
