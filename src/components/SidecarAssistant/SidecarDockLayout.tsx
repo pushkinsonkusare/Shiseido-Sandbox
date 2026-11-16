@@ -17,6 +17,7 @@ import {
 } from "../AgentModeBar/AgentModeContext";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { useFabInvite } from "../../hooks/useFabInvite";
+import { useNarrowScreen } from "../../hooks/useNarrowScreen";
 import { SidecarAssistant, type PendingAsk } from "./SidecarAssistant";
 import type { AskAssistantEventDetail } from "../../pages/ProductDetailPage/PdpNbaPanel";
 // Reuse the SideBySide docking shell CSS for desktop grid + mobile overlay.
@@ -76,24 +77,6 @@ function shouldOpenPanelFromUrl(): boolean {
   // Runtime re-read covers late URL changes / stale module constants.
   if (readDemoScenario() != null) return true;
   return open === "1" || open === "true" || open === "yes";
-}
-
-/** Phone-width breakpoint, matching the storefront's mobile CSS. */
-const NARROW_SCREEN_QUERY = "(max-width: 767.98px)";
-
-/** True on a real phone or narrow window, independent of the demo switcher. */
-function useNarrowScreen() {
-  const [narrow, setNarrow] = useState(
-    () => typeof window !== "undefined" && window.matchMedia(NARROW_SCREEN_QUERY).matches,
-  );
-  useEffect(() => {
-    const mq = window.matchMedia(NARROW_SCREEN_QUERY);
-    const sync = () => setNarrow(mq.matches);
-    sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
-  }, []);
-  return narrow;
 }
 
 export function SidecarDockLayout({ children }: Props) {

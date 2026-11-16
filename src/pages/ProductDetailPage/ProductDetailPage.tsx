@@ -15,6 +15,7 @@ import {
 } from "../../components/icons/StorefrontIcons";
 import { ROUTES, usePrototypeNavigation } from "../../prototypeRoutes";
 import { SITE_BRAND, SITE_FOOTER_COPY } from "../../siteContent";
+import { useNarrowScreen } from "../../hooks/useNarrowScreen";
 import PdpNbaPanel from "./PdpNbaPanel";
 import "./ProductDetailPage.css";
 
@@ -43,9 +44,11 @@ export default function ProductDetailPage() {
   const showNbaPanel =
     pdpInlineWidget && (nbaAnswerMode === "inline-answer" || assistantMounted);
   /* Mobile stacks gallery above info, so a left-under-image panel would sit
-   * above the buy box. Park the widget in the info rail there (both themes);
-   * desktop keeps the configured placement. */
-  const isMobileViewport = viewportMode === "mobile";
+   * above the buy box. Park the widget in the info rail there, just above
+   * Overview (both themes, demo switcher or a real phone); desktop keeps the
+   * configured placement. */
+  const narrowScreen = useNarrowScreen();
+  const isMobileViewport = viewportMode === "mobile" || narrowScreen;
   const showNbaUnderGallery =
     showNbaPanel && nbaPlacement === "left-under-image" && !isMobileViewport;
   const showNbaInRightRail =

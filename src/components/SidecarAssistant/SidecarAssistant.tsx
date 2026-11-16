@@ -5642,7 +5642,21 @@ export function SidecarAssistant({
         cleanupFns.push(() => media.removeEventListener("error", onMediaSettled));
       }
     } else {
-      node.scrollTo({ top: node.scrollHeight, behavior: "smooth" });
+      // Head for the end, but never so far that the shopper's question (or,
+      // with none, the start of what just arrived) leaves the top. In the
+      // half-height mobile sheet a short answer plus its next steps already
+      // overflows, and the end alone would show only the chips.
+      const first = appendedNodes[0];
+      const anchor = first.classList.contains("sidecar-assistant__user-row")
+        ? first
+        : tallDockAnchor(first);
+      node.scrollTo({
+        top: Math.min(
+          node.scrollHeight - node.clientHeight,
+          cardTopScrollTarget(node, anchor),
+        ),
+        behavior: "smooth",
+      });
     }
 
     previousMessageIdsRef.current = currentIds;
