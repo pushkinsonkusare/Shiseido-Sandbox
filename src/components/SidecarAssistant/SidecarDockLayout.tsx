@@ -18,6 +18,7 @@ import {
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import { useFabInvite } from "../../hooks/useFabInvite";
 import { useNarrowScreen } from "../../hooks/useNarrowScreen";
+import { acknowledgeProactive, useProactiveBadge } from "../../hooks/useProactiveNudge";
 import { SidecarAssistant, type PendingAsk } from "./SidecarAssistant";
 import type { AskAssistantEventDetail } from "../../pages/ProductDetailPage/PdpNbaPanel";
 // Reuse the SideBySide docking shell CSS for desktop grid + mobile overlay.
@@ -171,6 +172,7 @@ export function SidecarDockLayout({ children }: Props) {
     setPanelOpen(true);
   };
   const openPanel = () => openPanelAt("full");
+  const proactiveBadge = useProactiveBadge();
   const closePanel = () => setPanelOpen(false);
   const toggleDetach = () => setDetached((value) => !value);
 
@@ -647,10 +649,19 @@ export function SidecarDockLayout({ children }: Props) {
         <button
           type="button"
           className={
-            "sxs-layout__fab" + (fabInvite ? " sxs-layout__fab--invite" : "")
+            "sxs-layout__fab" +
+            (fabInvite ? " sxs-layout__fab--invite" : "") +
+            (proactiveBadge ? " sxs-layout__fab--badged" : "")
           }
-          aria-label="Open Beauty Advisor"
-          onClick={openPanel}
+          aria-label={
+            proactiveBadge
+              ? "Open Beauty Advisor, 1 new suggestion"
+              : "Open Beauty Advisor"
+          }
+          onClick={() => {
+            acknowledgeProactive();
+            openPanel();
+          }}
         >
           <SparkleIcon
             width={22}
@@ -661,6 +672,11 @@ export function SidecarDockLayout({ children }: Props) {
           <span className="sxs-layout__fab-label" aria-hidden="true">
             glow with me
           </span>
+          {proactiveBadge ? (
+            <span className="proactive-badge" aria-hidden="true">
+              1
+            </span>
+          ) : null}
         </button>
       ) : null}
     </div>

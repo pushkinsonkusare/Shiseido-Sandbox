@@ -16,6 +16,7 @@ import {
 import { ROUTES, usePrototypeNavigation } from "../../prototypeRoutes";
 import { SITE_BRAND, SITE_FOOTER_COPY } from "../../siteContent";
 import { useNarrowScreen } from "../../hooks/useNarrowScreen";
+import { setProactivePage } from "../../hooks/useProactiveNudge";
 import PdpNbaPanel from "./PdpNbaPanel";
 import "./ProductDetailPage.css";
 
@@ -62,6 +63,13 @@ export default function ProductDetailPage() {
   useEffect(() => {
     setActiveImageIndex(0);
     setSelectedVariantIndex(0);
+  }, [product.slug]);
+
+  // Proactive Assistant: after a beat on this product, the advisor's entry
+  // points badge a suggestion for it.
+  useEffect(() => {
+    setProactivePage(product.slug);
+    return () => setProactivePage(null);
   }, [product.slug]);
 
   const activeImage = gallery[activeImageIndex] ?? gallery[0];

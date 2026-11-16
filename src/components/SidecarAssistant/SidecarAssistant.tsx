@@ -63,6 +63,10 @@ import { AgentCartUpsell } from "./components/AgentCartUpsell";
 import { SimulatedIOSKeyboard } from "./components/SimulatedIOSKeyboard";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import {
+  consumeProactivePending,
+  useProactivePending,
+} from "../../hooks/useProactiveNudge";
+import {
   LANDING_NBA_SUCCESS_THRESHOLDS,
   ORDER_FOLLOWUP_NBAS,
   EMPTY_CART_NBAS,
@@ -6868,6 +6872,66 @@ export function SidecarAssistant({
     />
   );
 
+  /* Proactive Assistant: opened from a badged entry point on a PDP, the
+   * advisor starts in that product's context with its next-best actions in
+   * the composer, the way two selected products offer Compare. The pills go
+   * once the shopper sends anything, picks a pill or leaves the product. */
+  const proactivePending = useProactivePending();
+  const [proactiveSlug, setProactiveSlug] = useState<string | null>(null);
+  const proactiveBaseCountRef = useRef(0);
+  useEffect(() => {
+    const slug = proactivePending.slug;
+    if (!slug) return;
+    consumeProactivePending();
+    proactiveBaseCountRef.current = messagesRef.current.length;
+    setComposerContextCleared(false);
+    setContextualThreadActive(false);
+    setProactiveSlug(slug);
+    setIsOpen(true);
+  }, [proactivePending.slug, proactivePending.token]);
+  useEffect(() => {
+    if (!proactiveSlug) return;
+    if (messages.length < proactiveBaseCountRef.current) {
+      // Chat cleared or re-seeded under us; count from here.
+      proactiveBaseCountRef.current = messages.length;
+      return;
+    }
+    const sentSince = messages
+      .slice(proactiveBaseCountRef.current)
+      .some((message) => message.kind === "shopper_text");
+    if (sentSince) setProactiveSlug(null);
+  }, [messages, proactiveSlug]);
+  useEffect(() => {
+    if (proactiveSlug && pageProductSlug !== proactiveSlug) setProactiveSlug(null);
+  }, [pageProductSlug, proactiveSlug]);
+  const proactiveProduct =
+    proactiveSlug &&
+    selectedSlugs.length === 0 &&
+    askingAboutProduct?.slug === proactiveSlug
+      ? askingAboutProduct
+      : undefined;
+  const proactiveNbaItems = useMemo(() => {
+    if (!proactiveProduct) return [];
+    const [faq1, faq2] = buildContextualFaqs(proactiveProduct);
+    return buildNbaItems(["Show similar", faq1, faq2], "nba-proactive");
+  }, [proactiveProduct]);
+  const proactiveNbas =
+    proactiveProduct && proactiveNbaItems.length > 0 ? (
+      <AgentNBAs
+        className="agent-nba__set--scroll"
+        nbas={proactiveNbaItems}
+        regenerateButton={false}
+        onSelect={(nba) => {
+          const slug = proactiveProduct.slug;
+          setProactiveSlug(null);
+          handleContextualPill(nba.label, slug);
+          if (simulateMobileKeyboard) {
+            dismissSimulatedKeyboard();
+          }
+        }}
+      />
+    ) : null;
+
   const showInShellSelectionPills =
     inChatProductSelection &&
     selectedSlugs.length > 0 &&
@@ -6889,6 +6953,8 @@ export function SidecarAssistant({
       nbas:
         selectedSlugs.length >= 2 && inChatProductSelection && selectionNbas ? (
           <div className="sidecar-assistant__shell-nbas">{selectionNbas}</div>
+        ) : proactiveNbas && askingAboutRow ? (
+          <div className="sidecar-assistant__shell-nbas">{proactiveNbas}</div>
         ) : null,
     };
   }

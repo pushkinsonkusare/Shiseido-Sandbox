@@ -395,3 +395,62 @@ html[data-demo-viewport="mobile"] #root {
     font-size: max(16px, 1em) !important;
   }
 }
+
+/* Proactive Assistant: the "1" on the advisor's entry points while the PDP
+ * has a suggestion waiting. Pops in once, then sits still. */
+.proactive-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 0;
+  background: #e60012;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 1;
+  animation: proactive-badge-in 360ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes proactive-badge-in {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+.personal-assistant-nav-trigger {
+  position: relative;
+}
+
+/* The FAB clips its contents for the label reveal; let the badge sit over
+ * the edge (the label clips itself) and skip the shimmer, which would show. */
+.sxs-layout__fab.sxs-layout__fab--badged {
+  overflow: visible;
+}
+
+.sxs-layout__fab.sxs-layout__fab--badged::after {
+  display: none;
+}
+
+.sxs-layout__fab .proactive-badge {
+  top: -2px;
+  right: -2px;
+  min-width: 20px;
+  height: 20px;
+  font-size: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .proactive-badge {
+    animation: none;
+  }
+}
