@@ -4,7 +4,7 @@ import { isBundleTrippingPhrase } from "./assistantSuggestions";
 /* =============================================================
  * Goal engine for the search overlay's advisor suggestions.
  *
- * Turns whatever the shopper typed into 3 goals that the advisor can
+ * Turns whatever the shopper typed into up to 6 goals that the advisor can
  * act on. Runs locally and synchronously, so something useful always
  * shows on the same keystroke as the product grid (the AI upgrade in
  * `assistantSuggestionsLLM.ts` may refine it afterwards).
@@ -50,7 +50,7 @@ export type AssistantGoal = {
   source: "rule" | "llm";
 };
 
-export const MAX_GOALS = 3;
+export const MAX_GOALS = 6;
 const FALLBACK_SCORE = 10;
 
 /* ---------- Modifiers ---------- */
@@ -125,6 +125,30 @@ const SITUATIONS: SituationRule[] = [
         label: "Recover skin after a day in the sun",
         hint: "Soothe, rehydrate and even tone",
         prompt: "Help me build a hydrating routine to recover my skin after a lot of sun",
+        goal: "hydration",
+      },
+      {
+        id: "beach-spots",
+        kind: "concern",
+        label: "Stop sun from leaving dark spots",
+        hint: "Daily SPF plus brightening care",
+        prompt: "Help me prevent and fade dark spots from sun exposure",
+        goal: "brightening",
+      },
+      {
+        id: "beach-compare",
+        kind: "compare",
+        label: "Compare face and body sunscreens",
+        hint: "Which one for which day, explained",
+        prompt: "Help me compare your sunscreens and tell me which suits beach days versus everyday wear",
+        goal: "sun",
+      },
+      {
+        id: "beach-eyes-lips",
+        kind: "discover",
+        label: "Protect eyes and lips in the sun",
+        hint: "The spots most sunscreens miss",
+        prompt: "Help me protect and soothe the skin around my eyes and lips on sunny days",
         goal: "hydration",
       },
     ],
@@ -850,6 +874,28 @@ const FALLBACKS: Template[] = [
     hint: "The cult favourites, explained",
     prompt: "Help me choose from your best sellers and explain who each is for",
   },
+  {
+    id: "fallback-concern",
+    kind: "concern",
+    label: "Fix my biggest skin concern",
+    hint: "Name it, get a targeted plan",
+    prompt: "Help me tackle my biggest skin concern with the right products",
+  },
+  {
+    id: "fallback-spf",
+    kind: "situation",
+    label: "Pick the right daily SPF",
+    hint: "Matched to your skin and your day",
+    prompt: "Help me choose a daily sunscreen that suits my skin type",
+    goal: "sun",
+  },
+  {
+    id: "fallback-gift",
+    kind: "gift",
+    label: "Find a gift they'll actually use",
+    hint: "Tell me who it's for",
+    prompt: "Help me find a skincare gift for someone",
+  },
 ];
 
 /* ---------- Assembly ---------- */
@@ -936,7 +982,7 @@ export function buildGoals(
   );
 
   // Pick: highest score first, one per id, prefer distinct kinds and
-  // distinct advisor goals so the 3 rows feel like 3 different doors.
+  // distinct advisor goals so the rows feel like different doors.
   candidates.sort((a, b) => b.score - a.score);
   const picked: AssistantGoal[] = [];
   const seenIds = new Set<string>();

@@ -592,17 +592,18 @@ html[data-demo-viewport="mobile"] .sxs-layout--mobile {
   grid-column: auto !important;
 }
 
-/* Fully hide storefront sticky chrome while the overlay is open. */
-html[data-sxs-assistant-open] .unified-top-header,
-html[data-sxs-assistant-open] .figma-storefront__header-shell,
-html[data-sxs-assistant-open] .figma-plp__header-shell,
-html[data-sxs-assistant-open] .figma-pdp__header-shell,
-html[data-sxs-assistant-open] .figma-cart__header-shell,
-html[data-sxs-assistant-open] .figma-order-confirmation__header-shell,
-html[data-sxs-assistant-open] .figma-about__top-nav,
-html[data-sxs-assistant-open] .figma-overview__top-nav,
-html[data-sxs-assistant-open] .figma-checkout__topbar,
-html[data-sxs-assistant-open] .immersive-header {
+/* Fully hide storefront sticky chrome while the overlay is open full
+ * (at half, the page above the sheet keeps its header). */
+html[data-sxs-assistant-open="true"] .unified-top-header,
+html[data-sxs-assistant-open="true"] .figma-storefront__header-shell,
+html[data-sxs-assistant-open="true"] .figma-plp__header-shell,
+html[data-sxs-assistant-open="true"] .figma-pdp__header-shell,
+html[data-sxs-assistant-open="true"] .figma-cart__header-shell,
+html[data-sxs-assistant-open="true"] .figma-order-confirmation__header-shell,
+html[data-sxs-assistant-open="true"] .figma-about__top-nav,
+html[data-sxs-assistant-open="true"] .figma-overview__top-nav,
+html[data-sxs-assistant-open="true"] .figma-checkout__topbar,
+html[data-sxs-assistant-open="true"] .immersive-header {
   visibility: hidden !important;
   pointer-events: none !important;
   z-index: 0 !important;
@@ -736,4 +737,125 @@ html:not([data-demo-viewport="mobile"]) .sxs-layout__panel--mobile {
 
 .sxs-layout__panel--mobile .sidecar-assistant__header-btn--detach {
   display: none;
+}
+
+
+/* ---------- Mobile sheet stops: half and full ----------
+ * A pill opens the advisor at half: the answer and its NBAs sit in the
+ * lower part of the screen with the page dimmed above, which reads as a
+ * temporary layer. Typing, a flick up or the handle takes it full. The
+ * sheet is anchored to the bottom in both stops, so it grows upward. */
+.sxs-layout__panel--mobile {
+  interpolate-size: allow-keywords;
+  transition:
+    height 340ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-radius 340ms ease,
+    box-shadow 340ms ease;
+}
+
+/* `#root >` (the portal target) outranks the frame and chrome variants. */
+#root > .sxs-layout__panel--mobile.sxs-layout__panel--half {
+  top: auto !important;
+  height: 58% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  border-radius: 20px 20px 0 0 !important;
+  box-shadow: 0 -12px 40px rgba(15, 15, 20, 0.18) !important;
+}
+
+/* The tint over the page while the sheet is at half. */
+.sxs-layout__sheet-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1099;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: rgba(12, 12, 16, 0.44);
+  opacity: 0;
+  pointer-events: none;
+  cursor: pointer;
+  touch-action: none;
+  transition: opacity 280ms ease;
+}
+
+html[data-demo-viewport="mobile"] .sxs-layout__sheet-scrim {
+  position: absolute;
+}
+
+.sxs-layout__sheet-scrim--on {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* The grab bar: drag it to resize the sheet (it follows the finger and
+ * snaps to full, half or closed), or tap it to switch stops. The hit area
+ * is much bigger than the bar itself. */
+.sxs-layout__sheet-handle {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 10;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 120px;
+  height: 24px;
+  margin: 0;
+  padding: 8px 0 0;
+  border: none;
+  border-radius: 0 0 12px 12px;
+  background: transparent;
+  transform: translateX(-50%);
+  cursor: grab;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sxs-layout__sheet-handle:active {
+  cursor: grabbing;
+}
+
+.sxs-layout__sheet-handle-bar {
+  display: block;
+  width: 40px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.22);
+  transition: background-color 150ms ease, width 150ms ease;
+}
+
+.sxs-layout__sheet-handle:hover .sxs-layout__sheet-handle-bar,
+.sxs-layout__sheet-handle:active .sxs-layout__sheet-handle-bar {
+  width: 48px;
+  background: rgba(15, 23, 42, 0.36);
+}
+
+/* The real bar replaces the decorative one, and the header drops a few
+ * pixels so the bar gets its own strip above the title. */
+.sxs-layout__panel--mobile::before {
+  display: none;
+}
+
+#root > .sxs-layout__panel--mobile .sidecar-assistant__header {
+  padding-top: 20px !important;
+}
+
+.sxs-layout__sheet-handle:focus-visible {
+  outline: 2px solid #2f7df6;
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sxs-layout__panel--mobile,
+  .sxs-layout__sheet-scrim {
+    transition: none;
+  }
+}
+
+/* At half the answer leads: the composer is a single line (no product
+ * chip, no disclaimer) until the shopper taps it and the sheet goes full. */
+#root > .sxs-layout__panel--half .sidecar-assistant__selection-slot,
+#root > .sxs-layout__panel--half .sidecar-assistant__disclaimer {
+  display: none !important;
 }

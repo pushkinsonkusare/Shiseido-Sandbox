@@ -34,6 +34,30 @@ const PANEL_WIDTH_MIN = 420;
 const PANEL_WIDTH_MAX = 630;
 const PANEL_WIDTH_STEP = 16;
 
+/**
+ * Mobile bottom-sheet stops. A pill or NBA opens the advisor at "half" so
+ * the answer lands next to the page the shopper was on; typing, a flick
+ * up, or the grab handle takes it to "full".
+ */
+type SheetStop = "half" | "full";
+
+/** How far a vertical flick has to travel before the sheet changes stop. */
+const SHEET_FLICK_UP_PX = 48;
+const SHEET_FLICK_DOWN_PX = 110;
+
+/** Inline styles that let a drag override the sheet's stop heights. */
+const SHEET_DRAG_PROPS = ["height", "top", "min-height", "max-height", "transition"] as const;
+
+/** True when the touch began inside something already scrolled down. */
+function startedInScrolledArea(target: EventTarget | null, panel: HTMLElement): boolean {
+  let el = target instanceof Element ? target : null;
+  while (el && el !== panel) {
+    if (el.scrollTop > 0) return true;
+    el = el.parentElement;
+  }
+  return false;
+}
+
 function clampPanelWidth(width: number): number {
   return Math.min(PANEL_WIDTH_MAX, Math.max(PANEL_WIDTH_MIN, Math.round(width)));
 }
@@ -137,7 +161,32 @@ export function SidecarDockLayout({ children }: Props) {
     null,
   );
 
-  const openPanel = () => setPanelOpen(true);
+  const [sheetStop, setSheetStop] = useState<SheetStop>("full");
+  const swipeFromScrolledRef = useRef(false);
+  /** The grab bar's drag: where it started and how tall the sheet was. */
+  const handleDragRef = useRef<{
+    pointerId: number;
+    startY: number;
+    scale: number;
+    startHeight: number;
+    maxHeight: number;
+    lastY: number;
+    lastT: number;
+    velocity: number;
+    moved: boolean;
+  } | null>(null);
+  // Read inside the document listeners, which are registered once.
+  const panelOpenRef = useRef(panelOpen);
+  useEffect(() => {
+    panelOpenRef.current = panelOpen;
+  }, [panelOpen]);
+
+  /** Opens at `stop` from closed; an open sheet keeps the stop it's at. */
+  const openPanelAt = (stop: SheetStop) => {
+    if (!panelOpenRef.current) setSheetStop(stop);
+    setPanelOpen(true);
+  };
+  const openPanel = () => openPanelAt("full");
   const closePanel = () => setPanelOpen(false);
   const toggleDetach = () => setDetached((value) => !value);
 
@@ -178,6 +227,7 @@ export function SidecarDockLayout({ children }: Props) {
   }, [panelOpen, isMobileViewport]);
 
   const isDetached = detached && !isMobileViewport;
+  const isHalfSheet = isMobileViewport && panelOpen && sheetStop === "half";
 
   // Immersive covers the viewport, so the storefront behind it should hold still
   // rather than scrolling along. The docked panel deliberately does not lock:
@@ -203,12 +253,13 @@ export function SidecarDockLayout({ children }: Props) {
   useEffect(() => {
     const root = document.documentElement;
     if (isMobileViewport && panelOpen) {
-      root.setAttribute("data-sxs-assistant-open", "true");
+      // "half" leaves the storefront showing above the sheet, chrome and all.
+      root.setAttribute("data-sxs-assistant-open", isHalfSheet ? "half" : "true");
     } else {
       root.removeAttribute("data-sxs-assistant-open");
     }
     return () => root.removeAttribute("data-sxs-assistant-open");
-  }, [isMobileViewport, panelOpen]);
+  }, [isMobileViewport, panelOpen, isHalfSheet]);
 
   // Open on the same storefront events the sidecar/SxS assistants listen for.
   // The `agentic:ask-assistant` prompt is normally seeded by SidecarAssistant's
@@ -228,6 +279,8 @@ export function SidecarDockLayout({ children }: Props) {
     };
     const onAsk = (event: Event) => {
       if (!sidecarAvailableRef.current) return;
+      // A pill's answer opens the sheet halfway; the FAB still opens full.
+      openPanelAt("half");
       if (!panelMountedRef.current) {
         const detail = (event as CustomEvent<AskAssistantEventDetail>).detail;
         if (detail?.prompt?.trim()) {
@@ -235,7 +288,6 @@ export function SidecarDockLayout({ children }: Props) {
           setPendingAsk({ token: askTokenRef.current, detail });
         }
       }
-      openPanel();
     };
     document.addEventListener("agentic:open-assistant", onOpen);
     document.addEventListener("agentic:ask-assistant", onAsk);
@@ -314,6 +366,93 @@ export function SidecarDockLayout({ children }: Props) {
     };
   }, [resizing]);
 
+  const handleDragMovedRef = useRef(false);
+  const clearSheetDragStyles = () => {
+    const el = panelRef.current;
+    if (!el) return;
+    for (const prop of SHEET_DRAG_PROPS) el.style.removeProperty(prop);
+  };
+
+  const beginHandleDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const el = panelRef.current;
+    if (!el || (event.pointerType === "mouse" && event.button !== 0)) return;
+    const rect = el.getBoundingClientRect();
+    // The demo phone frame may be scaled to fit; work in CSS pixels.
+    const scale = el.offsetHeight ? rect.height / el.offsetHeight : 1;
+    const inFrame = el.parentElement?.id === "root" && getComputedStyle(el).position === "absolute";
+    const frameTop = inFrame ? (el.parentElement?.getBoundingClientRect().top ?? 0) : 0;
+    // Full height reaches the top of the frame, below any fake status bar.
+    const statusBar =
+      document.documentElement.dataset.demoMobileChrome === "true"
+        ? parseFloat(getComputedStyle(el).getPropertyValue("--mobile-chrome-status")) || 0
+        : 0;
+    handleDragMovedRef.current = false;
+    handleDragRef.current = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      scale,
+      startHeight: el.offsetHeight,
+      maxHeight: (rect.bottom - frameTop) / scale - statusBar,
+      lastY: event.clientY,
+      lastT: event.timeStamp,
+      velocity: 0,
+      moved: false,
+    };
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Pointer already gone (e.g. a cancelled touch); the drag still works.
+    }
+  };
+
+  const moveHandleDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const drag = handleDragRef.current;
+    const el = panelRef.current;
+    if (!drag || !el || drag.pointerId !== event.pointerId) return;
+    const dy = (event.clientY - drag.startY) / drag.scale;
+    if (!drag.moved && Math.abs(dy) < 4) return;
+    drag.moved = true;
+    handleDragMovedRef.current = true;
+    const dt = Math.max(1, event.timeStamp - drag.lastT);
+    drag.velocity = (event.clientY - drag.lastY) / dt; // px/ms, + is down
+    drag.lastY = event.clientY;
+    drag.lastT = event.timeStamp;
+    const height = Math.min(drag.maxHeight, Math.max(80, drag.startHeight - dy));
+    el.style.setProperty("transition", "none", "important");
+    el.style.setProperty("top", "auto", "important");
+    el.style.setProperty("min-height", "0", "important");
+    el.style.setProperty("max-height", "none", "important");
+    el.style.setProperty("height", `${Math.round(height)}px`, "important");
+  };
+
+  const endHandleDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const drag = handleDragRef.current;
+    const el = panelRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    handleDragRef.current = null;
+    if (!drag.moved || !el) {
+      clearSheetDragStyles();
+      return;
+    }
+    const share = el.offsetHeight / drag.maxHeight;
+    // A quick flick wins over where the finger stopped.
+    const flick = Math.abs(drag.velocity) > 0.6 ? Math.sign(drag.velocity) : 0;
+    let next: SheetStop | "closed";
+    if (flick < 0) next = "full";
+    else if (flick > 0) next = share > 0.8 ? "half" : "closed";
+    else if (share > 0.78) next = "full";
+    else if (share > 0.32) next = "half";
+    else next = "closed";
+    // Let the stop's own height take over with its transition.
+    el.style.removeProperty("transition");
+    el.style.removeProperty("height");
+    el.style.removeProperty("min-height");
+    el.style.removeProperty("max-height");
+    el.style.removeProperty("top");
+    if (next === "closed") closePanel();
+    else setSheetStop(next);
+  };
+
   const panel = panelMounted && sidecarAvailable ? (
     <aside
       ref={panelRef}
@@ -322,6 +461,7 @@ export function SidecarDockLayout({ children }: Props) {
           ? "sxs-layout__panel sxs-layout__panel--open"
           : "sxs-layout__panel sxs-layout__panel--closing") +
         (isMobileViewport ? " sxs-layout__panel--mobile" : "") +
+        (isHalfSheet ? " sxs-layout__panel--half" : "") +
         (isDetached ? " sxs-layout__panel--detached" : "")
       }
       aria-label="Beauty Advisor"
@@ -330,8 +470,30 @@ export function SidecarDockLayout({ children }: Props) {
         if (!isMobileViewport || !panelOpen) return;
         const touch = event.touches[0];
         if (!touch) return;
+        // The grab bar runs its own drag (pointer events, below).
+        if ((event.target as Element).closest?.(".sxs-layout__sheet-handle")) {
+          swipeStartXRef.current = null;
+          swipeStartYRef.current = null;
+          return;
+        }
         swipeStartXRef.current = touch.clientX;
         swipeStartYRef.current = touch.clientY;
+        swipeFromScrolledRef.current = panelRef.current
+          ? startedInScrolledArea(event.target, panelRef.current)
+          : false;
+      }}
+      // Reaching for the composer means the keyboard is coming: go full.
+      onFocusCapture={(event) => {
+        if (!isHalfSheet) return;
+        if ((event.target as Element).matches?.("textarea, input, [contenteditable='true']")) {
+          setSheetStop("full");
+        }
+      }}
+      onPointerDownCapture={(event) => {
+        if (!isHalfSheet) return;
+        if ((event.target as Element).closest?.(".sidecar-assistant__input-bar")) {
+          setSheetStop("full");
+        }
       }}
       onTouchMove={(event) => {
         if (!isMobileViewport || !panelOpen) return;
@@ -342,8 +504,9 @@ export function SidecarDockLayout({ children }: Props) {
         if (!panelEl || startX === null || startY === null || !touch) return;
         const dx = touch.clientX - startX;
         const dy = touch.clientY - startY;
-        // Bottom sheet: only engage a downward, vertically-dominant drag.
-        if (dy <= 0 || Math.abs(dy) < Math.abs(dx)) return;
+        // Bottom sheet: only engage a downward, vertically-dominant drag
+        // that isn't just the chat scrolling back up.
+        if (dy <= 0 || Math.abs(dy) < Math.abs(dx) || swipeFromScrolledRef.current) return;
         panelEl.style.transition = "none";
         panelEl.style.transform = `translate3d(0, ${Math.min(dy, 220)}px, 0)`;
       }}
@@ -360,9 +523,21 @@ export function SidecarDockLayout({ children }: Props) {
         }
         const dx = touch.clientX - startX;
         const dy = touch.clientY - startY;
-        // Swipe down far enough (and vertically) dismisses the sheet.
-        if (dy > 120 && Math.abs(dy) > Math.abs(dx)) {
-          closePanel();
+        const vertical = Math.abs(dy) > Math.abs(dx);
+        // Flick up from half: immerse.
+        if (sheetStop === "half" && vertical && dy < -SHEET_FLICK_UP_PX) {
+          setSheetStop("full");
+          resetSwipeTransform();
+          return;
+        }
+        // Flick down: full steps back to half, half dismisses.
+        if (vertical && dy > SHEET_FLICK_DOWN_PX && !swipeFromScrolledRef.current) {
+          if (sheetStop === "full") {
+            setSheetStop("half");
+            resetSwipeTransform();
+          } else {
+            closePanel();
+          }
           return;
         }
         const panelEl = panelRef.current;
@@ -372,6 +547,34 @@ export function SidecarDockLayout({ children }: Props) {
         window.setTimeout(() => resetSwipeTransform(), 190);
       }}
     >
+      {panelOpen && isMobileViewport ? (
+        <button
+          type="button"
+          className="sxs-layout__sheet-handle"
+          aria-label={isHalfSheet ? "Expand Beauty Advisor" : "Shrink Beauty Advisor to half"}
+          onPointerDown={beginHandleDrag}
+          onPointerMove={moveHandleDrag}
+          onPointerUp={endHandleDrag}
+          onPointerCancel={endHandleDrag}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowUp") {
+              event.preventDefault();
+              setSheetStop("full");
+            } else if (event.key === "ArrowDown") {
+              event.preventDefault();
+              if (isHalfSheet) closePanel();
+              else setSheetStop("half");
+            }
+          }}
+          onClick={(event) => {
+            // A drag already decided the stop; only a plain tap toggles.
+            if (event.detail !== 0 && handleDragMovedRef.current) return;
+            setSheetStop(isHalfSheet ? "full" : "half");
+          }}
+        >
+          <span className="sxs-layout__sheet-handle-bar" aria-hidden="true" />
+        </button>
+      ) : null}
       {panelOpen && !isMobileViewport && !isDetached ? (
         <div
           className="sxs-layout__resize"
@@ -404,8 +607,27 @@ export function SidecarDockLayout({ children }: Props) {
   // storefront header. Nested `position:fixed` inside `.sxs-shell` loses to
   // sticky compositing; a direct `#root` child with a high z-index does not.
   const rootEl = typeof document !== "undefined" ? document.getElementById("root") : null;
+  // At half the page stays visible under a tint; tapping it closes the sheet.
+  const sheetScrim = (
+    <button
+      type="button"
+      className={"sxs-layout__sheet-scrim" + (isHalfSheet ? " sxs-layout__sheet-scrim--on" : "")}
+      aria-label="Close Beauty Advisor"
+      aria-hidden={!isHalfSheet}
+      tabIndex={isHalfSheet ? 0 : -1}
+      onClick={closePanel}
+    />
+  );
   const mobilePanel =
-    isMobileViewport && panel && rootEl ? createPortal(panel, rootEl) : null;
+    isMobileViewport && panel && rootEl
+      ? createPortal(
+          <>
+            {sheetScrim}
+            {panel}
+          </>,
+          rootEl,
+        )
+      : null;
   const desktopPanel = !isMobileViewport ? panel : null;
 
   return (

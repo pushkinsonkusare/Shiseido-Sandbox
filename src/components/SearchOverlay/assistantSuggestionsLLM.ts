@@ -13,7 +13,7 @@ import { MAX_GOALS, type AssistantGoal, type GoalKind } from "./goalEngine";
  * The local goal engine (`goalEngine.ts`) always renders first. Once
  * the shopper pauses, this one-shot call asks the model to infer the
  * shopper's underlying goal (from a product name, a situation, a
- * concern, or plain nonsense) and return 3 sharper goals. The local
+ * concern, or plain nonsense) and return 6 sharper goals. The local
  * goals are passed in as context so the model refines rather than
  * starts cold, and its output is validated against the same routing
  * rules. Anything invalid is dropped and topped up from local goals,
@@ -52,14 +52,14 @@ function digest(p: CatalogProduct) {
 
 const SYSTEM_PROMPT = [
   "You write the 'Let your advisor help' suggestions in a Shiseido skincare search dropdown.",
-  "Your job: infer the shopper's underlying GOAL from what they typed, then offer 3 goals the AI advisor can solve better than a product grid.",
+  "Your job: infer the shopper's underlying GOAL from what they typed, then offer 6 goals the AI advisor can solve better than a product grid.",
   "Infer goals from: product or collection names (Ultimune → strengthen skin and prevent early ageing; Benefiance → wrinkles; Vital Perfection → lifting and dark spots; Future Solution LX → luxury anti-aging; Ultimate Sun / Urban Environment → sun protection; Eudermine → softener prep; Essentials → simple basics; Shiseido Men → men's routine; WASO → gentle, plant-powered basics);",
   "situations (travel → carry-on routine, in-flight hydration, SPF for the trip; wedding → glow countdown; gym → post-workout, sweat-proof SPF; winter → dry-skin rescue; late nights → revive dull skin and tired eyes; gift → gifts for her/him);",
   "concerns (fine lines, dark spots, dryness, oiliness, sensitivity, puffy eyes); and modifiers (budget like 'under $50', age like '40s', morning/night).",
   "If the query is vague or nonsense, offer helpful starting points (build a routine, find best-match products, best sellers explained).",
   "Each goal has: label (outcome-first, 3-7 words, sentence case, max 48 chars, no trailing period), hint (the value the shopper gets, max 48 chars, can use ' · ' separators), prompt (the full first-person request sent to the advisor, max 160 chars), kind (one of situation, concern, routine, compare, gift, discover).",
   "ROUTING RULES for prompt (critical): start with 'Help me' (or 'Compare X vs Y' for comparisons), and include at least one of: anti-aging, fine lines, brightening, dark spots, hydrating, dry, oily, pores, sunscreen, men's, routine. Never use the words kit, bundle, set or combo unless kind is gift.",
-  "Make the 3 goals genuinely different (different kinds or different skin goals). Do not just restate the query. Never invent product names; only reference collections listed above or in the matches.",
+  "Make the 6 goals genuinely different (different kinds or different skin goals). Do not just restate the query. Never invent product names; only reference collections listed above or in the matches.",
   "You will receive local draft goals; improve on them, keep any that are already strong. If you change a label, write a new hint that matches it. Drafts like 'Build a routine for my skin' are generic fallbacks: replace them whenever you can infer anything specific from the query.",
   'Return STRICTLY valid JSON: {"goals":[{"label":"","hint":"","prompt":"","kind":""}]}. No prose, no markdown.',
 ].join(" ");
@@ -140,7 +140,7 @@ export async function fetchAssistantGoalsLLM(
       {
         model: getOpenAIModel(),
         temperature: 0.5,
-        max_tokens: 420,
+        max_tokens: 800,
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },

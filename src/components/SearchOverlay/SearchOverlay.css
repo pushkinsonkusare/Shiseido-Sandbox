@@ -33,7 +33,10 @@
   z-index: 1;
   background: #ffffff;
   width: 100%;
-  max-height: calc(100vh - var(--app-topbar-height, 56px));
+  /* A dropdown, not a page: the panel is only as tall as the results
+   * column (the suggestions rail scrolls to match), so the dimmed page
+   * shows beneath it. On short screens it still leaves a sliver of tint. */
+  max-height: calc(100dvh - var(--app-topbar-height, 56px) - 40px);
   margin-top: var(--app-topbar-height, 56px); /* clear the AgentModeBar */
   display: flex;
   flex-direction: column;
@@ -381,8 +384,11 @@
   margin-left: auto;
   margin-right: auto;
   padding: 56px 64px 32px;
+  /* Side by side, only the suggestions rail scrolls; the results stay put.
+   * The body itself scrolls only if even the results don't fit. */
   overflow-y: auto;
   flex: 1 1 auto;
+  min-height: 0;
 }
 
 @media (max-width: 1599.98px) {
@@ -403,6 +409,7 @@
     align-items: center;
     gap: 24px;
     padding: 32px;
+    overflow-y: auto;
   }
 }
 
@@ -426,6 +433,13 @@
   }
 }
 
+/* Phones: the dropdown takes the screen, as a sheet would. */
+@media (max-width: 767.98px) {
+  .search-overlay__panel {
+    max-height: calc(100dvh - var(--app-topbar-height, 56px));
+  }
+}
+
 .search-overlay__col {
   min-width: 0;
 }
@@ -437,6 +451,66 @@
  * the body stacks below 1100px. */
 .search-overlay__col--recent {
   flex: 0 0 360px;
+  /* Contributes no height of its own: the results column sets the row
+   * height and the rail stretches to it, scrolling the rest. */
+  contain: size;
+  align-self: stretch;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Room for focus rings and the scrollbar without clipping rows. */
+  margin: -4px;
+  padding: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}
+
+.search-overlay__col--recent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.search-overlay__col--recent::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 999px;
+}
+
+/* Side by side, four suggested searches are plenty; the room goes to the
+ * advisor goals underneath, and the rail is tall enough that the first
+ * three show before the scroll fade. */
+@media (min-width: 1100px) {
+  .search-overlay__recent-list > :nth-child(n + 5) {
+    display: none;
+  }
+
+  .search-overlay__col--recent {
+    min-height: 420px;
+  }
+}
+
+/* A soft fade at the rail's bottom edge while there's more to scroll,
+ * gone once the shopper reaches the end (or when nothing overflows). */
+@property --rail-fade {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@keyframes search-overlay__rail-fade {
+  0%,
+  92% {
+    --rail-fade: 36px;
+  }
+  100% {
+    --rail-fade: 0px;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .search-overlay__col--recent {
+    mask-image: linear-gradient(to bottom, #000 calc(100% - var(--rail-fade)), transparent);
+    animation: search-overlay__rail-fade linear both;
+    animation-timeline: scroll(self);
+  }
 }
 
 @media (max-width: 1599.98px) {
@@ -453,6 +527,10 @@
     flex: 0 0 auto;
     width: 100%;
     max-width: 544px;
+    contain: none;
+    align-self: auto;
+    overflow: visible;
+    mask-image: none;
   }
 }
 
@@ -866,6 +944,8 @@
   container: search-promo / inline-size;
   position: relative;
   margin: 0 auto 32px;
+  /* Never squeezed by the capped panel; the body above gives up room. */
+  flex: 0 0 auto;
   width: calc(100% - 128px);
   max-width: calc(1920px - 128px);
   padding: 20px 20px 20px 24px;
@@ -1169,6 +1249,15 @@ html[data-demo-viewport="mobile"] .search-overlay__col--recent {
   flex: 0 0 auto;
   width: 100%;
   max-width: none;
+  contain: none;
+  align-self: auto;
+  overflow: visible;
+  mask-image: none;
+  min-height: 0;
+}
+
+html[data-demo-viewport="mobile"] .search-overlay__recent-list > :nth-child(n + 5) {
+  display: list-item;
 }
 
 html[data-demo-viewport="mobile"] .search-overlay__recent-list > :nth-child(n + 7) {
